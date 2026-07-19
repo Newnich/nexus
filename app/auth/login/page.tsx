@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { createClient, supabase } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
-  const sbRef = useRef<ReturnType<typeof supabase>>(null);
+  const sbRef = useRef<ReturnType<typeof createClient> | null>(null);
   const [ready, setReady] = useState(false);
   const router = useRouter();
   const [email, setEmail] = useState("");
