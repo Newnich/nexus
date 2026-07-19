@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-
-const sb = supabase();
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
+  const sb = supabase();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
