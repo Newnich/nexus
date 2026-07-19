@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createClient, supabase } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
-  const [sb, setSb] = useState<ReturnType<typeof createClient> | null>(null);
+  const sbRef = useRef<ReturnType<typeof supabase>>(null);
+  const [ready, setReady] = useState(false);
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,7 +16,8 @@ export default function LoginPage() {
 
   // Only create Supabase client on the client side (browser)
   useEffect(() => {
-    setSb(supabase());
+    sbRef.current = supabase();
+    setReady(true);
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -24,7 +26,7 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await sb.auth.signUp({
+        const { error } = await sbRef.current!.auth.signUp({
           email,
           password,
           options: {
@@ -34,7 +36,7 @@ export default function LoginPage() {
         if (error) throw error;
         toast.success("Check your email to confirm your account!");
       } else {
-        const { error } = await sb.auth.signInWithPassword({
+        const { error } = await sbRef.current!.auth.signInWithPassword({
           email,
           password,
         });
@@ -51,7 +53,7 @@ export default function LoginPage() {
   const handleOAuth = async (provider: "google" | "github") => {
     setLoading(true);
     try {
-      const { error } = await sb.auth.signInWithOAuth({
+      const { error } = await sbRef.current!.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -64,7 +66,7 @@ export default function LoginPage() {
     }
   };
 
-  if (!sb) {
+  if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
