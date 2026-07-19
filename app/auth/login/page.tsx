@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+
+const sb = supabase();
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
@@ -18,7 +20,7 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { error } = await sb.auth.signUp({
           email,
           password,
           options: {
@@ -28,7 +30,7 @@ export default function LoginPage() {
         if (error) throw error;
         toast.success("Check your email to confirm your account!");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error } = await sb.auth.signInWithPassword({
           email,
           password,
         });
@@ -45,7 +47,7 @@ export default function LoginPage() {
   const handleOAuth = async (provider: "google" | "github") => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await sb.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
