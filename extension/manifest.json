@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "NEXUS — Save to Knowledge OS",
+  "version": "1.0.0",
+  "description": "Save anything to NEXUS in one click. Your AI-native knowledge OS companion.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "contextMenus",
+    "notifications",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://nexus.app/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Save to NEXUS",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "commands": {
+    "save-to-nexus": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Save current page to NEXUS"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "author": "NEXUS",
+  "homepage_url": "https://nexus.app"
+}

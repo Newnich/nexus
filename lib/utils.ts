@@ -1,0 +1,105 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { nanoid } from "nanoid";
+import { format, formatDistanceToNow } from "date-fns";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function generateId(): string {
+  return nanoid(24);
+}
+
+export function formatDate(date: string | Date): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return format(d, "MMM d, yyyy");
+}
+
+export function formatDateRelative(date: string | Date): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return formatDistanceToNow(d, { addSuffix: true });
+}
+
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+export function extractDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace("www.", "");
+  } catch {
+    return url;
+  }
+}
+
+export function truncate(str: string, length: number): string {
+  if (str.length <= length) return str;
+  return str.slice(0, length).trimEnd() + "...";
+}
+
+export function readingTime(text: string): number {
+  const wordsPerMinute = 200;
+  const words = text.split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / wordsPerMinute));
+}
+
+export function debounce<T extends (...args: unknown[]) => unknown>(
+  fn: T,
+  ms: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), ms);
+  };
+}
+
+export function groupBy<T>(items: T[], key: keyof T): Record<string, T[]> {
+  return items.reduce(
+    (acc, item) => {
+      const k = String(item[key]);
+      if (!acc[k]) acc[k] = [];
+      acc[k].push(item);
+      return acc;
+    },
+    {} as Record<string, T[]>
+  );
+}
+
+export function sortByDate<T extends { createdAt: string }>(
+  items: T[],
+  order: "asc" | "desc" = "desc"
+): T[] {
+  return [...items].sort((a, b) => {
+    const diff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return order === "desc" ? diff : -diff;
+  });
+}
+
+export async function fetcher<T>(url: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) {
+    const error = new Error("API request failed");
+    throw error;
+  }
+  return res.json();
+}
+
+export const ITEM_TYPE_CONFIG = {
+  link: { icon: "🔗", label: "Link", color: "text-blue-400" },
+  note: { icon: "📝", label: "Note", color: "text-yellow-400" },
+  file: { icon: "📄", label: "File", color: "text-green-400" },
+  image: { icon: "🖼", label: "Image", color: "text-purple-400" },
+  screenshot: { icon: "📸", label: "Screenshot", color: "text-pink-400" },
+  voice_memo: { icon: "🎤", label: "Voice Memo", color: "text-orange-400" },
+  pdf: { icon: "📕", label: "PDF", color: "text-red-400" },
+  video: { icon: "🎬", label: "Video", color: "text-indigo-400" },
+} as const;

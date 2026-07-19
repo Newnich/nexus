@@ -1,0 +1,53 @@
+# ─── Environment & Secrets ───
+.env
+.env.local
+.env.production
+.env.development
+.env.*.local
+*.pem
+*.key
+
+# ─── Dependencies ───
+node_modules/
+.pnp
+.pnp.js
+
+# ─── Next.js ───
+.next/
+out/
+
+# ─── Build Output ───
+build/
+dist/
+*.tsbuildinfo
+
+# ─── IDE & Editor ───
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ─── Logs ───
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Testing ───
+coverage/
+.nyc_output/
+
+# ─── Database ───
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Uploads & Temp ───
+public/uploads/*
+!public/uploads/.gitkeep
+tmp/
+temp/
+
+# ─── Chrome Extension ───
+extension/*.zip
