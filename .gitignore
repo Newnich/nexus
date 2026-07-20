@@ -53,3 +53,6 @@ temp/
 
 # ─── Chrome Extension ───
 extension/*.zip
+
+# ─── Windows ───
+nul
