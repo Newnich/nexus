@@ -5,7 +5,6 @@
 
   [![CI](https://github.com/Newnich/nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/Newnich/nexus/actions/workflows/ci.yml)
   [![Vercel](https://img.shields.io/badge/deployed-vercel-black)](https://nexus-wine-chi.vercel.app)
-  [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 </div>
 
 ---
