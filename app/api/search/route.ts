@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { searchVectors } from "@/lib/vector/pinecone";
-import { generateEmbedding } from "@/lib/ai/openai";
+import { searchByVector } from "@/lib/vector/pgvector";
+import { generateEmbedding } from "@/lib/ai/ollama";
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,11 +32,8 @@ export async function GET(request: NextRequest) {
       // Semantic search with embeddings + user-scoped vector search
       try {
         const embedding = await generateEmbedding(query);
-        // Use Pinecone metadata filter with proper operator syntax
-        // to ensure results are scoped to the authenticated user
-        const vectorResults = await searchVectors(embedding, limit, {
-          user_id: { $eq: user.id },
-        });
+        // Use pgvector for user-scoped semantic search (free, in-database)
+        const vectorResults = await searchByVector(embedding, user.id, limit);
 
         if (vectorResults.length > 0) {
           const itemIds = vectorResults.map((r) => r.id);

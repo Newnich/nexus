@@ -1,18 +1,163 @@
 "use client";
 
-import { useState, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import type { Item } from "@/types/item";
+
+interface SearchResult extends Item {
+  relevanceScore?: number;
+}
+
+function ResultCard({ item }: { item: SearchResult }) {
+  const typeIcons: Record<string, string> = {
+    link: "🔗",
+    note: "📝",
+    file: "📄",
+    image: "🖼",
+    screenshot: "📸",
+    voice_memo: "🎤",
+    pdf: "📕",
+    video: "🎬",
+  };
+
+  return (
+    <a
+      href={`/items/${item.id}`}
+      className="block p-5 glass-card hover:bg-card/80 rounded-2xl transition-all group"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-lg">{typeIcons[item.type] || "📌"}</span>
+            <span className="text-xs font-medium text-nexus-400 bg-nexus-500/10 px-2 py-0.5 rounded-full uppercase">
+              {item.type}
+            </span>
+            {item.visibility && item.visibility !== "private" && (
+              <span className="text-xs text-muted-foreground">
+                {item.visibility === "public" ? "🌍" : "👥"} {item.visibility}
+              </span>
+            )}
+          </div>
+          <h3 className="text-lg font-semibold truncate group-hover:text-nexus-400 transition-colors">
+            {item.title || "Untitled"}
+          </h3>
+          {item.aiData?.summary && (
+            <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">
+              {item.aiData.summary}
+            </p>
+          )}
+          {item.aiData?.tags && item.aiData.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {item.aiData.tags.slice(0, 5).map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        {(item.relevanceScore !== undefined && item.relevanceScore > 0) && (
+          <div className="flex-shrink-0 text-right">
+            <div className="text-xs text-muted-foreground">Relevance</div>
+            <div className="text-sm font-semibold text-nexus-400">
+              {Math.round(item.relevanceScore * 100)}%
+            </div>
+          </div>
+        )}
+      </div>
+      {item.metadata?.domain && (
+        <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2">
+          {item.metadata.favicon && (
+            <img src={item.metadata.favicon} alt="" className="w-4 h-4 rounded" />
+          )}
+          <span>{item.metadata.domain}</span>
+          <span>·</span>
+          <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+        </div>
+      )}
+    </a>
+  );
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialQuery = searchParams.get("q") || "";
   const [query, setQuery] = useState(initialQuery);
-  const [searchMode, setSearchMode] = useState<"semantic" | "fulltext">("semantic");
+  const [searchMode, setSearchMode] = useState<"semantic" | "fulltext">(
+    (searchParams.get("mode") as "semantic" | "fulltext") || "semantic"
+  );
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searched, setSearched] = useState(false);
+
+  const performSearch = useCallback(async (q: string, mode: string) => {
+    if (!q.trim()) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSearched(true);
+
+    try {
+      const res = await fetch(
+        `/api/search?q=${encodeURIComponent(q)}&mode=${mode}`
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Search failed");
+      }
+      const data = await res.json();
+      setResults(data.items || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Run search on mount if initial query exists from URL params
+  useEffect(() => {
+    if (initialQuery) {
+      performSearch(initialQuery, searchMode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-run search when mode changes and there's an active query
+  useEffect(() => {
+    if (query.trim() && searched) {
+      performSearch(query, searchMode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchMode]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Searching:", query, "mode:", searchMode);
+    // Update URL with query param
+    const params = new URLSearchParams();
+    params.set("q", query);
+    params.set("mode", searchMode);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+    performSearch(query, searchMode);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion);
+    const params = new URLSearchParams();
+    params.set("q", suggestion);
+    params.set("mode", searchMode);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+    performSearch(suggestion, searchMode);
   };
 
   return (
@@ -61,8 +206,8 @@ function SearchContent() {
         </button>
       </div>
 
-      {/* Empty State */}
-      {!query && (
+      {/* Empty State - No Query */}
+      {!query && !searched && (
         <div className="text-center py-20">
           <div className="text-5xl mb-4">⌕</div>
           <h2 className="text-xl font-semibold mb-2">Ask anything about your knowledge</h2>
@@ -78,7 +223,7 @@ function SearchContent() {
             ].map((suggestion) => (
               <button
                 key={suggestion}
-                onClick={() => setQuery(suggestion)}
+                onClick={() => handleSuggestionClick(suggestion)}
                 className="p-3 glass-card hover:bg-card/70 rounded-xl text-sm text-left transition-all"
               >
                 {suggestion}
@@ -88,11 +233,60 @@ function SearchContent() {
         </div>
       )}
 
-      {/* Results placeholder */}
-      {query && (
-        <div className="text-center py-12 glass-card rounded-2xl">
-          <p className="text-muted-foreground">
-            Search results will appear here once you save items.
+      {/* Loading State */}
+      {loading && (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-5 glass-card rounded-2xl">
+              <div className="skeleton h-4 w-16 rounded mb-3" />
+              <div className="skeleton h-6 w-3/4 rounded mb-2" />
+              <div className="skeleton h-4 w-full rounded mb-1" />
+              <div className="skeleton h-4 w-2/3 rounded" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="text-center py-12 glass-card rounded-2xl border-red-500/20">
+          <div className="text-3xl mb-3">⚠️</div>
+          <h3 className="text-lg font-semibold text-red-400 mb-1">Search Error</h3>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      )}
+
+      {/* Results */}
+      {!loading && !error && searched && results.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Found {results.length} result{results.length !== 1 ? "s" : ""} for &ldquo;{query}&rdquo;
+          </p>
+          <div className="space-y-3">
+            {results.map((item) => (
+              <ResultCard key={item.id} item={item} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* No Results */}
+      {!loading && !error && searched && results.length === 0 && (
+        <div className="text-center py-16 glass-card rounded-2xl">
+          <div className="text-4xl mb-4">🔍</div>
+          <h3 className="text-lg font-semibold mb-1">No results found</h3>
+          <p className="text-muted-foreground max-w-sm mx-auto">
+            Try a different search term or switch to{" "}
+            <button
+              onClick={() => {
+                setSearchMode("fulltext");
+                performSearch(query, "fulltext");
+              }}
+              className="text-nexus-400 hover:underline"
+            >
+              Full Text search
+            </button>
+            .
           </p>
         </div>
       )}

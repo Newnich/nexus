@@ -21,23 +21,49 @@ export default function NewItemPage() {
     setIsSaving(true);
 
     try {
-      // TODO: Call API to save item with AI processing
-      const item = {
+      const body = {
         type: saveType,
         title: title || url || "Untitled",
         content: saveType === "note" ? content : url,
         metadata: saveType === "link" ? { sourceUrl: url } : {},
       };
 
-      console.log("Saving item:", item);
+      const res = await fetch("/api/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-      // Simulate AI processing
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to save item");
+      }
 
-      toast.success("Item saved! AI is processing...");
+      const { item } = await res.json();
+
+      toast.success(
+        (t) => (
+          <div className="flex items-center gap-2">
+            <span>Item saved! AI is processing...</span>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                router.push(`/items/${item.id}`);
+              }}
+              className="text-xs underline hover:text-nexus-400 transition-colors"
+            >
+              View
+            </button>
+          </div>
+        ),
+        { duration: 5000 }
+      );
+
       router.push("/dashboard");
     } catch (error) {
-      toast.error("Failed to save item");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save item"
+      );
     } finally {
       setIsSaving(false);
     }

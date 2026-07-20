@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { processNewItem } from "@/lib/ai/pipeline";
-import { upsertVector } from "@/lib/vector/pinecone";
+import { storeEmbedding } from "@/lib/vector/pgvector";
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,21 +78,13 @@ export async function POST(request: NextRequest) {
 
     if (updateError) throw updateError;
 
-    // Store embedding in Pinecone
-    try {
-      await upsertVector(
-        item.id,
-        result.aiData.embedding,
-        {
-          user_id: user.id,
-          title: item.title,
-          type: item.type,
-          category: result.aiData.category,
-          tags: result.aiData.tags.join(","),
-        }
-      );
-    } catch (vectorError) {
-      console.warn("Failed to store vector embedding:", vectorError);
+    // Store embedding in pgvector (zero-cost, in Supabase)
+    if (result.aiData.embedding && result.aiData.embedding.length > 0) {
+      try {
+        await storeEmbedding(itemId, result.aiData.embedding, user.id);
+      } catch (vectorError) {
+        console.warn("Failed to store embedding:", vectorError);
+      }
     }
 
     // Create connections

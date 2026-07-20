@@ -1,4 +1,4 @@
-import { generateSummary, generateTags, categorizeContent, generateEmbedding, extractKeyPoints, analyzeSentiment, findConnections } from "./openai";
+import { generateSummary, generateTags, categorizeContent, generateEmbedding, extractKeyPoints, analyzeSentiment, findConnections } from "./ollama";
 import type { ItemAIData, Item } from "@/types/item";
 
 export interface ProcessingResult {
