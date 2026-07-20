@@ -51,5 +51,8 @@ public/uploads/*
 tmp/
 temp/
 
+# ─── Chrome Extension ───
+extension/*.zip
+
 # ─── Windows ───
 nul
