@@ -8,6 +8,7 @@
 -- Enable extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "vector"; -- pgvector for semantic search
 
 -- ── Users Table ──
 CREATE TABLE IF NOT EXISTS users (
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS items (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('link', 'note', 'file', 'image', 'screenshot', 'voice_memo', 'pdf', 'video')),
   title TEXT NOT NULL,
+  UNIQUE(user_id, title),
   content TEXT DEFAULT '',
   extracted_text TEXT DEFAULT '',
   metadata JSONB NOT NULL DEFAULT '{}',
@@ -55,17 +57,21 @@ CREATE TABLE IF NOT EXISTS items (
 );
 
 -- ── Items full-text search index ──
-CREATE INDEX IF NOT EXISTS idx_items_user_id ON items(user_id);
+-- Note: user_id lookup is covered by the UNIQUE(user_id, title) constraint's b-tree index
 CREATE INDEX IF NOT EXISTS idx_items_type ON items(type);
 CREATE INDEX IF NOT EXISTS idx_items_created_at ON items(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_items_favorite ON items(user_id, is_favorite) WHERE is_favorite = true;
 CREATE INDEX IF NOT EXISTS idx_items_fts ON items USING GIN(to_tsvector('english', coalesce(title, '') || ' ' || coalesce(extracted_text, '')));
+
+-- pgvector index for semantic search (cosine distance)
+CREATE INDEX IF NOT EXISTS idx_items_embedding ON items USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 
 -- ── Collections Table ──
 CREATE TABLE IF NOT EXISTS collections (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
+  UNIQUE(user_id, name),
   description TEXT DEFAULT '',
   type TEXT NOT NULL DEFAULT 'manual' CHECK (type IN ('manual', 'auto', 'query')),
   icon TEXT DEFAULT '📁',
@@ -139,6 +145,45 @@ CREATE TABLE IF NOT EXISTS activity_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_log(user_id, created_at DESC);
+
+-- ── Semantic Search Function (pgvector) ──
+-- Returns items ranked by cosine similarity to a query embedding
+CREATE OR REPLACE FUNCTION search_items(
+  query_embedding vector(768),
+  user_id_param UUID,
+  match_count INT DEFAULT 20
+)
+RETURNS TABLE (
+  id UUID,
+  title TEXT,
+  type TEXT,
+  content TEXT,
+  extracted_text TEXT,
+  metadata JSONB,
+  ai_data JSONB,
+  visibility TEXT,
+  is_favorite BOOLEAN,
+  is_archived BOOLEAN,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  accessed_at TIMESTAMPTZ,
+  similarity FLOAT
+) LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    items.id, items.title, items.type, items.content,
+    items.extracted_text, items.metadata, items.ai_data,
+    items.visibility, items.is_favorite, items.is_archived,
+    items.created_at, items.updated_at, items.accessed_at,
+    1 - (items.embedding <=> query_embedding) AS similarity
+  FROM items
+  WHERE items.user_id = user_id_param
+    AND items.embedding IS NOT NULL
+  ORDER BY items.embedding <=> query_embedding
+  LIMIT match_count;
+END;
+$$;
 
 -- ── Automatic Timestamps ──
 CREATE OR REPLACE FUNCTION update_updated_at()
