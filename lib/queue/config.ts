@@ -27,6 +27,13 @@ const REDIS_OPTIONS: RedisOptions = {
     // Exponential backoff with a 30s cap
     return Math.min(times * 200, 30000);
   },
+  // Enable TLS for remote hosts (e.g. Upstash, Redis Cloud)
+  // Required by most managed Redis providers
+  ...(process.env.REDIS_TLS === "true" ||
+  (process.env.REDIS_HOST &&
+    !["localhost", "127.0.0.1", "redis"].includes(process.env.REDIS_HOST))
+    ? { tls: {} }
+    : {}),
 };
 
 // Lazy singleton — prevents duplicate connections during hot reloads
