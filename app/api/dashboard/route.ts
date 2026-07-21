@@ -19,6 +19,7 @@ export async function GET() {
       connectionsResult,
       recentItemsResult,
       activityResult,
+      typeDistributionResult,
     ] = await Promise.all([
       // Total items count
       supabase
@@ -53,6 +54,12 @@ export async function GET() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(10),
+
+      // Type distribution
+      supabase
+        .from("items")
+        .select("type")
+        .eq("user_id", user.id),
     ]);
 
     // Extract counts
@@ -99,7 +106,18 @@ export async function GET() {
       createdAt: entry.created_at,
     }));
 
+    // Compute type distribution
+    const typeCount = new Map<string, number>();
+    for (const item of typeDistributionResult.data || []) {
+      const type = item.type || "unknown";
+      typeCount.set(type, (typeCount.get(type) || 0) + 1);
+    }
+    const itemsByType = Array.from(typeCount.entries())
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
+
     return NextResponse.json({
+      itemsByType,
       totalItems,
       totalCollections,
       totalConnections,

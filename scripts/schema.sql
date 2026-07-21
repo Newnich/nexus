@@ -66,6 +66,10 @@ CREATE INDEX IF NOT EXISTS idx_items_fts ON items USING GIN(to_tsvector('english
 -- pgvector index for semantic search (cosine distance)
 CREATE INDEX IF NOT EXISTS idx_items_embedding ON items USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 
+-- Partial index for backfill: quickly find items missing AI processing
+-- Only indexes rows where embedding IS NULL, ordered by created_at for cursor pagination
+CREATE INDEX IF NOT EXISTS idx_items_unprocessed ON items(created_at) WHERE embedding IS NULL;
+
 -- ── Collections Table ──
 CREATE TABLE IF NOT EXISTS collections (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -123,13 +127,17 @@ CREATE INDEX IF NOT EXISTS idx_connections_strength ON connections(strength DESC
 CREATE TABLE IF NOT EXISTS ai_queue (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'queued', 'processing', 'completed', 'failed')),
   priority INTEGER NOT NULL DEFAULT 0,
   error TEXT,
   started_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Unique constraint on item_id for upsert support in the worker
+ALTER TABLE ai_queue DROP CONSTRAINT IF EXISTS ai_queue_item_id_key;
+ALTER TABLE ai_queue ADD CONSTRAINT ai_queue_item_id_key UNIQUE (item_id);
 
 CREATE INDEX IF NOT EXISTS idx_ai_queue_status ON ai_queue(status);
 
@@ -222,3 +230,24 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trigger_collection_item_count
   AFTER INSERT OR DELETE ON collection_items
   FOR EACH ROW EXECUTE FUNCTION update_collection_item_count();
+
+-- ── Auto-enqueue AI processing on item creation ──
+-- When an item is inserted, notify the background worker via Postgres LISTEN/NOTIFY
+CREATE OR REPLACE FUNCTION notify_item_created()
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM pg_notify(
+    'nexus:item:created',
+    json_build_object(
+      'itemId', NEW.id,
+      'userId', NEW.user_id
+    )::text
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_notify_item_created
+  AFTER INSERT ON items
+  FOR EACH ROW
+  EXECUTE FUNCTION notify_item_created();

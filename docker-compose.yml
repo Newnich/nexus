@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  # ── Redis (required for BullMQ job queue & AI processing) ──
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Next.js App ──
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexus-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # ── Required: Supabase ──
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?err}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:?err}
+      # ── Required: Redis connection (Docker internal hostname) ──
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # ── Auth (required for Supabase SSR) ──
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY:-}
+      # ── Optional: AI Worker ──
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      # ── Optional: Notifications ──
+      - ALERT_EMAIL_TO=${ALERT_EMAIL_TO:-}
+      - ALERT_EMAIL_FROM=${ALERT_EMAIL_FROM:-}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ── AI Worker (optional — run separately for production) ──
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: nexus-worker
+    restart: unless-stopped
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?err}
+      - SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:?err}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY:?err}
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - BACKFILL_CRON=${BACKFILL_CRON:-*/15 * * * *}
+    depends_on:
+      redis:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  redis-data:

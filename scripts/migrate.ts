@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS connections (
 CREATE TABLE IF NOT EXISTS ai_queue (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'queued', 'processing', 'completed', 'failed')),
   priority INTEGER NOT NULL DEFAULT 0,
   error TEXT,
   started_at TIMESTAMPTZ,
@@ -151,6 +151,9 @@ CREATE INDEX IF NOT EXISTS idx_items_is_favorite ON items(user_id, is_favorite) 
 CREATE INDEX IF NOT EXISTS idx_items_search ON items USING GIN(to_tsvector('english', title || ' ' || coalesce(extracted_text, '')));
 CREATE INDEX IF NOT EXISTS idx_items_metadata ON items USING GIN(metadata);
 
+-- Partial index for backfill: quickly find items missing AI processing
+CREATE INDEX IF NOT EXISTS idx_items_unprocessed ON items(created_at) WHERE embedding IS NULL;
+
 CREATE INDEX IF NOT EXISTS idx_collections_user_id ON collections(user_id);
 CREATE INDEX IF NOT EXISTS idx_collections_parent_id ON collections(parent_id);
 CREATE INDEX IF NOT EXISTS idx_collection_items_item ON collection_items(item_id);
@@ -160,7 +163,46 @@ CREATE INDEX IF NOT EXISTS idx_connections_from ON connections(from_item_id);
 CREATE INDEX IF NOT EXISTS idx_connections_to ON connections(to_item_id);
 CREATE INDEX IF NOT EXISTS idx_connections_strength ON connections(strength DESC);
 
+-- Unique constraint on item_id for upsert support in the worker
+ALTER TABLE ai_queue DROP CONSTRAINT IF EXISTS ai_queue_item_id_key;
+ALTER TABLE ai_queue ADD CONSTRAINT ai_queue_item_id_key UNIQUE (item_id);
+
 CREATE INDEX IF NOT EXISTS idx_ai_queue_status ON ai_queue(status);
+-- ── API Keys Table ──
+CREATE TABLE IF NOT EXISTS api_keys (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  key_hash TEXT NOT NULL,
+  prefix TEXT NOT NULL,
+  last_used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
+CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
+
+-- ── Row-Level Security for api_keys ──
+ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own API keys
+DROP POLICY IF EXISTS api_keys_select_policy ON api_keys;
+CREATE POLICY api_keys_select_policy ON api_keys
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Users can create their own API keys
+DROP POLICY IF EXISTS api_keys_insert_policy ON api_keys;
+CREATE POLICY api_keys_insert_policy ON api_keys
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Users can delete their own API keys
+DROP POLICY IF EXISTS api_keys_delete_policy ON api_keys;
+CREATE POLICY api_keys_delete_policy ON api_keys
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
 CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id, created_at DESC);
 
 -- =========================================================================
@@ -203,6 +245,27 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trigger_collection_item_count
   AFTER INSERT OR DELETE ON collection_items
   FOR EACH ROW EXECUTE FUNCTION update_collection_item_count();
+
+-- ── Auto-enqueue AI processing on item creation ──
+-- When an item is inserted, notify the background worker via Postgres LISTEN/NOTIFY
+CREATE OR REPLACE FUNCTION notify_item_created()
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM pg_notify(
+    'nexus:item:created',
+    json_build_object(
+      'itemId', NEW.id,
+      'userId', NEW.user_id
+    )::text
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_notify_item_created
+  AFTER INSERT ON items
+  FOR EACH ROW
+  EXECUTE FUNCTION notify_item_created();
 `;
 
 async function runMigration() {

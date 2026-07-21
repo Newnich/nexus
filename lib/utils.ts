@@ -103,3 +103,17 @@ export const ITEM_TYPE_CONFIG = {
   pdf: { icon: "📕", label: "PDF", color: "text-red-400" },
   video: { icon: "🎬", label: "Video", color: "text-indigo-400" },
 } as const;
+
+/**
+ * Highlight search query matches in text by splitting at match boundaries.
+ * Returns an array of { text, highlight } segments for React rendering.
+ */
+export function highlightMatches(text: string, query: string): Array<{ text: string; highlight: boolean }> {
+  if (!query.trim() || !text) return [{ text, highlight: false }];
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
+  return parts.map((part) => ({
+    text: part,
+    highlight: part.toLowerCase() === query.toLowerCase(),
+  }));
+}
