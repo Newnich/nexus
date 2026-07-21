@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Docker deployment: output standalone build for container optimization
+  output: process.env.BUILD_TARGET === 'standalone' ? 'standalone' : undefined,
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },

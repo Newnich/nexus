@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { processNewItem } from "@/lib/ai/pipeline";
-import { storeEmbedding } from "@/lib/vector/pgvector";
+import { enqueueAIProcessing } from "@/lib/queue/ai-queue";
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * POST /api/ai/process
+ *
+ * Enqueues an item for AI background processing via BullMQ.
+ * Previously this route processed inline (which could time out);
+ * now it returns immediately after queueing the job.
+ *
+ * Body: { itemId: string }
+ * Response: { success: true, queued: true, itemId }
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
@@ -21,10 +30,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get item from database
+    // Verify the item exists and belongs to the user
     const { data: item, error: itemError } = await supabase
       .from("items")
-      .select("*")
+      .select("id")
       .eq("id", itemId)
       .eq("user_id", user.id)
       .single();
@@ -36,103 +45,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mark as processing
-    await supabase
+    // Create a DB queue entry if one doesn't exist
+    const { data: existingQueue } = await supabase
       .from("ai_queue")
-      .update({ status: "processing", started_at: new Date().toISOString() })
-      .eq("item_id", itemId);
+      .select("id, status")
+      .eq("item_id", itemId)
+      .maybeSingle();
 
-    // Get existing items for connection finding
-    const { data: existingItems } = await supabase
-      .from("items")
-      .select("id, title, ai_data->>summary")
-      .eq("user_id", user.id)
-      .neq("id", itemId)
-      .not("ai_data", "is", null)
-      .limit(20);
-
-    const existingSummaries = (existingItems || []).map((item) => ({
-      id: item.id,
-      title: item.title || "",
-      summary: (item as Record<string, unknown>).summary as string || "",
-    }));
-
-    // Run AI processing pipeline
-    const result = await processNewItem(
-      {
-        id: item.id,
-        title: item.title,
-        content: item.content || "",
-        extractedText: item.extracted_text || "",
-      },
-      existingSummaries.length > 0 ? existingSummaries : undefined
-    );
-
-    // Update item with AI data
-    const { error: updateError } = await supabase
-      .from("items")
-      .update({
-        ai_data: result.aiData,
-      })
-      .eq("id", itemId);
-
-    if (updateError) throw updateError;
-
-    // Store embedding in pgvector (zero-cost, in Supabase)
-    if (result.aiData.embedding && result.aiData.embedding.length > 0) {
-      try {
-        await storeEmbedding(itemId, result.aiData.embedding, user.id);
-      } catch (vectorError) {
-        console.warn("Failed to store embedding:", vectorError);
-      }
+    if (!existingQueue) {
+      await supabase.from("ai_queue").insert({
+        item_id: itemId,
+        status: "queued",
+        priority: 1,
+      });
+    } else if (existingQueue.status === "completed") {
+      // Already processed — reset to allow reprocessing
+      await supabase
+        .from("ai_queue")
+        .update({ status: "queued", error: null, started_at: null, completed_at: null })
+        .eq("item_id", itemId);
     }
 
-    // Create connections
-    if (result.connections.length > 0) {
-      const connectionRecords = result.connections.map((conn) => ({
-        user_id: user.id,
-        from_item_id: itemId,
-        to_item_id: conn.itemId,
-        type: "semantic" as const,
-        strength: conn.strength,
-        description: conn.reason,
-      }));
-
-      await supabase.from("connections").insert(connectionRecords);
-    }
-
-    // Mark as completed
-    await supabase
-      .from("ai_queue")
-      .update({
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("item_id", itemId);
-
-    // Log activity
-    await supabase.from("activity_log").insert({
-      user_id: user.id,
-      action: "ai_process",
-      entity_type: "item",
-      entity_id: itemId,
-      metadata: {
-        processingTime: result.processingTime,
-        connectionsFound: result.connections.length,
-        partialFailures: result.partialFailures,
-      },
-    });
+    // Enqueue the processing job
+    await enqueueAIProcessing(itemId, user.id, 1);
 
     return NextResponse.json({
       success: true,
-      processingTime: result.processingTime,
-      connectionsFound: result.connections.length,
-      partialFailures: result.partialFailures,
+      queued: true,
+      itemId,
     });
   } catch (error) {
     console.error("POST /api/ai/process error:", error);
     return NextResponse.json(
-      { error: "AI processing failed" },
+      { error: "Failed to queue AI processing" },
       { status: 500 }
     );
   }

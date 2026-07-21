@@ -7,6 +7,7 @@ on:
     branches: [master, main]
 
 jobs:
+  # ── Static analysis & tests ──
   test:
     timeout-minutes: 15
     runs-on: ubuntu-latest
@@ -32,11 +33,9 @@ jobs:
 
       - name: Type check
         run: npx tsc --noEmit
-        continue-on-error: true
 
       - name: Lint
         run: npx next lint
-        continue-on-error: true
 
       - name: Create env file
         run: |
@@ -74,3 +73,43 @@ jobs:
           name: test-results
           path: test-results/
           retention-days: 7
+
+  # ── Docker build check ──
+  docker:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (app)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: nexus-app:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Docker image (worker)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.worker
+          push: false
+          load: true
+          tags: nexus-worker:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify images exist
+        run: |
+          docker images nexus-app:ci
+          docker images nexus-worker:ci
+          echo "✅ Both Docker images built successfully"

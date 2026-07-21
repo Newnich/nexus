@@ -51,6 +51,20 @@ export default function CollectionDetailPage() {
   const [availableItems, setAvailableItems] = useState<DetailItem[]>([]);
   const [selectedAddItems, setSelectedAddItems] = useState<Set<string>>(new Set());
   const [loadingAvailable, setLoadingAvailable] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState<string>("all");
+
+  const filteredItems = items.filter((item) => {
+    if (selectedType !== "all" && item.type !== selectedType) return false;
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(q) ||
+      item.tags.some((t) => t.toLowerCase().includes(q)) ||
+      item.category?.toLowerCase().includes(q) ||
+      (item.summary && item.summary.toLowerCase().includes(q))
+    );
+  });
 
   const fetchCollection = useCallback(async () => {
     try {
@@ -314,28 +328,80 @@ export default function CollectionDetailPage() {
         )}
       </div>
 
+      {/* Search & Filter */}
+      {items.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 max-w-sm">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">⌕</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search within collection..."
+              className="w-full pl-8 pr-4 py-2 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-nexus-500/30 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-1 flex-wrap">
+            {["all", "link", "note", "pdf", "file", "image", "video"].map((type) => {
+              const count = type === "all" ? items.length : items.filter((i) => i.type === type).length;
+              if (type !== "all" && count === 0) return null;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setSelectedType(type)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs transition-all ${
+                    selectedType === type
+                      ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30"
+                      : "glass-card text-muted-foreground hover:text-foreground border border-transparent"
+                  }`}
+                >
+                  {type === "all" ? `All (${items.length})` : `${type === "link" ? "🔗" : type === "note" ? "📝" : type === "pdf" ? "📕" : type === "file" ? "📄" : type === "image" ? "🖼" : "🎬"} ${type}`}
+                </button>
+              );
+            })}
+          </div>
+          {searchQuery && (
+            <span className="text-xs text-muted-foreground">
+              Found {filteredItems.length} of {items.length}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Items List */}
-      {items.length === 0 ? (
+      {(searchQuery || selectedType !== "all" ? filteredItems.length === 0 : items.length === 0) ? (
         <div className="text-center py-16 glass-card rounded-2xl">
-          <div className="text-4xl mb-4">📂</div>
-          <h3 className="font-semibold mb-1">This collection is empty</h3>
-          <p className="text-sm text-muted-foreground mb-6">Add items to organize your knowledge.</p>
-          <button
-            onClick={openAddModal}
-            className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
-          >
-            + Add Items
-          </button>
+          <div className="text-4xl mb-4">{searchQuery ? "🔍" : "📂"}</div>
+          <h3 className="font-semibold mb-1">{searchQuery ? "No results found" : "This collection is empty"}</h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            {searchQuery ? "Try a different search term." : "Add items to organize your knowledge."}
+          </p>
+          {!searchQuery && (
+            <button
+              onClick={openAddModal}
+              className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
+            >
+              + Add Items
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {items.length} item{items.length !== 1 ? "s" : ""}
+              {searchQuery ? `${filteredItems.length} of ${items.length}` : items.length} item{items.length !== 1 ? "s" : ""}
             </p>
           </div>
 
-          {items.map((item) => {
+          {filteredItems.map((item) => {
             const config = ITEM_TYPE_CONFIG[item.type as keyof typeof ITEM_TYPE_CONFIG] || ITEM_TYPE_CONFIG.note;
             const isRemoving = removing.includes(item.id);
 
