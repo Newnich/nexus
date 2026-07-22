@@ -5,6 +5,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { CommandPalette } from "@/components/command-palette";
 import { ShortcutsModal } from "@/components/shortcuts-modal";
 import { QuickCapture } from "@/components/quick-capture";
+import { NavigationProgress } from "@/components/navigation-progress";
 import { ThemeProvider } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
+      <NavigationProgress />
       <div className="min-h-screen bg-background">
         <Sidebar />
         <div className="md:ml-60 pb-16 md:pb-0">
