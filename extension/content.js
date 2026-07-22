@@ -51,7 +51,7 @@ function getFavicon() {
 
 function getContentType() {
   const contentType = document.querySelector('meta[property="article:published_time"]');
-  if (contentType) return "article";
+  if (contentType) return "link";
 
   const isVideo =
     document.querySelector("video") || document.querySelector('[data-testid="video"]');

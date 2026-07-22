@@ -3,7 +3,7 @@
   "name": "NEXUS — Save to Knowledge OS",
   "version": "1.0.0",
   "description": "Save anything to NEXUS in one click. Your AI-native knowledge OS companion.",
-  "permissions": ["storage", "activeTab", "contextMenus", "notifications", "tabs"],
+  "permissions": ["storage", "activeTab", "contextMenus", "notifications", "tabs", "scripting"],
   "host_permissions": ["http://localhost:3000/*", "https://nexus.app/*"],
   "action": {
     "default_popup": "popup.html",
