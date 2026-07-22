@@ -147,3 +147,119 @@ Supabase credentials are also configured in:
 
 - **GitHub Secrets** (for CI)
 - **Vercel Environment Variables** (for production & preview)
+
+---
+
+## 🦴 Skeleton System (Loading States)
+
+NEXUS uses a **two-layer skeleton system** to give users immediate visual feedback during loading:
+
+1. **`loading.tsx`** — Automatically shown by Next.js during SSR streaming and route transitions (server-side)
+2. **Inline `if (loading) { return }`** — Shown while the client-side component fetches its own data
+
+### PageSkeleton (Reusable Layout Skeleton)
+
+`components/page-skeleton.tsx` provides the common page layout skeleton (header + search + filters + content). Import it in `loading.tsx` or inline loading blocks:
+
+```tsx
+import { PageSkeleton } from "@/components/page-skeleton";
+
+export default function MyPageLoading() {
+  return (
+    <PageSkeleton
+      titleWidth="w-48" // Width of title skeleton (default: "w-48")
+      subtitleWidth="w-64" // Width of subtitle skeleton (default: "w-64")
+      actionWidths={["w-36"]} // Widths of action button skeletons
+      searchBar // Show a search bar skeleton
+      filterCount={6} // Number of filter chip skeletons
+      filterWidth="w-20" // Width of each filter chip (default: "w-20")
+    >
+      {/* Page-specific content skeleton */}
+      <ItemSkeleton viewMode="grid" count={8} />
+    </PageSkeleton>
+  );
+}
+```
+
+### Page-Specific Skeleton Components
+
+| Component            | File                                 | Matches                   | Props                                                                                             |
+| -------------------- | ------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------- |
+| `ItemSkeleton`       | `components/item-skeleton.tsx`       | Items list cards          | `viewMode: "grid" \| "list"` (default: `"grid"`), `count?: number` (default: `8` grid / `5` list) |
+| `CollectionSkeleton` | `components/collection-skeleton.tsx` | Collections list cards    | `count?: number` (default: `4`)                                                                   |
+| `ActivitySkeleton`   | `components/activity-skeleton.tsx`   | Activity timeline entries | `count?: number` (default: `5`)                                                                   |
+
+### Quick Reference — When to Use What
+
+| Pattern                                      | Where                                            | Example                             |
+| -------------------------------------------- | ------------------------------------------------ | ----------------------------------- |
+| **`loading.tsx` + `PageSkeleton`**           | New page — always create one                     | `app/(dashboard)/items/loading.tsx` |
+| **`if (loading) { return <PageSkeleton> }`** | Early-return loading (replaces entire component) | Settings pages, Graph page          |
+| **`{loading && <PlainContentSkeleton>}`**    | Inline loading (real header already visible)     | Tags page, Search page              |
+
+### Rules for Adding Loading States to a New Page
+
+1. **Create `loading.tsx`** — Always create a `loading.tsx` file in the route directory for SSR streaming
+2. **Use `PageSkeleton`** for the page wrapper in `loading.tsx` — pass the right widths and filter count
+3. **Pass the page-specific skeleton** (ItemSkeleton, CollectionSkeleton, etc.) as children
+4. **For client-side loading**, use:
+   - `if (loading) { return <PageSkeleton>...</PageSkeleton> }` if the loading state replaces the entire component output
+   - `{loading && <div>...</div>}` with plain content skeletons if the real header/search bar are already rendered by the parent JSX
+5. **All skeleton elements** must use the `skeleton` CSS class only — do not add `animate-pulse` or other animation classes (the `skeleton` class has its own shimmer animation)
+
+### Example: Full Pattern for a New Page
+
+```tsx
+// app/(dashboard)/my-items/loading.tsx
+import { PageSkeleton } from "@/components/page-skeleton";
+import { ItemSkeleton } from "@/components/item-skeleton";
+
+export default function MyItemsLoading() {
+  return (
+    <PageSkeleton
+      titleWidth="w-32"
+      subtitleWidth="w-56"
+      actionWidths={["w-32", "w-28"]}
+      searchBar
+      filterCount={4}
+    >
+      <ItemSkeleton viewMode="grid" count={8} />
+    </PageSkeleton>
+  );
+}
+```
+
+```tsx
+// app/(dashboard)/my-items/page.tsx (snippet — client-side loading)
+import { PageSkeleton } from "@/components/page-skeleton";
+import { ItemSkeleton } from "@/components/item-skeleton";
+
+// Early-return pattern (replaces entire component during loading):
+if (loading) {
+  return (
+    <PageSkeleton titleWidth="w-32" subtitleWidth="w-56" actionWidths={["w-32"]}>
+      <ItemSkeleton viewMode="grid" count={8} />
+    </PageSkeleton>
+  );
+}
+```
+
+### Styling
+
+The `skeleton` CSS class is defined in `app/globals.css`:
+
+```css
+.skeleton {
+  @apply bg-muted rounded;
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0) 0%,
+    rgba(99, 102, 241, 0.05) 50%,
+    rgba(30, 41, 59, 0) 100%
+  );
+  background-size: 200% 100%;
+}
+```
+
+It produces a subtle indigo-tinted shimmer that matches the NEXUS brand. All skeleton components use this class exclusively — do not add additional animation classes.
