@@ -36,7 +36,9 @@ function parseBookmarksHtml(html: string): Array<{ title: string; url: string; c
   return items;
 }
 
-function parseImportJson(data: Record<string, unknown>): Array<{ title: string; url?: string; content?: string; type?: string }> {
+function parseImportJson(
+  data: Record<string, unknown>,
+): Array<{ title: string; url?: string; content?: string; type?: string }> {
   const items: Array<{ title: string; url?: string; content?: string; type?: string }> = [];
 
   const rawItems = Array.isArray(data.items) ? data.items : [];
@@ -47,7 +49,8 @@ function parseImportJson(data: Record<string, unknown>): Array<{ title: string; 
       items.push({
         title: String(record.title || record.Title || "Untitled"),
         url: record.url || record.URL ? String(record.url || record.URL) : undefined,
-        content: record.content || record.Content ? String(record.content || record.Content) : undefined,
+        content:
+          record.content || record.Content ? String(record.content || record.Content) : undefined,
         type: String(record.type || record.Type || "link").toLowerCase(),
       });
     }
@@ -60,14 +63,16 @@ function parseImportJson(data: Record<string, unknown>): Array<{ title: string; 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    const importType = formData.get("type") as string || "auto";
+    const importType = (formData.get("type") as string) || "auto";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -79,7 +84,10 @@ export async function POST(request: NextRequest) {
     // Detect format if auto
     let items: Array<{ title: string; url?: string; content?: string; type?: string }> = [];
 
-    if (importType === "html" || (importType === "auto" && (fileName.endsWith(".html") || fileName.endsWith(".htm")))) {
+    if (
+      importType === "html" ||
+      (importType === "auto" && (fileName.endsWith(".html") || fileName.endsWith(".htm")))
+    ) {
       items = parseBookmarksHtml(content);
     } else if (importType === "json" || (importType === "auto" && fileName.endsWith(".json"))) {
       try {
@@ -91,7 +99,7 @@ export async function POST(request: NextRequest) {
     } else {
       return NextResponse.json(
         { error: `Unsupported file type: ${fileName}. Use .json or .html` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -113,7 +121,11 @@ export async function POST(request: NextRequest) {
       const inserts = batch.map((item) => {
         let domain = null;
         if (item.url) {
-          try { domain = new URL(item.url).hostname; } catch { /* invalid URL, skip domain */ }
+          try {
+            domain = new URL(item.url).hostname;
+          } catch {
+            /* invalid URL, skip domain */
+          }
         }
         return {
           user_id: user.id,
@@ -142,9 +154,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("POST /api/data/import error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

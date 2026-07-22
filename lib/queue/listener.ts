@@ -36,7 +36,7 @@ function getConnectionString(): string {
   }
   throw new Error(
     "Postgres listener requires DATABASE_URL. " +
-    "Set it in .env.local (find it in Supabase Dashboard > Settings > Database > URI)."
+      "Set it in .env.local (find it in Supabase Dashboard > Settings > Database > URI).",
   );
 }
 
@@ -59,9 +59,7 @@ export async function startDbListener(): Promise<void> {
 
       try {
         const payload: ItemCreatedPayload = JSON.parse(msg.payload);
-        console.log(
-          `[DB Listener] Item created: ${payload.itemId} — enqueuing AI processing`
-        );
+        console.log(`[DB Listener] Item created: ${payload.itemId} — enqueuing AI processing`);
 
         // Also create a DB queue entry (best-effort, already done by trigger)
         // Then enqueue via BullMQ
@@ -85,7 +83,7 @@ export async function startDbListener(): Promise<void> {
       setTimeout(() => {
         console.log("[DB Listener] Attempting reconnection...");
         startDbListener().catch((e) =>
-          console.error("[DB Listener] Reconnection failed:", e.message)
+          console.error("[DB Listener] Reconnection failed:", e.message),
         );
       }, 5000);
     });

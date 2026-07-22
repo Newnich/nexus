@@ -24,13 +24,10 @@ export interface VectorSearchResult {
 export async function storeEmbedding(
   itemId: string,
   embedding: number[],
-  _userId: string
+  _userId: string,
 ): Promise<void> {
   const client = await createServiceClient();
-  const { error } = await client
-    .from("items")
-    .update({ embedding })
-    .eq("id", itemId);
+  const { error } = await client.from("items").update({ embedding }).eq("id", itemId);
 
   if (error) {
     console.warn("Failed to store embedding:", error);
@@ -45,7 +42,7 @@ export async function storeEmbedding(
 export async function searchByVector(
   embedding: number[],
   userId: string,
-  limit: number = 20
+  limit: number = 20,
 ): Promise<VectorSearchResult[]> {
   const client = await createServiceClient();
 

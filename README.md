@@ -3,10 +3,10 @@
   <p><strong>AI-Native Knowledge OS</strong></p>
   <p>The last app you'll ever need for information.</p>
 
-  [![CI](https://github.com/Newnich/nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/Newnich/nexus/actions/workflows/ci.yml)
-  [![Vercel](https://img.shields.io/badge/deployed-vercel-black)](https://nexus-wine-chi.vercel.app)
-  [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://github.com/Newnich/nexus)
-  [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/Newnich/nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/Newnich/nexus/actions/workflows/ci.yml)
+[![Vercel](https://img.shields.io/badge/deployed-vercel-black)](https://nexus-wine-chi.vercel.app)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://github.com/Newnich/nexus)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 </div>
 
 ---
@@ -63,19 +63,19 @@ NEXUS is an AI-powered knowledge management system that helps you capture, organ
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Framework** | Next.js 14 (App Router) |
-| **Language** | TypeScript |
-| **Styling** | Tailwind CSS |
-| **Database** | Supabase (PostgreSQL + pgvector) |
-| **Auth** | Supabase Auth |
-| **Queue** | BullMQ + Redis |
-| **AI** | Ollama (local) |
-| **E2E Tests** | Playwright |
-| **CI** | GitHub Actions |
-| **Container** | Docker + Docker Compose |
-| **Hosting** | Vercel / Any Docker host |
+| Layer         | Technology                       |
+| ------------- | -------------------------------- |
+| **Framework** | Next.js 14 (App Router)          |
+| **Language**  | TypeScript                       |
+| **Styling**   | Tailwind CSS                     |
+| **Database**  | Supabase (PostgreSQL + pgvector) |
+| **Auth**      | Supabase Auth                    |
+| **Queue**     | BullMQ + Redis                   |
+| **AI**        | Ollama (local)                   |
+| **E2E Tests** | Playwright                       |
+| **CI**        | GitHub Actions                   |
+| **Container** | Docker + Docker Compose          |
+| **Hosting**   | Vercel / Any Docker host         |
 
 ---
 
@@ -146,24 +146,24 @@ Visit **http://localhost:3000** and sign in with `demo@nexus.app / demo123456`.
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | — | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | — | Supabase anon/public key |
-| `SUPABASE_SERVICE_KEY` | ⬜ | — | Service role key (for admin ops + worker) |
-| `NEXT_PUBLIC_SITE_URL` | ⬜ | `http://localhost:3000` | Site URL for auth redirects |
-| `REDIS_HOST` | ⬜ | `localhost` | Redis server hostname |
-| `REDIS_PORT` | ⬜ | `6379` | Redis server port |
-| `REDIS_PASSWORD` | ⬜ | — | Redis auth password |
-| `REDIS_DB` | ⬜ | `0` | Redis database index |
-| `OLLAMA_URL` | ⬜ | `http://localhost:11434` | Ollama API endpoint |
-| `BACKFILL_CRON` | ⬜ | `*/15 * * * *` | Backfill job schedule (cron) |
-| `RESEND_API_KEY` | ⬜ | — | Resend API key for email alerts |
-| `ALERT_EMAIL_TO` | ⬜ | — | Alert email recipient |
-| `ALERT_EMAIL_FROM` | ⬜ | `alerts@nexus.app` | Alert email sender |
-| `SLACK_WEBHOOK_URL` | ⬜ | — | Slack webhook for notifications |
-| `DISCORD_WEBHOOK_URL` | ⬜ | — | Discord webhook for notifications |
-| `BUILD_TARGET` | ⬜ | — | Set to `standalone` for Docker builds |
+| Variable                        | Required | Default                  | Description                               |
+| ------------------------------- | -------- | ------------------------ | ----------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | ✅       | —                        | Supabase project URL                      |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅       | —                        | Supabase anon/public key                  |
+| `SUPABASE_SERVICE_KEY`          | ⬜       | —                        | Service role key (for admin ops + worker) |
+| `NEXT_PUBLIC_SITE_URL`          | ⬜       | `http://localhost:3000`  | Site URL for auth redirects               |
+| `REDIS_HOST`                    | ⬜       | `localhost`              | Redis server hostname                     |
+| `REDIS_PORT`                    | ⬜       | `6379`                   | Redis server port                         |
+| `REDIS_PASSWORD`                | ⬜       | —                        | Redis auth password                       |
+| `REDIS_DB`                      | ⬜       | `0`                      | Redis database index                      |
+| `OLLAMA_URL`                    | ⬜       | `http://localhost:11434` | Ollama API endpoint                       |
+| `BACKFILL_CRON`                 | ⬜       | `*/15 * * * *`           | Backfill job schedule (cron)              |
+| `RESEND_API_KEY`                | ⬜       | —                        | Resend API key for email alerts           |
+| `ALERT_EMAIL_TO`                | ⬜       | —                        | Alert email recipient                     |
+| `ALERT_EMAIL_FROM`              | ⬜       | `alerts@nexus.app`       | Alert email sender                        |
+| `SLACK_WEBHOOK_URL`             | ⬜       | —                        | Slack webhook for notifications           |
+| `DISCORD_WEBHOOK_URL`           | ⬜       | —                        | Discord webhook for notifications         |
+| `BUILD_TARGET`                  | ⬜       | —                        | Set to `standalone` for Docker builds     |
 
 ---
 
@@ -222,8 +222,8 @@ The `/api/health` endpoint returns the status of all critical services:
   "status": "ok",
   "services": [
     { "name": "database", "status": "ok", "latency": 12 },
-    { "name": "redis",    "status": "ok", "latency": 3 },
-    { "name": "auth",     "status": "ok", "latency": 8 }
+    { "name": "redis", "status": "ok", "latency": 3 },
+    { "name": "auth", "status": "ok", "latency": 8 }
   ],
   "timestamp": "2026-07-21T12:00:00.000Z",
   "uptime": 3600
@@ -263,18 +263,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide, includin
 
 ### Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Production build |
-| `npm start` | Start production server |
-| `npm run typecheck` | TypeScript type checking |
-| `npm run lint` | ESLint |
-| `npm run seed` | Seed test data |
-| `npm run migrate` | Run database migrations |
-| `npm run worker` | Start AI worker in production |
+| Command              | Description                         |
+| -------------------- | ----------------------------------- |
+| `npm run dev`        | Start development server            |
+| `npm run build`      | Production build                    |
+| `npm start`          | Start production server             |
+| `npm run typecheck`  | TypeScript type checking            |
+| `npm run lint`       | ESLint                              |
+| `npm run seed`       | Seed test data                      |
+| `npm run migrate`    | Run database migrations             |
+| `npm run worker`     | Start AI worker in production       |
 | `npm run worker:dev` | Start AI worker in dev mode (watch) |
-| `npm run test:e2e` | Run Playwright E2E tests |
+| `npm run test:e2e`   | Run Playwright E2E tests            |
 
 ---
 

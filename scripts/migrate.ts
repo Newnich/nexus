@@ -13,7 +13,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase credentials. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
+  console.error(
+    "Missing Supabase credentials. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY",
+  );
   process.exit(1);
 }
 
@@ -270,10 +272,9 @@ CREATE TRIGGER trigger_notify_item_created
 
 async function runMigration() {
   console.log("🚀 Running NEXUS database migration...");
-  
+
   // Split by semicolons and execute each statement
-  const statements = MIGRATION_SQL
-    .split(";")
+  const statements = MIGRATION_SQL.split(";")
     .map((s) => s.trim())
     .filter((s) => s.length > 0 && !s.startsWith("--"));
 

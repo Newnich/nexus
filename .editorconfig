@@ -1,0 +1,27 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# NEXUS — EditorConfig
+# ═══════════════════════════════════════════════════════════════════════════════
+# EditorConfig helps maintain consistent coding styles across different editors
+# and IDEs. This file should be kept in sync with .prettierrc.
+#
+# See https://editorconfig.org for more information.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab

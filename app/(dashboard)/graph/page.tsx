@@ -68,7 +68,8 @@ function ParticleBackground() {
     let w = 0;
     let h = 0;
 
-    const particles: { x: number; y: number; vx: number; vy: number; r: number; alpha: number }[] = [];
+    const particles: { x: number; y: number; vx: number; vy: number; r: number; alpha: number }[] =
+      [];
     const COUNT = 60;
 
     function resize() {
@@ -136,7 +137,9 @@ function ParticleBackground() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />;
+  return (
+    <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />
+  );
 }
 
 export default function GraphPage() {
@@ -196,8 +199,8 @@ export default function GraphPage() {
     if (!data || data.nodes.length === 0) return;
     const gData = data;
 
-    const centerX = viewBox.w / 2;
-    const centerY = viewBox.h / 2;
+    const centerX = viewBoxRef.current.w / 2;
+    const centerY = viewBoxRef.current.h / 2;
     const spread = Math.min(300, Math.max(100, gData.nodes.length * 25));
 
     const positioned: PositionedNode[] = gData.nodes.map((node, i) => {
@@ -423,8 +426,8 @@ export default function GraphPage() {
           prev.map((n) =>
             n.id === nodeId
               ? { ...n, x: mx - dragOffset.current.x, y: my - dragOffset.current.y, vx: 0, vy: 0 }
-              : n
-          )
+              : n,
+          ),
         );
       };
 
@@ -438,7 +441,7 @@ export default function GraphPage() {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
     },
-    [simulation, reheatSimulation]
+    [simulation, reheatSimulation],
   );
 
   const handleNodeClick = useCallback(
@@ -447,7 +450,7 @@ export default function GraphPage() {
         router.push(`/items/${nodeId}`);
       }
     },
-    [router, draggedNode]
+    [router, draggedNode],
   );
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -501,8 +504,13 @@ export default function GraphPage() {
     return new Set(
       data.nodes
         .filter((n) => selectedTypes.has(n.type))
-        .filter((n) => !searchQuery || n.title.toLowerCase().includes(searchQuery.toLowerCase()) || n.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())))
-        .map((n) => n.id)
+        .filter(
+          (n) =>
+            !searchQuery ||
+            n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            n.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())),
+        )
+        .map((n) => n.id),
     );
   }, [data, selectedTypes, searchQuery]);
 
@@ -544,7 +552,9 @@ export default function GraphPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold gradient-text">Knowledge Graph</h1>
-            <p className="text-muted-foreground mt-1">Visualize connections between your knowledge</p>
+            <p className="text-muted-foreground mt-1">
+              Visualize connections between your knowledge
+            </p>
           </div>
         </div>
         <div className="glass-card rounded-2xl h-[600px] flex items-center justify-center relative overflow-hidden">
@@ -584,7 +594,9 @@ export default function GraphPage() {
           {/* Node Search */}
           {hasGraph && data!.nodes.length > 0 && (
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">⌕</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                ⌕
+              </span>
               <input
                 type="text"
                 value={searchQuery}
@@ -598,7 +610,9 @@ export default function GraphPage() {
             onClick={() => setShowLegend(!showLegend)}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all",
-              showLegend ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30" : "glass-card hover:bg-card/70"
+              showLegend
+                ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30"
+                : "glass-card hover:bg-card/70",
             )}
           >
             <span>▣</span>
@@ -623,7 +637,9 @@ export default function GraphPage() {
         {/* Legend Panel */}
         {showLegend && (
           <div className="absolute top-4 left-4 z-20 glass-card p-4 rounded-xl w-48 animate-fade-in-up">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Node Types</h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Node Types
+            </h3>
             <div className="space-y-1.5">
               {totalTypes.map((type) => {
                 const cfg = TYPE_CONFIG[type];
@@ -642,14 +658,16 @@ export default function GraphPage() {
                     }}
                     className={cn(
                       "w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-all",
-                      isSelected ? "bg-muted/50" : "opacity-40 hover:opacity-70"
+                      isSelected ? "bg-muted/50" : "opacity-40 hover:opacity-70",
                     )}
                   >
                     <span
                       className="w-3 h-3 rounded-full shrink-0"
                       style={{ backgroundColor: cfg.color }}
                     />
-                    <span className="flex-1 text-left">{cfg.icon} {cfg.label}</span>
+                    <span className="flex-1 text-left">
+                      {cfg.icon} {cfg.label}
+                    </span>
                     <span className="text-muted-foreground">{count}</span>
                   </button>
                 );
@@ -658,7 +676,8 @@ export default function GraphPage() {
             {searchQuery && (
               <div className="mt-3 pt-3 border-t border-border/50">
                 <p className="text-xs text-muted-foreground">
-                  Found {visibleSimulation.length} matching node{visibleSimulation.length !== 1 ? "s" : ""}
+                  Found {visibleSimulation.length} matching node
+                  {visibleSimulation.length !== 1 ? "s" : ""}
                 </p>
               </div>
             )}
@@ -672,8 +691,8 @@ export default function GraphPage() {
               <div className="text-6xl mb-4 opacity-30">⬡</div>
               <h2 className="text-xl font-semibold mb-2">No connections yet</h2>
               <p className="text-muted-foreground max-w-sm mx-auto">
-                Your knowledge graph will appear here as you save items.
-                NEXUS automatically discovers connections between related content.
+                Your knowledge graph will appear here as you save items. NEXUS automatically
+                discovers connections between related content.
               </p>
               <div className="mt-8 grid grid-cols-3 gap-4 max-w-lg mx-auto">
                 {[
@@ -697,7 +716,8 @@ export default function GraphPage() {
         {/* SVG Graph */}
         {hasGraph && simulation.length > 0 && (
           <svg
-            ref={svgRef}              className="w-full h-full select-none transition-opacity duration-500 cursor-grab active:cursor-grabbing"
+            ref={svgRef}
+            className="w-full h-full select-none transition-opacity duration-500 cursor-grab active:cursor-grabbing"
             viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
             preserveAspectRatio="xMidYMid meet"
             onWheel={handleWheel}
@@ -889,11 +909,14 @@ export default function GraphPage() {
                 {hoveredNodeData.type}
               </span>
               {hoveredNodeData.category && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{hoveredNodeData.category}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                  {hoveredNodeData.category}
+                </span>
               )}
               {hoveredNodeData.connectionCount > 0 && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                  {hoveredNodeData.connectionCount} connection{hoveredNodeData.connectionCount !== 1 ? "s" : ""}
+                  {hoveredNodeData.connectionCount} connection
+                  {hoveredNodeData.connectionCount !== 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -905,10 +928,35 @@ export default function GraphPage() {
       {hasGraph && (
         <div className="grid grid-cols-4 gap-4">
           {[
-            { label: "Nodes", value: String(data!.stats.totalNodes), color: "text-nexus-400", icon: "⬡" },
-            { label: "Edges", value: String(data!.stats.totalEdges), color: "text-green-400", icon: "╱" },
-            { label: "Avg Strength", value: data!.stats.averageStrength ? `${Math.round(data!.stats.averageStrength * 100)}%` : "—", color: "text-yellow-400", icon: "⟐" },
-            { label: "Connected", value: simulation.filter((n) => n.connectionCount > 0).length > 0 ? `${simulation.filter((n) => n.connectionCount > 0).length}/${data!.nodes.length}` : "—", color: "text-purple-400", icon: "⊞" },
+            {
+              label: "Nodes",
+              value: String(data!.stats.totalNodes),
+              color: "text-nexus-400",
+              icon: "⬡",
+            },
+            {
+              label: "Edges",
+              value: String(data!.stats.totalEdges),
+              color: "text-green-400",
+              icon: "╱",
+            },
+            {
+              label: "Avg Strength",
+              value: data!.stats.averageStrength
+                ? `${Math.round(data!.stats.averageStrength * 100)}%`
+                : "—",
+              color: "text-yellow-400",
+              icon: "⟐",
+            },
+            {
+              label: "Connected",
+              value:
+                simulation.filter((n) => n.connectionCount > 0).length > 0
+                  ? `${simulation.filter((n) => n.connectionCount > 0).length}/${data!.nodes.length}`
+                  : "—",
+              color: "text-purple-400",
+              icon: "⊞",
+            },
           ].map((stat, i) => (
             <div
               key={stat.label}

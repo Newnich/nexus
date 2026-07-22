@@ -19,29 +19,21 @@ export const metadata: Metadata = {
     "spatial knowledge",
     "personal knowledge OS",
   ],
-  icons: [
-    { rel: "icon", url: "/favicon.svg", type: "image/svg+xml" },
-  ],
+  icons: [{ rel: "icon", url: "/favicon.svg", type: "image/svg+xml" }],
   openGraph: {
     title: "NEXUS — Your Knowledge OS",
-    description:
-      "The last app you'll ever need for information. AI-native knowledge management.",
+    description: "The last app you'll ever need for information. AI-native knowledge management.",
     type: "website",
     siteName: "NEXUS",
   },
   twitter: {
     card: "summary_large_image",
     title: "NEXUS — Your Knowledge OS",
-    description:
-      "The last app you'll ever need for information. AI-native knowledge management.",
+    description: "The last app you'll ever need for information. AI-native knowledge management.",
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans antialiased`}>

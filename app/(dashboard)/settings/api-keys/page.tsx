@@ -70,7 +70,8 @@ export default function ApiKeysPage() {
   };
 
   const handleRevoke = async (keyId: string) => {
-    if (!confirm("Revoke this API key? Any services using it will immediately lose access.")) return;
+    if (!confirm("Revoke this API key? Any services using it will immediately lose access."))
+      return;
     setRevoking(keyId);
     try {
       const res = await fetch(`/api/settings/api-keys?keyId=${keyId}`, { method: "DELETE" });
@@ -116,7 +117,10 @@ export default function ApiKeysPage() {
           <div className="text-4xl mb-4">⚠️</div>
           <h3 className="text-lg font-semibold text-red-400 mb-1">Failed to load API keys</h3>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <button onClick={fetchKeys} className="px-4 py-2 bg-nexus-500 hover:bg-nexus-600 text-white rounded-lg text-sm transition-all">
+          <button
+            onClick={fetchKeys}
+            className="px-4 py-2 bg-nexus-500 hover:bg-nexus-600 text-white rounded-lg text-sm transition-all"
+          >
             Try again
           </button>
         </div>
@@ -178,7 +182,10 @@ export default function ApiKeysPage() {
         <div className="glass-card p-5 rounded-xl space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-sm">New API Key</h3>
-            <button onClick={() => setShowNewKey(false)} className="text-muted-foreground hover:text-foreground text-sm">
+            <button
+              onClick={() => setShowNewKey(false)}
+              className="text-muted-foreground hover:text-foreground text-sm"
+            >
               Cancel
             </button>
           </div>
@@ -215,7 +222,9 @@ export default function ApiKeysPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">{keys.length} key{keys.length !== 1 ? "s" : ""}</p>
+          <p className="text-xs text-muted-foreground">
+            {keys.length} key{keys.length !== 1 ? "s" : ""}
+          </p>
           {keys.map((key) => (
             <div key={key.id} className="glass-card p-5 rounded-xl">
               <div className="flex items-start justify-between gap-4">
@@ -228,7 +237,9 @@ export default function ApiKeysPage() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Created {formatDateRelative(key.created_at)}
-                    {key.last_used_at ? ` · Last used ${formatDateRelative(key.last_used_at)}` : " · Never used"}
+                    {key.last_used_at
+                      ? ` · Last used ${formatDateRelative(key.last_used_at)}`
+                      : " · Never used"}
                   </p>
                 </div>
                 <button
@@ -236,7 +247,7 @@ export default function ApiKeysPage() {
                   disabled={revoking === key.id}
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-xs transition-all shrink-0",
-                    "border border-red-500/20 text-red-400 hover:bg-red-500/10"
+                    "border border-red-500/20 text-red-400 hover:bg-red-500/10",
                   )}
                 >
                   {revoking === key.id ? "⟳" : "Revoke"}
@@ -249,20 +260,35 @@ export default function ApiKeysPage() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-4">
-        <a href="/settings/general" className="flex items-center gap-3 p-3 glass-card hover:bg-card/70 rounded-xl text-sm transition-all group">
+        <a
+          href="/settings/general"
+          className="flex items-center gap-3 p-3 glass-card hover:bg-card/70 rounded-xl text-sm transition-all group"
+        >
           <span>🔧</span>
           <span className="flex-1">General Settings</span>
-          <span className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">→</span>
+          <span className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
+            →
+          </span>
         </a>
-        <a href="/settings/notifications" className="flex items-center gap-3 p-3 glass-card hover:bg-card/70 rounded-xl text-sm transition-all group">
+        <a
+          href="/settings/notifications"
+          className="flex items-center gap-3 p-3 glass-card hover:bg-card/70 rounded-xl text-sm transition-all group"
+        >
           <span>📡</span>
           <span className="flex-1">Channel Config</span>
-          <span className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">→</span>
+          <span className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
+            →
+          </span>
         </a>
-        <a href="/status" className="flex items-center gap-3 p-3 glass-card hover:bg-card/70 rounded-xl text-sm transition-all group">
+        <a
+          href="/status"
+          className="flex items-center gap-3 p-3 glass-card hover:bg-card/70 rounded-xl text-sm transition-all group"
+        >
           <span>⚙</span>
           <span className="flex-1">System Status</span>
-          <span className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">→</span>
+          <span className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
+            →
+          </span>
         </a>
       </div>
     </div>

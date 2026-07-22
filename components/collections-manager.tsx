@@ -110,7 +110,9 @@ export function CollectionsManager({ itemId }: CollectionManagerProps) {
       {open && (
         <div className="absolute right-0 top-full mt-2 z-50 w-72 glass-card rounded-2xl overflow-hidden shadow-xl border border-border/50">
           <div className="p-3 border-b border-border/50">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Collections</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Collections
+            </p>
           </div>
           <div className="max-h-64 overflow-y-auto p-1.5">
             {loading ? (
@@ -122,7 +124,9 @@ export function CollectionsManager({ itemId }: CollectionManagerProps) {
             ) : allCollections.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-sm text-muted-foreground">No collections yet</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Create collections from the Collections page</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">
+                  Create collections from the Collections page
+                </p>
               </div>
             ) : (
               <div className="space-y-0.5">
@@ -143,9 +147,7 @@ export function CollectionsManager({ itemId }: CollectionManagerProps) {
                       {/* Checkbox */}
                       <div
                         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-                          isMember
-                            ? "border-nexus-500 bg-nexus-500"
-                            : "border-muted-foreground/30"
+                          isMember ? "border-nexus-500 bg-nexus-500" : "border-muted-foreground/30"
                         }`}
                       >
                         {isMember && <span className="text-white text-[10px]">✓</span>}

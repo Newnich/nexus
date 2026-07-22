@@ -28,13 +28,25 @@ interface DashboardStats {
 }
 
 const TYPE_ICONS: Record<string, string> = {
-  link: "🔗", note: "📝", file: "📄", image: "🖼",
-  screenshot: "📸", voice_memo: "🎤", pdf: "📕", video: "🎬",
+  link: "🔗",
+  note: "📝",
+  file: "📄",
+  image: "🖼",
+  screenshot: "📸",
+  voice_memo: "🎤",
+  pdf: "📕",
+  video: "🎬",
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  link: "Links", note: "Notes", file: "Files", image: "Images",
-  screenshot: "Screenshots", voice_memo: "Voice Memos", pdf: "PDFs", video: "Videos",
+  link: "Links",
+  note: "Notes",
+  file: "Files",
+  image: "Images",
+  screenshot: "Screenshots",
+  voice_memo: "Voice Memos",
+  pdf: "PDFs",
+  video: "Videos",
 };
 
 const TYPE_GRADIENTS: Record<string, string> = {
@@ -202,7 +214,9 @@ export default function DashboardPage() {
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center text-xl">
               ⬡
             </div>
-            <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded-full">Connections</span>
+            <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded-full">
+              Connections
+            </span>
           </div>
           <p className="text-3xl font-bold gradient-text">{stats?.totalConnections || 0}</p>
           <p className="text-sm text-muted-foreground mt-1">AI Discovered</p>
@@ -221,7 +235,10 @@ export default function DashboardPage() {
               <h2 className="font-semibold">{hasItems ? "Recent Items" : "Getting Started"}</h2>
             </div>
             {hasItems && (
-              <Link href="/items" className="text-sm text-nexus-400 hover:text-nexus-300 transition-colors">
+              <Link
+                href="/items"
+                className="text-sm text-nexus-400 hover:text-nexus-300 transition-colors"
+              >
                 View all →
               </Link>
             )}
@@ -231,7 +248,9 @@ export default function DashboardPage() {
             <div className="text-center py-12">
               <div className="text-5xl mb-4">⟠</div>
               <p className="text-muted-foreground mb-2">Your knowledge base is empty</p>
-              <p className="text-sm text-muted-foreground/60 mb-6">Save your first item to get started</p>
+              <p className="text-sm text-muted-foreground/60 mb-6">
+                Save your first item to get started
+              </p>
               <Link
                 href="/items/new"
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all text-sm"
@@ -250,7 +269,9 @@ export default function DashboardPage() {
                     href={`/items/${item.id}`}
                     className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-all group stagger-item"
                   >
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-lg shrink-0`}>
+                    <div
+                      className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-lg shrink-0`}
+                    >
                       {TYPE_ICONS[item.type] || "📄"}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -268,7 +289,9 @@ export default function DashboardPage() {
                         {formatDateRelative(item.createdAt)}
                       </p>
                     </div>
-                    <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                    <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                      →
+                    </span>
                   </Link>
                 );
               })}
@@ -298,11 +321,15 @@ export default function DashboardPage() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">
-                        {entry.action === "ai_process" ? "AI processed" :
-                         entry.action === "create" ? "Created" :
-                         entry.action === "delete" ? "Deleted" :
-                         entry.action === "ai_backfill" ? "Backfilled" :
-                         entry.action}
+                        {entry.action === "ai_process"
+                          ? "AI processed"
+                          : entry.action === "create"
+                            ? "Created"
+                            : entry.action === "delete"
+                              ? "Deleted"
+                              : entry.action === "ai_backfill"
+                                ? "Backfilled"
+                                : entry.action}
                         {entry.entityType === "item" ? " item" : ` ${entry.entityType}`}
                       </p>
                       <p className="text-[10px] text-muted-foreground/60">
@@ -336,7 +363,9 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between text-sm mb-1">
                         <span className="flex items-center gap-2">
                           <span className="text-xs">{icon}</span>
-                          <span className="group-hover:text-nexus-400 transition-colors">{label}</span>
+                          <span className="group-hover:text-nexus-400 transition-colors">
+                            {label}
+                          </span>
                         </span>
                         <span className="text-muted-foreground text-xs font-mono">{count}</span>
                       </div>
@@ -377,7 +406,9 @@ export default function DashboardPage() {
                       className="block group"
                     >
                       <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="group-hover:text-nexus-400 transition-colors">{cat.category}</span>
+                        <span className="group-hover:text-nexus-400 transition-colors">
+                          {cat.category}
+                        </span>
                         <span className="text-muted-foreground text-xs">{cat.count}</span>
                       </div>
                       <div className="h-2 rounded-full bg-muted overflow-hidden">

@@ -44,9 +44,10 @@ export function CollectionPicker({
             id: c.id,
             name: c.name,
             icon: c.icon || "▦",
-          }))
+          })),
         );
-      } catch {} finally {
+      } catch {
+      } finally {
         setLoading(false);
       }
     }
@@ -83,7 +84,7 @@ export function CollectionPicker({
         className={cn(
           "w-full flex items-center gap-2 px-4 py-3 bg-muted border border-border rounded-xl text-sm text-left transition-all",
           "hover:border-nexus-500/30",
-          disabled && "opacity-50 cursor-not-allowed"
+          disabled && "opacity-50 cursor-not-allowed",
         )}
       >
         {selected.size > 0 ? (
@@ -93,7 +94,10 @@ export function CollectionPicker({
         ) : (
           <span className="text-muted-foreground">{placeholder}</span>
         )}
-        <span className="ml-auto text-muted-foreground transition-transform" style={{ transform: isOpen ? "rotate(180deg)" : "" }}>
+        <span
+          className="ml-auto text-muted-foreground transition-transform"
+          style={{ transform: isOpen ? "rotate(180deg)" : "" }}
+        >
           ▼
         </span>
       </button>
@@ -114,7 +118,7 @@ export function CollectionPicker({
                   onClick={() => toggle(col.id)}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all",
-                    isSelected ? "bg-nexus-500/10 text-nexus-400" : "hover:bg-muted/50"
+                    isSelected ? "bg-nexus-500/10 text-nexus-400" : "hover:bg-muted/50",
                   )}
                 >
                   <span>{col.icon}</span>

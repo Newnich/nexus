@@ -30,7 +30,8 @@ const CHANNEL_CONFIGS: ChannelCooldownConfig[] = [
     key: "slack",
     label: "Slack Cooldown",
     description: "How long to wait before sending another Slack notification for the same alert",
-    detail: "Prevents alert fatigue by enforcing a minimum gap between repeated Slack notifications for the same alert ID.",
+    detail:
+      "Prevents alert fatigue by enforcing a minimum gap between repeated Slack notifications for the same alert ID.",
     icon: "💬",
     min: 1,
     max: 1440,
@@ -40,7 +41,8 @@ const CHANNEL_CONFIGS: ChannelCooldownConfig[] = [
     key: "discord",
     label: "Discord Cooldown",
     description: "How long to wait before sending another Discord notification for the same alert",
-    detail: "Prevents alert fatigue by enforcing a minimum gap between repeated Discord notifications for the same alert ID.",
+    detail:
+      "Prevents alert fatigue by enforcing a minimum gap between repeated Discord notifications for the same alert ID.",
     icon: "🎮",
     min: 1,
     max: 1440,
@@ -50,7 +52,8 @@ const CHANNEL_CONFIGS: ChannelCooldownConfig[] = [
     key: "email",
     label: "Email Cooldown",
     description: "How long to wait before sending another email notification for the same alert",
-    detail: "Prevents alert fatigue by enforcing a minimum gap between repeated email notifications for the same alert ID.",
+    detail:
+      "Prevents alert fatigue by enforcing a minimum gap between repeated email notifications for the same alert ID.",
     icon: "📧",
     min: 1,
     max: 1440,
@@ -75,9 +78,11 @@ export default function CooldownSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const isDirty = !!(draft && config && CHANNEL_CONFIGS.some(
-    (cfg) => draft[cfg.key] !== config[cfg.key]
-  ));
+  const isDirty = !!(
+    draft &&
+    config &&
+    CHANNEL_CONFIGS.some((cfg) => draft[cfg.key] !== config[cfg.key])
+  );
 
   // Load config on mount
   const fetchConfig = useCallback(async () => {
@@ -105,7 +110,7 @@ export default function CooldownSettingsPage() {
   // Update a single channel value
   const update = (key: keyof CooldownConfig, value: number) => {
     if (!draft) return;
-    setDraft((prev) => prev ? { ...prev, [key]: value } : prev);
+    setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
   // Save configuration
@@ -199,7 +204,10 @@ export default function CooldownSettingsPage() {
           <h2 className="text-xl font-semibold mb-2">Could not load cooldown config</h2>
           <p className="text-muted-foreground mb-6">Make sure Redis is running and try again.</p>
           <button
-            onClick={() => { setLoading(true); fetchConfig(); }}
+            onClick={() => {
+              setLoading(true);
+              fetchConfig();
+            }}
             className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
           >
             Retry
@@ -220,9 +228,7 @@ export default function CooldownSettingsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {isDirty && (
-            <span className="text-xs text-yellow-400 font-medium">Unsaved changes</span>
-          )}
+          {isDirty && <span className="text-xs text-yellow-400 font-medium">Unsaved changes</span>}
 
           <button
             onClick={() => setShowResetConfirm(true)}
@@ -315,7 +321,8 @@ export default function CooldownSettingsPage() {
               <h3 className="text-lg font-semibold">Reset to Defaults?</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
-              This will reset all cooldown periods to their factory defaults of <strong>30 minutes</strong> per channel.
+              This will reset all cooldown periods to their factory defaults of{" "}
+              <strong>30 minutes</strong> per channel.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
@@ -353,7 +360,9 @@ export default function CooldownSettingsPage() {
                 Control which alerts trigger which notification channels
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
           <Link
             href="/settings/alerts"
@@ -368,7 +377,9 @@ export default function CooldownSettingsPage() {
                 Configure when system alerts are triggered (failures, inactivity, backlog)
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
           <Link
             href="/settings/notifications"
@@ -383,7 +394,9 @@ export default function CooldownSettingsPage() {
                 Configure webhook URLs, test channels, view notification history
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
           <Link
             href="/status"
@@ -398,14 +411,17 @@ export default function CooldownSettingsPage() {
                 Monitor Redis, queues, backfill, and system health
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
         </div>
       </div>
 
       {/* Footer */}
       <div className="text-center text-xs text-muted-foreground/50">
-        Cooldown values are stored in minutes and converted to seconds for Redis. Changes take effect immediately.
+        Cooldown values are stored in minutes and converted to seconds for Redis. Changes take
+        effect immediately.
       </div>
     </div>
   );

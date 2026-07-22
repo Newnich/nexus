@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/Newnich/nexus/discussions
+    about: Please ask questions and start discussions here, not in the issue tracker.
+  - name: 📖 Documentation
+    url: https://github.com/Newnich/nexus#readme
+    about: Check the README for setup guides and usage instructions.
+  - name: 🤝 Contributing Guide
+    url: https://github.com/Newnich/nexus/blob/master/CONTRIBUTING.md
+    about: Read our contribution guidelines before submitting an issue or PR.

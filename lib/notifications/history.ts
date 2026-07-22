@@ -34,7 +34,7 @@ export interface NotificationHistoryEntry {
  * Record a notification event in the history.
  */
 export async function recordNotification(
-  entry: Omit<NotificationHistoryEntry, "timestamp">
+  entry: Omit<NotificationHistoryEntry, "timestamp">,
 ): Promise<void> {
   try {
     const redis = getRedisConnection();
@@ -58,7 +58,7 @@ export async function recordNotification(
  * Get recent notification history entries, newest first.
  */
 export async function getNotificationHistory(
-  limit: number = 50
+  limit: number = 50,
 ): Promise<NotificationHistoryEntry[]> {
   try {
     const redis = getRedisConnection();

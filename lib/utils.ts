@@ -50,7 +50,7 @@ export function readingTime(text: string): number {
 
 export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
-  ms: number
+  ms: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
@@ -67,13 +67,13 @@ export function groupBy<T>(items: T[], key: keyof T): Record<string, T[]> {
       acc[k].push(item);
       return acc;
     },
-    {} as Record<string, T[]>
+    {} as Record<string, T[]>,
   );
 }
 
 export function sortByDate<T extends { createdAt: string }>(
   items: T[],
-  order: "asc" | "desc" = "desc"
+  order: "asc" | "desc" = "desc",
 ): T[] {
   return [...items].sort((a, b) => {
     const diff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -108,7 +108,10 @@ export const ITEM_TYPE_CONFIG = {
  * Highlight search query matches in text by splitting at match boundaries.
  * Returns an array of { text, highlight } segments for React rendering.
  */
-export function highlightMatches(text: string, query: string): Array<{ text: string; highlight: boolean }> {
+export function highlightMatches(
+  text: string,
+  query: string,
+): Array<{ text: string; highlight: boolean }> {
   if (!query.trim() || !text) return [{ text, highlight: false }];
   const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const parts = text.split(new RegExp(`(${escaped})`, "gi"));

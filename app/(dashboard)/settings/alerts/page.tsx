@@ -31,7 +31,8 @@ const THRESHOLD_CONFIGS: ThresholdConfig[] = [
     key: "consecutiveFailuresThreshold",
     label: "Backfill Failure Threshold",
     description: "How many consecutive backfill failures before triggering an alert",
-    detail: "When the backfill worker fails this many times in a row, a warning alert fires. Useful for catching persistent issues without alerting on transient failures.",
+    detail:
+      "When the backfill worker fails this many times in a row, a warning alert fires. Useful for catching persistent issues without alerting on transient failures.",
     icon: "🔴",
     min: 1,
     max: 50,
@@ -42,7 +43,8 @@ const THRESHOLD_CONFIGS: ThresholdConfig[] = [
     key: "workerInactivityHours",
     label: "Worker Inactivity Threshold",
     description: "Hours of no successful backfill run before triggering an alert",
-    detail: "If the backfill worker hasn't completed a successful run in this many hours, a warning alert fires. Helps detect when the worker process has stopped.",
+    detail:
+      "If the backfill worker hasn't completed a successful run in this many hours, a warning alert fires. Helps detect when the worker process has stopped.",
     icon: "⏰",
     min: 0.5,
     max: 168,
@@ -53,7 +55,8 @@ const THRESHOLD_CONFIGS: ThresholdConfig[] = [
     key: "backlogThreshold",
     label: "Backlog Size Threshold",
     description: "Number of unprocessed items before triggering a backlog alert",
-    detail: "When items missing AI embeddings exceed this count, an info alert fires. Useful for monitoring if backfill is keeping up with new items.",
+    detail:
+      "When items missing AI embeddings exceed this count, an info alert fires. Useful for monitoring if backfill is keeping up with new items.",
     icon: "📦",
     min: 10,
     max: 100000,
@@ -71,9 +74,11 @@ export default function AlertThresholdsPage() {
   const [saving, setSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const isDirty = !!(draft && thresholds && THRESHOLD_CONFIGS.some(
-    (cfg) => draft[cfg.key] !== thresholds[cfg.key]
-  ));
+  const isDirty = !!(
+    draft &&
+    thresholds &&
+    THRESHOLD_CONFIGS.some((cfg) => draft[cfg.key] !== thresholds[cfg.key])
+  );
 
   // Load thresholds on mount
   const fetchThresholds = useCallback(async () => {
@@ -101,7 +106,7 @@ export default function AlertThresholdsPage() {
   // Update a single threshold value
   const update = (key: keyof AlertThresholds, value: number) => {
     if (!draft) return;
-    setDraft((prev) => prev ? { ...prev, [key]: value } : prev);
+    setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
   // Save thresholds
@@ -196,7 +201,10 @@ export default function AlertThresholdsPage() {
           <h2 className="text-xl font-semibold mb-2">Could not load thresholds</h2>
           <p className="text-muted-foreground mb-6">Make sure Redis is running and try again.</p>
           <button
-            onClick={() => { setLoading(true); fetchThresholds(); }}
+            onClick={() => {
+              setLoading(true);
+              fetchThresholds();
+            }}
             className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
           >
             Retry
@@ -212,14 +220,10 @@ export default function AlertThresholdsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold gradient-text">Alert Thresholds</h1>
-          <p className="text-muted-foreground mt-1">
-            Configure when system alerts are triggered
-          </p>
+          <p className="text-muted-foreground mt-1">Configure when system alerts are triggered</p>
         </div>
         <div className="flex items-center gap-3">
-          {isDirty && (
-            <span className="text-xs text-yellow-400 font-medium">Unsaved changes</span>
-          )}
+          {isDirty && <span className="text-xs text-yellow-400 font-medium">Unsaved changes</span>}
 
           <button
             onClick={() => setShowResetConfirm(true)}
@@ -361,7 +365,9 @@ export default function AlertThresholdsPage() {
                 Control which alerts trigger which notification channels
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
           <Link
             href="/settings/notifications"
@@ -376,7 +382,9 @@ export default function AlertThresholdsPage() {
                 Configure webhook URLs, test channels, view notification history
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
           <Link
             href="/status"
@@ -391,7 +399,9 @@ export default function AlertThresholdsPage() {
                 Monitor Redis, queues, backfill, and system health
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
         </div>
       </div>

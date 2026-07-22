@@ -5,14 +5,6 @@ export const metadata: Metadata = {
   description: "View shared content from NEXUS",
 };
 
-export default function SharedLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="min-h-screen bg-background">
-      {children}
-    </div>
-  );
+export default function SharedLayout({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-screen bg-background">{children}</div>;
 }

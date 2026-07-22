@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 // GET /api/graph — Returns all items (nodes) and connections (edges) for graph visualization
 export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -50,12 +52,9 @@ export async function GET() {
     for (const conn of connections || []) {
       nodeConnectionCount.set(
         conn.from_item_id,
-        (nodeConnectionCount.get(conn.from_item_id) || 0) + 1
+        (nodeConnectionCount.get(conn.from_item_id) || 0) + 1,
       );
-      nodeConnectionCount.set(
-        conn.to_item_id,
-        (nodeConnectionCount.get(conn.to_item_id) || 0) + 1
-      );
+      nodeConnectionCount.set(conn.to_item_id, (nodeConnectionCount.get(conn.to_item_id) || 0) + 1);
     }
 
     // Fill in connection counts
@@ -80,16 +79,11 @@ export async function GET() {
         totalNodes: nodes.length,
         totalEdges: edges.length,
         averageStrength:
-          edges.length > 0
-            ? edges.reduce((sum, e) => sum + e.strength, 0) / edges.length
-            : 0,
+          edges.length > 0 ? edges.reduce((sum, e) => sum + e.strength, 0) / edges.length : 0,
       },
     });
   } catch (error) {
     console.error("GET /api/graph error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

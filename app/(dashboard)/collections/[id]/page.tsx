@@ -107,7 +107,9 @@ export default function CollectionDetailPage() {
       if (!res.ok) throw new Error("Failed to update");
       toast.success("Collection updated");
       setEditing(false);
-      setCollection((prev) => prev ? { ...prev, name: editName.trim(), description: editDesc.trim() } : prev);
+      setCollection((prev) =>
+        prev ? { ...prev, name: editName.trim(), description: editDesc.trim() } : prev,
+      );
     } catch {
       toast.error("Failed to update collection");
     } finally {
@@ -125,7 +127,9 @@ export default function CollectionDetailPage() {
       });
       if (!res.ok) throw new Error("Failed to remove items");
       setItems((prev) => prev.filter((i) => !itemIds.includes(i.id)));
-      setCollection((prev) => prev ? { ...prev, itemCount: prev.itemCount - itemIds.length } : prev);
+      setCollection((prev) =>
+        prev ? { ...prev, itemCount: prev.itemCount - itemIds.length } : prev,
+      );
       toast.success(`Removed ${itemIds.length} item${itemIds.length > 1 ? "s" : ""}`);
     } catch {
       toast.error("Failed to remove items");
@@ -220,7 +224,10 @@ export default function CollectionDetailPage() {
         <div className="text-5xl mb-6">🔍</div>
         <h2 className="text-xl font-semibold mb-2">{error || "Collection not found"}</h2>
         <p className="text-muted-foreground mb-8">This collection may have been deleted.</p>
-        <Link href="/collections" className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all">
+        <Link
+          href="/collections"
+          className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
+        >
           ← Back to Collections
         </Link>
       </div>
@@ -284,7 +291,11 @@ export default function CollectionDetailPage() {
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-bold gradient-text">{collection.name}</h1>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                    {collection.type === "manual" ? "📁 Manual" : collection.type === "auto" ? "🤖 Auto" : "🔍 Query"}
+                    {collection.type === "manual"
+                      ? "📁 Manual"
+                      : collection.type === "auto"
+                        ? "🤖 Auto"
+                        : "🔍 Query"}
                   </span>
                 </div>
                 {collection.description && (
@@ -332,7 +343,9 @@ export default function CollectionDetailPage() {
       {items.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 max-w-sm">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">⌕</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+              ⌕
+            </span>
             <input
               type="text"
               value={searchQuery}
@@ -351,7 +364,8 @@ export default function CollectionDetailPage() {
           </div>
           <div className="flex items-center gap-1 flex-wrap">
             {["all", "link", "note", "pdf", "file", "image", "video"].map((type) => {
-              const count = type === "all" ? items.length : items.filter((i) => i.type === type).length;
+              const count =
+                type === "all" ? items.length : items.filter((i) => i.type === type).length;
               if (type !== "all" && count === 0) return null;
               return (
                 <button
@@ -363,7 +377,9 @@ export default function CollectionDetailPage() {
                       : "glass-card text-muted-foreground hover:text-foreground border border-transparent"
                   }`}
                 >
-                  {type === "all" ? `All (${items.length})` : `${type === "link" ? "🔗" : type === "note" ? "📝" : type === "pdf" ? "📕" : type === "file" ? "📄" : type === "image" ? "🖼" : "🎬"} ${type}`}
+                  {type === "all"
+                    ? `All (${items.length})`
+                    : `${type === "link" ? "🔗" : type === "note" ? "📝" : type === "pdf" ? "📕" : type === "file" ? "📄" : type === "image" ? "🖼" : "🎬"} ${type}`}
                 </button>
               );
             })}
@@ -380,7 +396,9 @@ export default function CollectionDetailPage() {
       {(searchQuery || selectedType !== "all" ? filteredItems.length === 0 : items.length === 0) ? (
         <div className="text-center py-16 glass-card rounded-2xl">
           <div className="text-4xl mb-4">{searchQuery ? "🔍" : "📂"}</div>
-          <h3 className="font-semibold mb-1">{searchQuery ? "No results found" : "This collection is empty"}</h3>
+          <h3 className="font-semibold mb-1">
+            {searchQuery ? "No results found" : "This collection is empty"}
+          </h3>
           <p className="text-sm text-muted-foreground mb-6">
             {searchQuery ? "Try a different search term." : "Add items to organize your knowledge."}
           </p>
@@ -397,12 +415,14 @@ export default function CollectionDetailPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {searchQuery ? `${filteredItems.length} of ${items.length}` : items.length} item{items.length !== 1 ? "s" : ""}
+              {searchQuery ? `${filteredItems.length} of ${items.length}` : items.length} item
+              {items.length !== 1 ? "s" : ""}
             </p>
           </div>
 
           {filteredItems.map((item) => {
-            const config = ITEM_TYPE_CONFIG[item.type as keyof typeof ITEM_TYPE_CONFIG] || ITEM_TYPE_CONFIG.note;
+            const config =
+              ITEM_TYPE_CONFIG[item.type as keyof typeof ITEM_TYPE_CONFIG] || ITEM_TYPE_CONFIG.note;
             const isRemoving = removing.includes(item.id);
 
             return (
@@ -410,13 +430,10 @@ export default function CollectionDetailPage() {
                 key={item.id}
                 className={cn(
                   "glass-card p-4 rounded-xl transition-all flex items-center gap-4",
-                  isRemoving ? "opacity-50" : "hover:bg-card/80"
+                  isRemoving ? "opacity-50" : "hover:bg-card/80",
                 )}
               >
-                <Link
-                  href={`/items/${item.id}`}
-                  className="flex items-center gap-4 flex-1 min-w-0"
-                >
+                <Link href={`/items/${item.id}`} className="flex items-center gap-4 flex-1 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-lg shrink-0">
                     {config.icon}
                   </div>
@@ -433,7 +450,9 @@ export default function CollectionDetailPage() {
                       )}
                     </div>
                     {item.summary && (
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.summary}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                        {item.summary}
+                      </p>
                     )}
                     <p className="text-[10px] text-muted-foreground/60 mt-0.5">
                       Added {formatDateRelative(item.addedAt)}
@@ -478,7 +497,9 @@ export default function CollectionDetailPage() {
               ) : availableItems.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-3xl mb-3">📂</div>
-                  <p className="text-sm text-muted-foreground">All your items are already in this collection!</p>
+                  <p className="text-sm text-muted-foreground">
+                    All your items are already in this collection!
+                  </p>
                   <Link
                     href="/items/new"
                     className="inline-block mt-4 text-sm text-nexus-400 hover:underline"
@@ -488,7 +509,9 @@ export default function CollectionDetailPage() {
                 </div>
               ) : (
                 availableItems.map((item) => {
-                  const config = ITEM_TYPE_CONFIG[item.type as keyof typeof ITEM_TYPE_CONFIG] || ITEM_TYPE_CONFIG.note;
+                  const config =
+                    ITEM_TYPE_CONFIG[item.type as keyof typeof ITEM_TYPE_CONFIG] ||
+                    ITEM_TYPE_CONFIG.note;
                   const isSelected = selectedAddItems.has(item.id);
                   return (
                     <button
@@ -505,19 +528,26 @@ export default function CollectionDetailPage() {
                         "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all",
                         isSelected
                           ? "bg-nexus-500/15 border border-nexus-500/30"
-                          : "bg-muted/30 hover:bg-muted/60 border border-transparent"
+                          : "bg-muted/30 hover:bg-muted/60 border border-transparent",
                       )}
                     >
-                      <div className={cn(
-                        "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all",
-                        isSelected ? "border-nexus-500 bg-nexus-500" : "border-muted-foreground/30"
-                      )}>
+                      <div
+                        className={cn(
+                          "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all",
+                          isSelected
+                            ? "border-nexus-500 bg-nexus-500"
+                            : "border-muted-foreground/30",
+                        )}
+                      >
                         {isSelected && <span className="text-white text-xs">✓</span>}
                       </div>
                       <span className="text-lg shrink-0">{config.icon}</span>
                       <div className="flex-1 min-w-0 text-left">
                         <p className="text-sm font-medium truncate">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">{item.type}{item.category ? ` · ${item.category}` : ""}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.type}
+                          {item.category ? ` · ${item.category}` : ""}
+                        </p>
                       </div>
                     </button>
                   );

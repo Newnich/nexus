@@ -56,3 +56,5 @@ extension/*.zip
 
 # ─── Windows ───
 nul
+.vercel
+.env*

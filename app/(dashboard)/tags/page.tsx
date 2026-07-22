@@ -66,7 +66,14 @@ export default function TagsPage() {
         body: JSON.stringify({
           action,
           tag: selectedTag.name,
-          ...(action !== "delete" ? { newName: actionValue.trim().toLowerCase().replace(/[^a-z0-9-_\s]/g, "") } : {}),
+          ...(action !== "delete"
+            ? {
+                newName: actionValue
+                  .trim()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9-_\s]/g, ""),
+              }
+            : {}),
         }),
       });
 
@@ -108,7 +115,9 @@ export default function TagsPage() {
         <div>
           <h1 className="text-2xl font-bold gradient-text">Tags</h1>
           <p className="text-muted-foreground mt-1">
-            {loading ? "Loading tags..." : `${total} tag${total !== 1 ? "s" : ""} across your items`}
+            {loading
+              ? "Loading tags..."
+              : `${total} tag${total !== 1 ? "s" : ""} across your items`}
           </p>
         </div>
         <Link
@@ -121,7 +130,9 @@ export default function TagsPage() {
 
       {/* ── Search ── */}
       <div className="relative">
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">⌕</span>
+        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+          ⌕
+        </span>
         <input
           type="text"
           placeholder="Filter tags..."
@@ -150,7 +161,10 @@ export default function TagsPage() {
                 {action === "delete" && "Delete Tag"}
               </h3>
               <button
-                onClick={() => { setSelectedTag(null); setActionValue(""); }}
+                onClick={() => {
+                  setSelectedTag(null);
+                  setActionValue("");
+                }}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 ✕
@@ -158,9 +172,12 @@ export default function TagsPage() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              {action === "rename" && `Rename "${selectedTag.name}" (${selectedTag.count} item${selectedTag.count !== 1 ? "s" : ""}) to:`}
-              {action === "merge" && `Merge "${selectedTag.name}" (${selectedTag.count} item${selectedTag.count !== 1 ? "s" : ""}) into another tag:`}
-              {action === "delete" && `Delete "${selectedTag.name}" from ${selectedTag.count} item${selectedTag.count !== 1 ? "s" : ""}? This cannot be undone.`}
+              {action === "rename" &&
+                `Rename "${selectedTag.name}" (${selectedTag.count} item${selectedTag.count !== 1 ? "s" : ""}) to:`}
+              {action === "merge" &&
+                `Merge "${selectedTag.name}" (${selectedTag.count} item${selectedTag.count !== 1 ? "s" : ""}) into another tag:`}
+              {action === "delete" &&
+                `Delete "${selectedTag.name}" from ${selectedTag.count} item${selectedTag.count !== 1 ? "s" : ""}? This cannot be undone.`}
             </p>
 
             {action !== "delete" && (
@@ -177,20 +194,25 @@ export default function TagsPage() {
 
             {action === "rename" && actionValue && actionValue !== selectedTag.name && (
               <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
-                <span className="text-nexus-400">{selectedTag.count}</span> item{selectedTag.count !== 1 ? "s" : ""} will be updated.
+                <span className="text-nexus-400">{selectedTag.count}</span> item
+                {selectedTag.count !== 1 ? "s" : ""} will be updated.
               </div>
             )}
 
             {action === "merge" && actionValue && actionValue !== selectedTag.name && (
               <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
                 Tag "{selectedTag.name}" ({selectedTag.count}) will merge into "{actionValue}".
-                {tags.find((t) => t.name === actionValue) && ` "${actionValue}" currently has ${tags.find((t) => t.name === actionValue)!.count} items.`}
+                {tags.find((t) => t.name === actionValue) &&
+                  ` "${actionValue}" currently has ${tags.find((t) => t.name === actionValue)!.count} items.`}
               </div>
             )}
 
             <div className="flex items-center gap-3 justify-end pt-2">
               <button
-                onClick={() => { setSelectedTag(null); setActionValue(""); }}
+                onClick={() => {
+                  setSelectedTag(null);
+                  setActionValue("");
+                }}
                 className="px-4 py-2 glass-card hover:bg-card/70 rounded-xl text-sm transition-all"
               >
                 Cancel
@@ -202,16 +224,16 @@ export default function TagsPage() {
                   "px-5 py-2 rounded-xl text-sm transition-all disabled:opacity-50",
                   action === "delete"
                     ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-nexus-500 hover:bg-nexus-600 text-white"
+                    : "bg-nexus-500 hover:bg-nexus-600 text-white",
                 )}
               >
                 {processing
                   ? "Processing..."
                   : action === "delete"
-                  ? "Delete"
-                  : action === "rename"
-                  ? "Rename"
-                  : "Merge"}
+                    ? "Delete"
+                    : action === "rename"
+                      ? "Rename"
+                      : "Merge"}
               </button>
             </div>
           </div>
@@ -233,7 +255,10 @@ export default function TagsPage() {
           <div className="text-4xl mb-4">⚠️</div>
           <h3 className="text-lg font-semibold text-red-400 mb-1">Failed to load tags</h3>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <button onClick={fetchTags} className="px-4 py-2 bg-nexus-500 hover:bg-nexus-600 text-white rounded-lg transition-all text-sm">
+          <button
+            onClick={fetchTags}
+            className="px-4 py-2 bg-nexus-500 hover:bg-nexus-600 text-white rounded-lg transition-all text-sm"
+          >
             Try again
           </button>
         </div>
@@ -252,7 +277,10 @@ export default function TagsPage() {
               : "Tags are automatically generated by AI when you save items."}
           </p>
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="px-6 py-3 glass-card hover:bg-card/70 rounded-xl transition-all">
+            <button
+              onClick={() => setSearchQuery("")}
+              className="px-6 py-3 glass-card hover:bg-card/70 rounded-xl transition-all"
+            >
               Clear search
             </button>
           )}

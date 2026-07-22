@@ -37,8 +37,8 @@ function getResendClient(): Resend {
     if (!RESEND_API_KEY) {
       throw new Error(
         "Missing RESEND_API_KEY environment variable. " +
-        "Set it in .env.local to enable email alerts. " +
-        "Get one at https://resend.com/api-keys"
+          "Set it in .env.local to enable email alerts. " +
+          "Get one at https://resend.com/api-keys",
       );
     }
     _resend = new Resend(RESEND_API_KEY);
@@ -90,8 +90,9 @@ export async function sendCriticalAlertEmail(alert: Alert): Promise<AlertEmailRe
   // Warn if using default from address (Resend requires domain verification)
   if (!process.env.ALERT_EMAIL_FROM) {
     console.warn(
-      "[Email] Using default from address " + ALERT_EMAIL_FROM +
-      " — set ALERT_EMAIL_FROM to a verified domain in Resend to ensure delivery"
+      "[Email] Using default from address " +
+        ALERT_EMAIL_FROM +
+        " — set ALERT_EMAIL_FROM to a verified domain in Resend to ensure delivery",
     );
   }
 
@@ -139,16 +140,12 @@ export async function sendCriticalAlertEmail(alert: Alert): Promise<AlertEmailRe
  * Called from the alerts API route after evaluating health conditions.
  */
 export async function sendCriticalAlertEmails(alerts: Alert[]): Promise<AlertEmailResult[]> {
-  const criticalAlerts = alerts.filter(
-    (a) => a.severity === "critical" && a.fresh
-  );
+  const criticalAlerts = alerts.filter((a) => a.severity === "critical" && a.fresh);
 
   if (criticalAlerts.length === 0) return [];
 
   console.log("[Email] Processing " + criticalAlerts.length + " critical alert(s)");
-  const results = await Promise.all(
-    criticalAlerts.map((alert) => sendCriticalAlertEmail(alert))
-  );
+  const results = await Promise.all(criticalAlerts.map((alert) => sendCriticalAlertEmail(alert)));
 
   const sent = results.filter((r) => r.sent).length;
   if (sent > 0) {

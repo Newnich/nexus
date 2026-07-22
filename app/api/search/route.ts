@@ -3,12 +3,14 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { searchByVector } from "@/lib/vector/pgvector";
 import { generateEmbedding } from "@/lib/ai/ollama";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -20,10 +22,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
 
     if (!query) {
-      return NextResponse.json(
-        { error: "Query parameter is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Query parameter is required" }, { status: 400 });
     }
 
     let items;
@@ -92,9 +91,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ items, query, mode, count: items?.length || 0 });
   } catch (error) {
     console.error("GET /api/search error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { backfillQueue } from "@/lib/queue/backfill";
 import { getRedisConnection } from "@/lib/queue/config";
 import { createServiceClient } from "@/lib/supabase/server";
-import {
-  evaluateAlerts,
-  getConsecutiveFailures,
-} from "@/lib/queue/alerts";
+import { evaluateAlerts, getConsecutiveFailures } from "@/lib/queue/alerts";
 import { sendCriticalAlertNotifications } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -27,9 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const previousParam = searchParams.get("previous") || "";
-    const previousAlertIds = new Set(
-      previousParam ? previousParam.split(",").filter(Boolean) : []
-    );
+    const previousAlertIds = new Set(previousParam ? previousParam.split(",").filter(Boolean) : []);
 
     // Collect health status
     const redis = getRedisConnection();
@@ -52,9 +47,7 @@ export async function GET(request: NextRequest) {
         if (data) {
           backfillErrors = data.errors || 0;
           lastBackfillRun = {
-            completedAt: job.finishedOn
-              ? new Date(job.finishedOn).toISOString()
-              : null,
+            completedAt: job.finishedOn ? new Date(job.finishedOn).toISOString() : null,
             hasErrors: (data.errors || 0) > 0,
           };
         }
@@ -94,12 +87,12 @@ export async function GET(request: NextRequest) {
         lastBackfillRun,
         backfillEnabled: process.env.BACKFILL_ENABLED !== "false",
       },
-      previousAlertIds
+      previousAlertIds,
     );
 
     // Send notifications for fresh critical alerts to all configured channels (fire-and-forget)
     sendCriticalAlertNotifications(alerts).catch((err) =>
-      console.error("Failed to send alert notifications:", err)
+      console.error("Failed to send alert notifications:", err),
     );
 
     return NextResponse.json({
@@ -114,7 +107,7 @@ export async function GET(request: NextRequest) {
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

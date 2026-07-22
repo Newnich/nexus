@@ -35,7 +35,11 @@ export default function NewItemForm() {
   const [content, setContent] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [urlPreview, setUrlPreview] = useState<{ title: string; domain: string; favicon: string | null } | null>(null);
+  const [urlPreview, setUrlPreview] = useState<{
+    title: string;
+    domain: string;
+    favicon: string | null;
+  } | null>(null);
   const [fetchingPreview, setFetchingPreview] = useState(false);
   const [selectedCollections, setSelectedCollections] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
@@ -85,30 +89,39 @@ export default function NewItemForm() {
     setFetchingPreview(false);
   }, []);
 
-  const handleFileDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files);
-    handleFiles(files);
-  }, []);
+  const handleFiles = useCallback(
+    async (files: File[]) => {
+      for (const file of files) {
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const base64 = ev.target?.result as string;
+          toast.success(`📎 ${file.name} ready to save`);
+          setContent(base64);
+          if (!title) setTitle(file.name.replace(/\.[^/.]+$/, ""));
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    [title],
+  );
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    handleFiles(files);
-  }, []);
+  const handleFileDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const files = Array.from(e.dataTransfer.files);
+      handleFiles(files);
+    },
+    [handleFiles],
+  );
 
-  const handleFiles = async (files: File[]) => {
-    for (const file of files) {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const base64 = ev.target?.result as string;
-        toast.success(`📎 ${file.name} ready to save`);
-        setContent(base64);
-        if (!title) setTitle(file.name.replace(/\.[^/.]+$/, ""));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      handleFiles(files);
+    },
+    [handleFiles],
+  );
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +132,10 @@ export default function NewItemForm() {
         type: saveType,
         title: title || url || "Untitled",
         content: saveType === "note" ? content : saveType === "file" ? content : url,
-        metadata: saveType === "link" ? { sourceUrl: url, ...(urlPreview?.domain ? { domain: urlPreview.domain } : {}) } : {},
+        metadata:
+          saveType === "link"
+            ? { sourceUrl: url, ...(urlPreview?.domain ? { domain: urlPreview.domain } : {}) }
+            : {},
         tags: tags.length > 0 ? tags : undefined,
         collectionIds: selectedCollections.size > 0 ? Array.from(selectedCollections) : undefined,
       };
@@ -143,14 +159,17 @@ export default function NewItemForm() {
           <div className="flex items-center gap-2">
             <span>✨ Saved! AI is processing...</span>
             <button
-              onClick={() => { toast.dismiss(t.id); router.push(`/items/${item.id}`); }}
+              onClick={() => {
+                toast.dismiss(t.id);
+                router.push(`/items/${item.id}`);
+              }}
               className="text-xs underline hover:text-nexus-400 transition-colors"
             >
               View
             </button>
           </div>
         ),
-        { duration: 5000 }
+        { duration: 5000 },
       );
 
       router.push("/dashboard");
@@ -186,7 +205,7 @@ export default function NewItemForm() {
               "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200 hover-lift",
               saveType === type
                 ? "border-nexus-500 bg-nexus-500/10 text-nexus-400"
-                : "border-border hover:border-nexus-500/30 bg-muted/20"
+                : "border-border hover:border-nexus-500/30 bg-muted/20",
             )}
           >
             <span className="text-3xl">{icon}</span>
@@ -202,7 +221,9 @@ export default function NewItemForm() {
           <div>
             <label className="block text-sm font-medium mb-2">URL</label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">🔗</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                🔗
+              </span>
               <input
                 type="url"
                 value={url}
@@ -237,7 +258,10 @@ export default function NewItemForm() {
 
         {saveType === "file" && (
           <div
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleFileDrop}
             onClick={() => fileInputRef.current?.click()}
@@ -245,7 +269,7 @@ export default function NewItemForm() {
               "border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-200",
               isDragging
                 ? "border-nexus-500 bg-nexus-500/10"
-                : "border-border hover:border-nexus-500/30 hover:bg-muted/20"
+                : "border-border hover:border-nexus-500/30 hover:bg-muted/20",
             )}
           >
             <input
@@ -259,9 +283,7 @@ export default function NewItemForm() {
             <p className="font-semibold mb-1">
               {isDragging ? "Drop files here" : "Drag & drop files or click to browse"}
             </p>
-            <p className="text-xs text-muted-foreground">
-              PDFs, images, documents, and more
-            </p>
+            <p className="text-xs text-muted-foreground">PDFs, images, documents, and more</p>
             {content && (
               <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-400 rounded-lg text-sm">
                 <span>✓ File loaded</span>
@@ -307,11 +329,7 @@ export default function NewItemForm() {
           <label className="block text-sm font-medium mb-2">
             Tags <span className="text-muted-foreground">(type and press Enter)</span>
           </label>
-          <TagChips
-            tags={tags}
-            onChange={setTags}
-            placeholder="AI, machine-learning, research"
-          />
+          <TagChips tags={tags} onChange={setTags} placeholder="AI, machine-learning, research" />
         </div>
 
         {/* Collection Picker */}
@@ -340,7 +358,10 @@ export default function NewItemForm() {
                 { icon: "🏷", label: "Auto-tag & categorize" },
                 { icon: "🔗", label: "Find connections" },
               ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+                <div
+                  key={item.label}
+                  className="flex items-center gap-2 p-2 rounded-lg bg-muted/30"
+                >
                   <span className="text-sm">{item.icon}</span>
                   <span className="text-xs text-muted-foreground">{item.label}</span>
                 </div>
@@ -376,7 +397,10 @@ export default function NewItemForm() {
             Cancel
           </button>
           <span className="text-xs text-muted-foreground ml-auto hidden sm:block">
-            <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-[10px]">⌘↵</kbd> to save
+            <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-[10px]">
+              ⌘↵
+            </kbd>{" "}
+            to save
           </span>
         </div>
       </form>

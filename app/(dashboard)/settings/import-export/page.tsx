@@ -148,9 +148,7 @@ export default function ImportExportPage() {
               Exporting...
             </>
           ) : (
-            <>
-              ⬇ Download Export
-            </>
+            <>⬇ Download Export</>
           )}
         </button>
       </div>
@@ -171,7 +169,10 @@ export default function ImportExportPage() {
 
         {/* Drop zone */}
         <div
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleFileDrop}
           onClick={() => fileInputRef.current?.click()}
@@ -179,7 +180,7 @@ export default function ImportExportPage() {
             "border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-200",
             isDragging
               ? "border-nexus-500 bg-nexus-500/5"
-              : "border-border hover:border-nexus-500/30 hover:bg-muted/20"
+              : "border-border hover:border-nexus-500/30 hover:bg-muted/20",
           )}
         >
           <input
@@ -194,8 +195,8 @@ export default function ImportExportPage() {
             {importing
               ? "Importing..."
               : isDragging
-              ? "Drop file here"
-              : "Click to browse or drag & drop"}
+                ? "Drop file here"
+                : "Click to browse or drag & drop"}
           </p>
           <p className="text-xs text-muted-foreground">
             Supports .json (NEXUS export) and .html (browser bookmarks) · Max 10MB
@@ -226,8 +227,12 @@ export default function ImportExportPage() {
               </div>
               <div>
                 <p className="font-medium text-foreground mb-1">🔖 Browser Bookmarks (HTML)</p>
-                <p>Standard Netscape bookmark format exported from Chrome, Firefox, Safari, or Edge.</p>
-                <p className="text-xs mt-1">Import up to 500 items at once. Duplicate URLs are skipped.</p>
+                <p>
+                  Standard Netscape bookmark format exported from Chrome, Firefox, Safari, or Edge.
+                </p>
+                <p className="text-xs mt-1">
+                  Import up to 500 items at once. Duplicate URLs are skipped.
+                </p>
               </div>
             </div>
           </details>

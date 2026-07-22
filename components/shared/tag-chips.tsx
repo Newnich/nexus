@@ -41,14 +41,14 @@ export function TagChips({
       onChange(newTags);
       setInput("");
     },
-    [tags, onChange, maxTags]
+    [tags, onChange, maxTags],
   );
 
   const removeTag = useCallback(
     (tag: string) => {
       onChange(tags.filter((t) => t !== tag));
     },
-    [tags, onChange]
+    [tags, onChange],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -66,7 +66,7 @@ export function TagChips({
         "flex flex-wrap items-center gap-2 px-3 py-2.5 bg-muted border border-border rounded-xl transition-all",
         "focus-within:ring-2 focus-within:ring-nexus-500/50 focus-within:border-nexus-500",
         disabled && "opacity-50 cursor-not-allowed",
-        className
+        className,
       )}
       onClick={() => inputRef.current?.focus()}
     >
@@ -79,7 +79,10 @@ export function TagChips({
           {!disabled && (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                removeTag(tag);
+              }}
               className="hover:text-red-400 transition-colors text-[10px]"
             >
               ✕

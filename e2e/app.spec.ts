@@ -73,10 +73,9 @@ test.describe("Authenticated Pages", () => {
     await page.goto("/items");
     await expect(page.locator("h1").filter({ hasText: /Items/ })).toBeVisible();
     await expect(page.getByRole("button", { name: "All Items" })).toBeVisible();
-    await page.waitForResponse(
-      (res) => res.url().includes("/api/items") && res.status() === 200,
-      { timeout: 10000 }
-    );
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
     const itemLinks = page.locator('a[href^="/items/"]');
     await expect(itemLinks.first()).toBeVisible();
     expect(await itemLinks.count()).toBeGreaterThan(0);
@@ -84,10 +83,9 @@ test.describe("Authenticated Pages", () => {
 
   test("Item detail page renders content", async ({ page }) => {
     await page.goto("/items");
-    await page.waitForResponse(
-      (res) => res.url().includes("/api/items") && res.status() === 200,
-      { timeout: 10000 }
-    );
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
     await page.waitForTimeout(1000);
     const firstItemLink = page.locator('a[href^="/items/"]').first();
     await firstItemLink.waitFor({ state: "visible", timeout: 5000 });
@@ -102,10 +100,9 @@ test.describe("Authenticated Pages", () => {
 
   test("Item detail shows AI summary card", async ({ page }) => {
     await page.goto("/items");
-    await page.waitForResponse(
-      (res) => res.url().includes("/api/items") && res.status() === 200,
-      { timeout: 10000 }
-    );
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
     await page.waitForTimeout(1000);
     const firstItemLink = page.locator('a[href^="/items/"]').first();
     const href = await firstItemLink.getAttribute("href");
@@ -131,7 +128,9 @@ test.describe("Authenticated Pages", () => {
     // Wait for detail page to load
     await page.waitForTimeout(2000);
     // Check for search/filter elements
-    await expect(page.getByPlaceholder("Search within collection...").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByPlaceholder("Search within collection...").first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Graph page renders force graph", async ({ page }) => {
@@ -169,10 +168,9 @@ test.describe("Authenticated Pages", () => {
 
   test("Sidebar shows recently viewed items after visiting an item", async ({ page }) => {
     await page.goto("/items");
-    await page.waitForResponse(
-      (res) => res.url().includes("/api/items") && res.status() === 200,
-      { timeout: 10000 }
-    );
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
     await page.waitForTimeout(1000);
     const firstItemLink = page.locator('a[href^="/items/"]').first();
     const href = await firstItemLink.getAttribute("href");
@@ -183,5 +181,3 @@ test.describe("Authenticated Pages", () => {
     }
   });
 });
-
-

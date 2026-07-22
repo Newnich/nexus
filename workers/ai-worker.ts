@@ -20,7 +20,11 @@
  *   WORKER_POLL_INTERVAL — polling interval in ms (default: uses BullMQ default)
  */
 
-import { createAIWorker, type AIProcessJobData, type AIProcessJobResult } from "@/lib/queue/ai-queue";
+import {
+  createAIWorker,
+  type AIProcessJobData,
+  type AIProcessJobResult,
+} from "@/lib/queue/ai-queue";
 import { processNewItem } from "@/lib/ai/pipeline";
 import { storeEmbedding } from "@/lib/vector/pgvector";
 import { createServiceClient } from "@/lib/supabase/server";
@@ -56,12 +60,15 @@ async function handleAIProcess(job: Job<AIProcessJobData>): Promise<AIProcessJob
     }
 
     // Mark as processing in the DB queue (upsert - creates row if missing for backfill)
-    await supabase.from("ai_queue").upsert({
-      item_id: itemId,
-      status: "processing",
-      priority: 0,
-      started_at: new Date().toISOString(),
-    }, { onConflict: "item_id" });
+    await supabase.from("ai_queue").upsert(
+      {
+        item_id: itemId,
+        status: "processing",
+        priority: 0,
+        started_at: new Date().toISOString(),
+      },
+      { onConflict: "item_id" },
+    );
 
     // ── Step 2: Fetch existing items for connection finding ──
     const { data: existingItems } = await supabase
@@ -86,7 +93,7 @@ async function handleAIProcess(job: Job<AIProcessJobData>): Promise<AIProcessJob
         content: item.content || "",
         extractedText: item.extracted_text || "",
       },
-      existingSummaries.length > 0 ? existingSummaries : undefined
+      existingSummaries.length > 0 ? existingSummaries : undefined,
     );
 
     // Collect partial failures
@@ -127,12 +134,10 @@ async function handleAIProcess(job: Job<AIProcessJobData>): Promise<AIProcessJob
         description: conn.reason,
       }));
 
-      const { error: connError } = await supabase
-        .from("connections")
-        .upsert(connectionRecords, {
-          onConflict: "from_item_id, to_item_id, type",
-          ignoreDuplicates: true,
-        });
+      const { error: connError } = await supabase.from("connections").upsert(connectionRecords, {
+        onConflict: "from_item_id, to_item_id, type",
+        ignoreDuplicates: true,
+      });
 
       if (connError) {
         partialFailures.push("connections");
@@ -141,11 +146,14 @@ async function handleAIProcess(job: Job<AIProcessJobData>): Promise<AIProcessJob
     }
 
     // Mark as completed in the DB queue (upsert - handles backfill path)
-    await supabase.from("ai_queue").upsert({
-      item_id: itemId,
-      status: "completed",
-      completed_at: new Date().toISOString(),
-    }, { onConflict: "item_id" });
+    await supabase.from("ai_queue").upsert(
+      {
+        item_id: itemId,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+      },
+      { onConflict: "item_id" },
+    );
 
     // Log activity
     await supabase.from("activity_log").insert({
@@ -174,12 +182,15 @@ async function handleAIProcess(job: Job<AIProcessJobData>): Promise<AIProcessJob
 
     // Mark as failed in the DB queue (upsert - handles backfill path)
     try {
-      await supabase.from("ai_queue").upsert({
-        item_id: itemId,
-        status: "failed",
-        error: errorMessage,
-        completed_at: new Date().toISOString(),
-      }, { onConflict: "item_id" });
+      await supabase.from("ai_queue").upsert(
+        {
+          item_id: itemId,
+          status: "failed",
+          error: errorMessage,
+          completed_at: new Date().toISOString(),
+        },
+        { onConflict: "item_id" },
+      );
     } catch {
       // Best-effort
     }
@@ -206,7 +217,9 @@ async function main() {
 
   const concurrency = parseInt(process.env.WORKER_CONCURRENCY || "2", 10);
   console.log(`   Concurrency: ${concurrency}`);
-  console.log(`   Redis:       ${process.env.REDIS_HOST || "localhost"}:${process.env.REDIS_PORT || "6379"}`);
+  console.log(
+    `   Redis:       ${process.env.REDIS_HOST || "localhost"}:${process.env.REDIS_PORT || "6379"}`,
+  );
   console.log(`   Ollama:      ${process.env.OLLAMA_URL || "http://localhost:11434"}`);
   console.log();
 
@@ -254,7 +267,9 @@ async function main() {
 
   console.log(`📡 Workers running:`);
   console.log(`   AI Processing:  ${aiWorker.name} (concurrency: ${aiWorker.opts.concurrency})`);
-  console.log(`   Maintenance:    ${maintenanceWorker.name} (cron: ${process.env.BACKFILL_CRON || "*/15 * * * *"})`);
+  console.log(
+    `   Maintenance:    ${maintenanceWorker.name} (cron: ${process.env.BACKFILL_CRON || "*/15 * * * *"})`,
+  );
   console.log();
   console.log("   Press Ctrl+C to stop.");
 }

@@ -96,9 +96,7 @@ export function ShortcutsModal() {
             <span className="text-xl">⌨️</span>
             <div>
               <h2 className="font-semibold">Keyboard Shortcuts</h2>
-              <p className="text-xs text-muted-foreground">
-                Master NEXUS with these shortcuts
-              </p>
+              <p className="text-xs text-muted-foreground">Master NEXUS with these shortcuts</p>
             </div>
           </div>
           <button
@@ -136,7 +134,11 @@ export function ShortcutsModal() {
         {/* Footer */}
         <div className="px-6 py-3 border-t border-border/50 text-center">
           <p className="text-[10px] text-muted-foreground">
-            Press <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[8px] font-mono">?</kbd> to toggle this modal anytime
+            Press{" "}
+            <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[8px] font-mono">
+              ?
+            </kbd>{" "}
+            to toggle this modal anytime
           </p>
         </div>
       </div>

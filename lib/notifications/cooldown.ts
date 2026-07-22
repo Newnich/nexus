@@ -79,9 +79,7 @@ export async function loadCooldowns(): Promise<CooldownConfig> {
 /**
  * Save cooldown configuration to Redis.
  */
-export async function saveCooldowns(
-  config: Partial<CooldownConfig>
-): Promise<boolean> {
+export async function saveCooldowns(config: Partial<CooldownConfig>): Promise<boolean> {
   try {
     const sanitized = sanitize(config);
     const redis = getRedisConnection();

@@ -28,7 +28,7 @@ export function Header() {
 
   const activeAlerts = alerts.filter((a) => !dismissedIds.has(a.id));
   const notificationCount = activeAlerts.filter(
-    (a) => a.severity === "critical" || a.severity === "warning"
+    (a) => a.severity === "critical" || a.severity === "warning",
   ).length;
 
   // Keyboard shortcuts
@@ -93,9 +93,17 @@ export function Header() {
     setDismissedIds(new Set(alerts.map((a) => a.id)));
   };
 
-  const SEVERITY_STYLES: Record<string, { icon: string; border: string; bg: string; text: string }> = {
+  const SEVERITY_STYLES: Record<
+    string,
+    { icon: string; border: string; bg: string; text: string }
+  > = {
     critical: { icon: "🔴", border: "border-red-500/30", bg: "bg-red-500/5", text: "text-red-400" },
-    warning: { icon: "🟡", border: "border-amber-500/30", bg: "bg-amber-500/5", text: "text-amber-400" },
+    warning: {
+      icon: "🟡",
+      border: "border-amber-500/30",
+      bg: "bg-amber-500/5",
+      text: "text-amber-400",
+    },
     info: { icon: "🔵", border: "border-blue-500/30", bg: "bg-blue-500/5", text: "text-blue-400" },
   };
 
@@ -113,7 +121,7 @@ export function Header() {
           <div
             className={cn(
               "relative flex items-center transition-all duration-200",
-              isFocused && "scale-[1.02]"
+              isFocused && "scale-[1.02]",
             )}
           >
             <span className="absolute left-3 text-muted-foreground text-sm">⌕</span>
@@ -128,7 +136,7 @@ export function Header() {
               className={cn(
                 "w-full pl-8 pr-8 py-1.5 md:py-2 bg-muted border border-border rounded-xl text-xs md:text-sm",
                 "focus:outline-none focus:ring-2 focus:ring-nexus-500/30 focus:border-nexus-500/50",
-                "placeholder:text-muted-foreground/50 transition-all"
+                "placeholder:text-muted-foreground/50 transition-all",
               )}
             />
             <div className="absolute right-2 flex items-center gap-1">
@@ -155,7 +163,10 @@ export function Header() {
             {showQuickCreate && (
               <div className="absolute right-0 top-full mt-1.5 w-48 glass-card rounded-xl overflow-hidden animate-fade-in-up z-50">
                 <button
-                  onClick={() => { setShowQuickCreate(false); router.push("/items/new"); }}
+                  onClick={() => {
+                    setShowQuickCreate(false);
+                    router.push("/items/new");
+                  }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-all text-sm"
                 >
                   <span className="text-lg">🔗</span>
@@ -166,7 +177,10 @@ export function Header() {
                 </button>
                 <div className="border-t border-border/50" />
                 <button
-                  onClick={() => { setShowQuickCreate(false); router.push("/items/new?type=note"); }}
+                  onClick={() => {
+                    setShowQuickCreate(false);
+                    router.push("/items/new?type=note");
+                  }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-all text-sm"
                 >
                   <span className="text-lg">📝</span>
@@ -177,7 +191,10 @@ export function Header() {
                 </button>
                 <div className="border-t border-border/50" />
                 <button
-                  onClick={() => { setShowQuickCreate(false); router.push("/items/new?type=file"); }}
+                  onClick={() => {
+                    setShowQuickCreate(false);
+                    router.push("/items/new?type=file");
+                  }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-all text-sm"
                 >
                   <span className="text-lg">📄</span>
@@ -198,7 +215,7 @@ export function Header() {
                 "relative p-2 rounded-lg transition-colors",
                 showNotifications || notificationCount > 0
                   ? "bg-nexus-500/10 text-nexus-400"
-                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                  : "hover:bg-muted text-muted-foreground hover:text-foreground",
               )}
               title="Notifications & alerts"
             >
@@ -257,14 +274,12 @@ export function Header() {
                           className={cn(
                             "flex items-start gap-3 p-3 rounded-xl transition-all group",
                             style.bg,
-                            "hover:bg-card/80"
+                            "hover:bg-card/80",
                           )}
                         >
                           <span className="text-sm mt-0.5 shrink-0">{style.icon}</span>
                           <div className="flex-1 min-w-0">
-                            <p className={cn("text-xs font-medium", style.text)}>
-                              {alert.message}
-                            </p>
+                            <p className={cn("text-xs font-medium", style.text)}>{alert.message}</p>
                             {alert.details && (
                               <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
                                 {alert.details}
@@ -290,7 +305,10 @@ export function Header() {
                 {/* Footer */}
                 <div className="px-4 py-2.5 border-t border-border/50 shrink-0">
                   <button
-                    onClick={() => { setShowNotifications(false); router.push("/status"); }}
+                    onClick={() => {
+                      setShowNotifications(false);
+                      router.push("/status");
+                    }}
                     className="w-full text-xs text-center text-muted-foreground hover:text-foreground transition-colors py-1"
                   >
                     Go to System Status →

@@ -46,8 +46,6 @@ export type AlertId = (typeof ALERT_IDS)[number];
 /** Mapping: alertId → { channelId → enabled } */
 export type NotificationPreferences = Record<AlertId, Record<ChannelId, boolean>>;
 
-
-
 /** Default preferences — all alerts sent to all channels */
 export function getDefaultPreferences(): NotificationPreferences {
   const prefs: Partial<NotificationPreferences> = {};
@@ -98,9 +96,7 @@ export async function loadPreferences(): Promise<NotificationPreferences> {
 /**
  * Save notification preferences to Redis.
  */
-export async function savePreferences(
-  prefs: NotificationPreferences
-): Promise<boolean> {
+export async function savePreferences(prefs: NotificationPreferences): Promise<boolean> {
   try {
     const redis = getRedisConnection();
     await redis.set(PREFERENCES_KEY, JSON.stringify(prefs));
@@ -118,7 +114,7 @@ export async function savePreferences(
 export function shouldNotify(
   prefs: NotificationPreferences,
   alertId: string,
-  channel: ChannelId
+  channel: ChannelId,
 ): boolean {
   const alertPrefs = prefs[alertId as AlertId];
   if (!alertPrefs) return true; // Unknown alerts default to allowed

@@ -118,7 +118,7 @@ export interface HealthStatus {
  */
 export async function evaluateAlerts(
   status: HealthStatus,
-  previousAlertIds: Set<string> = new Set()
+  previousAlertIds: Set<string> = new Set(),
 ): Promise<Alert[]> {
   const now = new Date().toISOString();
   const alerts: Alert[] = [];
@@ -132,7 +132,8 @@ export async function evaluateAlerts(
       id: "redis_disconnected",
       severity: "critical",
       title: "Redis Disconnected",
-      message: "Redis connection is " + status.redis + ". AI processing and backfill are unavailable.",
+      message:
+        "Redis connection is " + status.redis + ". AI processing and backfill are unavailable.",
       firstSeen: now,
       lastSeen: now,
       fresh: !previousAlertIds.has("redis_disconnected"),
@@ -145,7 +146,9 @@ export async function evaluateAlerts(
       id: "backfill_repeated_failures",
       severity: "warning",
       title: "Backfill Failing Repeatedly",
-      message: status.consecutiveFailures + " consecutive backfill failures. Check Ollama and database connectivity.",
+      message:
+        status.consecutiveFailures +
+        " consecutive backfill failures. Check Ollama and database connectivity.",
       firstSeen: now,
       lastSeen: now,
       fresh: !previousAlertIds.has("backfill_repeated_failures"),

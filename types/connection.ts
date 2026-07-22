@@ -1,4 +1,5 @@
-export type ConnectionType = "semantic" | "temporal" | "manual" | "inferred" | "citation" | "domain";
+export type ConnectionType =
+  "semantic" | "temporal" | "manual" | "inferred" | "citation" | "domain";
 
 export interface Connection {
   id: string;
