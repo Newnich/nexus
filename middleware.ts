@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { validateApiKey } from "@/lib/auth/validate-api-key";
 
 // ── Rate limiting state (in-memory — resets on server restart) ──
@@ -31,6 +32,67 @@ const EXTERNAL_API_PREFIX = "/api/external/";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+
+  // ── Create base response for cookie handling ──
+  const response = NextResponse.next();
+
+  // ── Supabase session refresh (all routes except assets and external API) ──
+  if (!pathname.startsWith("/_next") && !pathname.startsWith("/api/external/")) {
+    try {
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll();
+            },
+            setAll(
+              cookiesToSet: {
+                name: string;
+                value: string;
+                options?: {
+                  path?: string;
+                  maxAge?: number;
+                  secure?: boolean;
+                  sameSite?: "lax" | "strict" | "none";
+                };
+              }[],
+            ) {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                response.cookies.set(name, value, options),
+              );
+            },
+          },
+        },
+      );
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Protect dashboard routes — redirect to login if unauthenticated
+      const isDashboardRoute =
+        pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/items") ||
+        pathname.startsWith("/collections") ||
+        pathname.startsWith("/graph") ||
+        pathname.startsWith("/search") ||
+        pathname.startsWith("/activity") ||
+        pathname.startsWith("/status") ||
+        pathname.startsWith("/settings") ||
+        pathname.startsWith("/tags");
+
+      if (isDashboardRoute && !user) {
+        const redirectUrl = new URL("/auth/login", request.url);
+        redirectUrl.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(redirectUrl);
+      }
+    } catch {
+      // Session refresh failed silently — allow request to continue
+      // The client-side components will redirect if needed
+    }
+  }
 
   // ── Rate limiting for API routes ──
   if (pathname.startsWith("/api/") && !pathname.startsWith("/api/health")) {
@@ -106,18 +168,17 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-nexus-user-id", result.userId);
     requestHeaders.set("x-nexus-key-id", result.keyId);
 
-    const response = NextResponse.next({
+    const apiResponse = NextResponse.next({
       request: { headers: requestHeaders },
     });
 
     // Add security headers
-    addSecurityHeaders(response);
+    addSecurityHeaders(apiResponse);
 
-    return response;
+    return apiResponse;
   }
 
   // ── Regular request — add security headers and proceed ──
-  const response = NextResponse.next();
   addSecurityHeaders(response);
   return response;
 }
@@ -142,7 +203,18 @@ function addSecurityHeaders(response: NextResponse) {
   }
 }
 
-// ── Config: covers all /api/* routes for rate limiting & security headers ──
+// ── Config: covers API routes for rate limiting + dashboard routes for session refresh ──
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: [
+    "/api/:path*",
+    "/dashboard/:path*",
+    "/items/:path*",
+    "/collections/:path*",
+    "/graph/:path*",
+    "/search/:path*",
+    "/activity/:path*",
+    "/status/:path*",
+    "/settings/:path*",
+    "/tags/:path*",
+  ],
 };

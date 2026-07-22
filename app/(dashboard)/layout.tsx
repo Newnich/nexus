@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -5,6 +6,15 @@ import { CommandPalette } from "@/components/command-palette";
 import { ShortcutsModal } from "@/components/shortcuts-modal";
 import { QuickCapture } from "@/components/quick-capture";
 import { ThemeProvider } from "@/components/theme-toggle";
+
+export const metadata: Metadata = {
+  title: {
+    template: "%s — NEXUS",
+    default: "Dashboard — NEXUS",
+  },
+  description:
+    "Your personal knowledge dashboard — saved items, collections, and AI-discovered connections.",
+};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
