@@ -1,0 +1,63 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# NEXUS — Git Attributes
+# ═══════════════════════════════════════════════════════════════════════════════
+# Normalizes line endings across Windows/macOS/Linux and configures
+# language-specific diff and merge strategies.
+#
+# See: https://git-scm.com/docs/gitattributes
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Auto-detect text files and normalize to LF ──
+* text=auto eol=lf
+
+# ── Source code ──
+*.ts        text diff=typescript
+*.tsx       text diff=typescript
+*.js        text diff=javascript
+*.jsx       text diff=javascript
+*.json      text diff=json
+*.css       text diff=css
+*.md        text diff=markdown
+*.html      text diff=html
+*.yml       text diff=yaml
+*.yaml      text diff=yaml
+*.sh        text eol=lf
+.husky/pre-commit text eol=lf
+
+# ── Configuration ──
+*.env       text
+*.env.*     text
+.gitignore  text
+.editorconfig text
+.prettierrc text
+.eslintrc.* text
+
+# ── Makefile (requires LF and tabs) ──
+Makefile    text eol=lf
+Dockerfile  text eol=lf
+Dockerfile.* text eol=lf
+
+# ── Binary files (don't touch) ──
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.svg       binary
+*.webp      binary
+*.avif      binary
+*.woff      binary
+*.woff2     binary
+*.eot       binary
+*.ttf       binary
+*.otf       binary
+*.zip       binary
+*.tar.gz    binary
+*.gz        binary
+*.lock      binary
+
+# ── Generated / vendor files ──
+package-lock.json binary
+.next/**        -text
+out/**          -text
+node_modules/** -text
