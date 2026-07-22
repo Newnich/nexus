@@ -219,7 +219,7 @@ export default function MyItemsLoading() {
     <PageSkeleton
       titleWidth="w-32"
       subtitleWidth="w-56"
-      actionWidths={["w-32", "w-28"]}
+      actionWidths={["w-32"]}
       searchBar
       filterCount={4}
     >
