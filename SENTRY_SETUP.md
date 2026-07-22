@@ -103,13 +103,6 @@ Open your browser console and run:
 throw new Error("NEXUS Sentry test error - safe to ignore");
 ```
 
-Or use the Sentry SDK directly (if you have the browser console open on your app):
-
-```js
-// This will appear in Sentry's Issues dashboard
-await fetch("/api/sentry-test", { method: "POST" });
-```
-
 ### 3. Check Sentry Dashboard
 
 1. Go to **sentry.io** → **Issues** (sidebar)
