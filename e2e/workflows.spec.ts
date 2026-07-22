@@ -29,7 +29,7 @@ test.describe("Quick Capture", () => {
       .locator('input[placeholder*="url"i]')
       .first()
       .fill("https://example.com/test-quick-capture");
-    const submitBtn = page.locator("button:has-text('Add')").first();
+    const submitBtn = page.locator("button:has-text('Save')").first();
     if (await submitBtn.isVisible()) {
       await submitBtn.click();
       // Should show a success toast or the item appears

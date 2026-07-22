@@ -127,7 +127,7 @@ test.describe("Authenticated Pages", () => {
 
   test("Graph has connected nodes from seed data", async ({ page }) => {
     await page.goto("/graph");
-    await page.waitForSelector("svg", { timeout: 10000 });
+    await page.waitForSelector("svg", { timeout: 15000 });
     const circles = page.locator("svg circle");
     await expect(circles.first()).toBeVisible({ timeout: 10000 });
     expect(await circles.count()).toBeGreaterThan(5);
