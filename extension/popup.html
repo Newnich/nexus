@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Save to NEXUS</title>
+  <style>
+    :root {
+      --bg: #0a0a1a;
+      --card: #0f0f2e;
+      --border: #1e1e3a;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #818cf8;
+      --accent-hover: #6366f1;
+      --success: #22c55e;
+      --error: #ef4444;
+      --radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 360px;
+      min-height: 200px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .logo {
+      font-size: 24px;
+      color: var(--accent);
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: none;
+      border-radius: var(--radius);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      padding: 6px;
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); color: var(--text); }
+
+    .status {
+      font-size: 12px;
+      text-align: center;
+      padding: 8px;
+      border-radius: 8px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .status.success { display: block; background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.2); }
+    .status.error { display: block; background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+    .settings-toggle {
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .settings-toggle:hover { color: var(--accent); }
+
+    .settings-panel { display: none; }
+    .settings-panel.visible { display: block; }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">⟠</span>
+    <div>
+      <div class="title">NEXUS</div>
+      <div class="subtitle">Save to Knowledge OS</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="field-label">Title</div>
+    <input type="text" id="title" placeholder="Page title..." />
+  </div>
+
+  <div class="card">
+    <div class="field-label">URL / Content</div>
+    <input type="text" id="url" placeholder="URL or text..." />
+  </div>
+
+  <div class="card">
+    <div class="field-label">Type</div>
+    <select id="type">
+      <option value="link">🔗 Link</option>
+      <option value="note">📝 Note</option>
+      <option value="file">📄 File</option>
+    </select>
+  </div>
+
+  <button class="btn" id="saveBtn">
+    <span>⟠</span>
+    Save to NEXUS
+  </button>
+
+  <div class="status" id="status"></div>
+
+  <div class="settings-toggle" id="settingsToggle">⚙ Settings</div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <div class="card" style="margin-top: 8px;">
+      <div class="field-label">Server URL</div>
+      <input type="text" id="serverUrl" placeholder="http://localhost:3000" />
+    </div>
+    <div class="card">
+      <div class="field-label">API Key</div>
+      <input type="password" id="apiKey" placeholder="nx_..." />
+    </div>
+    <button class="btn btn-secondary" id="saveSettingsBtn">Save Settings</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
