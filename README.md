@@ -263,18 +263,47 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide, includin
 
 ### Available Commands
 
-| Command              | Description                         |
-| -------------------- | ----------------------------------- |
-| `npm run dev`        | Start development server            |
-| `npm run build`      | Production build                    |
-| `npm start`          | Start production server             |
-| `npm run typecheck`  | TypeScript type checking            |
-| `npm run lint`       | ESLint                              |
-| `npm run seed`       | Seed test data                      |
-| `npm run migrate`    | Run database migrations             |
-| `npm run worker`     | Start AI worker in production       |
-| `npm run worker:dev` | Start AI worker in dev mode (watch) |
-| `npm run test:e2e`   | Run Playwright E2E tests            |
+| Command                | Description                         |
+| ---------------------- | ----------------------------------- |
+| `npm run dev`          | Start development server            |
+| `npm run build`        | Production build                    |
+| `npm start`            | Start production server             |
+| `npm run typecheck`    | TypeScript type checking            |
+| `npm run lint`         | ESLint                              |
+| `npm run seed`         | Seed test data                      |
+| `npm run migrate`      | Run database migrations             |
+| `npm run worker`       | Start AI worker in production       |
+| `npm run worker:dev`   | Start AI worker in dev mode (watch) |
+| `npm run test:e2e`     | Run Playwright E2E tests            |
+| `npm run format`       | Auto-format all source files        |
+| `npm run format:check` | Check formatting without writing    |
+| `npm run db:reset`     | Reset and re-seed the database      |
+| `npm run prepare`      | Install Git hooks (Husky)           |
+
+### Automation & Quality
+
+The project includes several automation tools to maintain code quality:
+
+**Pre-commit Hooks (Husky + lint-staged)** — On every commit, staged files are automatically formatted with Prettier and linted with ESLint. This ensures no unformatted or broken code lands in the repository.
+
+**Makefile** — Convenience commands for common workflows:
+
+```bash
+make check      # Run typecheck + lint + format-check (use before pushing)
+make dev        # Start the development server
+make build      # Production build
+make lint       # Run ESLint
+make format     # Format all files with Prettier
+make seed       # Seed test data
+make docker-up  # docker compose up -d
+make docker-down# docker compose down
+```
+
+**Dependabot** — Automated dependency updates for npm, Docker, and GitHub Actions, grouped by production/dev with auto-assigned reviewers.
+
+**EditorConfig** — Consistent editor settings across all IDEs (`.editorconfig`).
+
+**Git Attributes** — Normalized LF line endings across Windows/macOS/Linux (`.gitattributes`).
 
 ---
 
