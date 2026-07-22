@@ -81,7 +81,16 @@ test.describe("Item CRUD", () => {
     const uniqueTitle = `E2E Detail Test ${Date.now()}`;
     await createTestItem(page, uniqueTitle, "https://example.com/e2e-detail");
 
-    // Detail page should show the title
+    // Navigate to items list to find the newly created item
+    await page.goto("/items");
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
+    // Click the item to go to its detail page
+    const itemLink = page.getByText(uniqueTitle).first();
+    await itemLink.waitFor({ state: "visible", timeout: 10000 });
+    await itemLink.click();
+    // Detail page should show the title in an h1
     await expect(page.locator("h1").filter({ hasText: uniqueTitle })).toBeVisible({
       timeout: 10000,
     });
