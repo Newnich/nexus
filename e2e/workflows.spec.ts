@@ -237,7 +237,7 @@ test.describe("Settings Pages", () => {
 
   test("Import/Export page loads", async ({ page }) => {
     await page.goto("/settings/import-export");
-    await expect(page.getByText(/import/i).or(page.getByText(/export/i))).toBeVisible({
+    await expect(page.locator("h1").filter({ hasText: /Import & Export/i })).toBeVisible({
       timeout: 10000,
     });
   });
@@ -271,7 +271,7 @@ test.describe("Activity and Status", () => {
 
   test("System status page loads", async ({ page }) => {
     await page.goto("/status");
-    await expect(page.getByText(/status/i).or(page.getByText(/health/i))).toBeVisible({
+    await expect(page.locator("h1").filter({ hasText: /System Status/i })).toBeVisible({
       timeout: 10000,
     });
   });
@@ -295,17 +295,18 @@ test.describe("Graph Interactions", () => {
     const edges = svg.locator("line");
     await expect(edges.first()).toBeVisible({ timeout: 5000 });
   });
-
   test("Graph nodes can be clicked", async ({ page }) => {
     await page.goto("/graph");
     await page.waitForSelector("svg circle", { timeout: 10000 });
+    // Wait for simulation to settle — circles should be stable
+    await page.waitForTimeout(2000);
     const circles = page.locator("svg circle");
     const count = await circles.count();
     if (count > 0) {
-      await circles.first().click();
-      // Clicking a node should show a tooltip or popover
-      await page.waitForTimeout(1000);
-      // Check if any popover/tooltip appeared
+      await circles.first().waitFor({ state: "visible", timeout: 5000 });
+      await circles.first().click({ force: true });
+      // Clicking a node should navigate or show a tooltip/popover
+      await page.waitForTimeout(1500);
       const tooltip = page.locator("[role='tooltip'], .popover, .tooltip").first();
       await expect(tooltip)
         .toBeVisible({ timeout: 5000 })
