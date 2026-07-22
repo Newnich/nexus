@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn, formatDateRelative } from "@/lib/utils";
+import { CollectionSkeleton } from "@/components/collection-skeleton";
 
 interface CollectionItem {
   id: string;
@@ -92,11 +93,7 @@ export default function CollectionsPage() {
             <div key={i} className="h-9 w-28 skeleton rounded-lg" />
           ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-48 skeleton rounded-2xl" />
-          ))}
-        </div>
+        <CollectionSkeleton count={4} />
       </div>
     );
   }

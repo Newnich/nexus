@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { formatDateRelative } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { formatDateRelative, cn } from "@/lib/utils";
+import { ActivitySkeleton } from "@/components/activity-skeleton";
 
 interface ActivityEntry {
   id: string;
@@ -167,13 +167,7 @@ export default function ActivityPage() {
       </div>
 
       {/* ── Loading ── */}
-      {loading && (
-        <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 skeleton rounded-2xl" />
-          ))}
-        </div>
-      )}
+      {loading && <ActivitySkeleton count={5} />}
 
       {/* ── Error ── */}
       {error && !loading && (
