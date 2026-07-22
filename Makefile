@@ -227,7 +227,9 @@ worker-dev:
 # ── Testing ──
 # ═══════════════════════════════════════════════════════════════════════════════
 
-test:
+test: test-e2e
+
+test-e2e:
 	npm run test:e2e
 
 test-ui:

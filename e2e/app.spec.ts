@@ -1,21 +1,5 @@
 import { test, expect } from "@playwright/test";
-
-// ═════════════════════════════════════════════════════════════════════════════
-// Config
-// ═════════════════════════════════════════════════════════════════════════════
-
-const TEST_EMAIL = "demo@nexus.app";
-const TEST_PASSWORD = "demo123456";
-
-/** Sign in via the browser login form */
-async function signIn(page: import("@playwright/test").Page) {
-  await page.goto("/auth/login");
-  await page.waitForSelector('input[type="email"]', { timeout: 15000 });
-  await page.fill('input[type="email"]', TEST_EMAIL);
-  await page.fill('input[type="password"]', TEST_PASSWORD);
-  await page.click('button[type="submit"]');
-  await page.waitForURL("**/dashboard", { timeout: 15000 });
-}
+import { signIn, TEST_EMAIL, TEST_PASSWORD } from "./helpers";
 
 // ═════════════════════════════════════════════════════════════════════════════
 // Auth & Public Pages
