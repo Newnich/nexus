@@ -64,6 +64,25 @@ jobs:
       - name: Seed test data
         run: npx tsx scripts/seed.ts
 
+      - name: Seed Redis defaults
+        run: |
+          node -e "
+            const Redis = require('ioredis');
+            const redis = new Redis({ host: 'localhost', port: 6379, maxRetriesPerRequest: null });
+            redis.set('nexus:alert:thresholds', JSON.stringify({
+              consecutiveFailuresThreshold: 3,
+              workerInactivityHours: 2,
+              backlogThreshold: 1000
+            }));
+            redis.set('nexus:notification:cooldowns', JSON.stringify({
+              slack: 30,
+              discord: 30,
+              email: 30
+            }));
+            redis.quit();
+            console.log('Redis defaults seeded');
+          "
+
       - name: Build production app
         run: npm run build
 
