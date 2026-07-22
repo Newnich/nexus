@@ -5,35 +5,20 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/sentry-test
  *
- * Deliberately throws an error to verify Sentry error tracking is working.
+ * Deliberately throws an unhandled error to verify Sentry error tracking.
+ * Sentry's withSentryConfig wrapper auto-captures unhandled exceptions in
+ * API routes, so this error will appear in the Sentry Issues dashboard.
  * Used during setup and onboarding (see SENTRY_SETUP.md).
  *
- * Response: Always returns a 500 with a description of the test error.
+ * Response: Always returns a 500 (Next.js default for unhandled errors).
  */
 export async function POST() {
   console.info("[SentryTest] Triggering test error for Sentry verification...");
 
-  try {
-    // Throw a well-typed error that Sentry can capture
-    throw new Error(
-      "Sentry test error — this is a deliberate error to verify Sentry " +
-        "error tracking is properly configured. Safe to ignore.",
-    );
-  } catch (error) {
-    // Notify Sentry explicitly (it will auto-capture the uncaught throw too,
-    // but this ensures we get a breadcrumb trail)
-    console.error("[SentryTest] Test error thrown:", error);
-
-    return NextResponse.json(
-      {
-        status: "error",
-        message:
-          "Test error thrown successfully. If Sentry is configured, this error " +
-          "should appear in your Sentry Issues dashboard within 30 seconds.",
-        sentryTest: true,
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 },
-    );
-  }
+  // Intentionally unhandled — Sentry's instrumentation catches this and
+  // sends it to the Issues dashboard as a full error event with stack trace.
+  throw new Error(
+    "Sentry test error — this is a deliberate error to verify Sentry " +
+      "error tracking is properly configured. Safe to ignore.",
+  );
 }

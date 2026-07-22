@@ -23,8 +23,8 @@ We provide security updates for the following versions:
 
 If you discover a security vulnerability, please report it privately to minimize risk to users:
 
-1. **Email**: [newton@withnexus.com](mailto:newton@withnexus.com)
-2. **GitHub**: Create a [Security Advisory](https://github.com/Newnich/nexus/security/advisories/new)
+1. **GitHub**: Create a [Security Advisory](https://github.com/Newnich/nexus/security/advisories/new)
+2. **Email**: [security@yourdomain.com](mailto:security@yourdomain.com) _(replace with your actual security contact)_
 
 Do **not** file a public GitHub issue for security vulnerabilities.
 
@@ -143,7 +143,7 @@ We use automated tools to keep dependencies secure:
 
 If you believe a security incident is in progress:
 
-1. **Immediately**: [Contact the maintainer](mailto:newton@withnexus.com)
+1. **Immediately**: Contact the maintainer via the email in the Security Advisory or your internal on-call
 2. **Contain**: Rotate affected credentials (API keys, database passwords)
 3. **Assess**: Determine the scope and impact of the incident
 4. **Remediate**: Apply the fix and verify
