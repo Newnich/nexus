@@ -54,13 +54,15 @@ This starts:
 
 ### 4. Run Database Migrations
 
-```bash
-# Apply schema
-psql "$DATABASE_URL" -f schema.sql
+Run these SQL files in your Supabase SQL Editor (Dashboard → SQL Editor) or via `psql`:
 
-# Enable pgvector extension
-psql "$DATABASE_URL" -f migration_pgvector.sql
+```bash
+# Get your DATABASE_URL from Supabase Dashboard → Settings → Database
+psql "postgresql://postgres:password@db.xxx.supabase.co:5432/postgres" -f schema.sql
+psql "postgresql://postgres:password@db.xxx.supabase.co:5432/postgres" -f migration_pgvector.sql
 ```
+
+Or copy-paste the contents of `schema.sql` and `migration_pgvector.sql` into the Supabase SQL Editor directly.
 
 ### 5. Seed Initial Data (Optional)
 
@@ -110,7 +112,7 @@ docker compose run --rm worker
 Or run standalone:
 
 ```bash
-pnpm tsx workers/ai-worker.ts
+npx tsx workers/ai-worker.ts
 ```
 
 ---
@@ -128,7 +130,7 @@ GitHub branch protection is enabled on `master`:
 ### API Rate Limiting
 
 - **60 requests per minute per IP** on all API routes
-- Configured in middleware and per-route via `lib/rate-limit.ts`
+- Configured in the middleware layer and per-route
 
 ### API Keys (External Integrations)
 
@@ -194,30 +196,28 @@ If deployed on Vercel, page views and web vitals are automatically tracked (via 
 ### Database Backups
 
 ```bash
-# Export Supabase data
-pg_dump "$DATABASE_URL" > backup_$(date +%Y%m%d).sql
+# Get your DATABASE_URL from Supabase Dashboard → Settings → Database → Connection string
+pg_dump "postgresql://postgres:password@db.xxx.supabase.co:5432/postgres" > backup_$(date +%Y%m%d).sql
 
 # Restore
-psql "$DATABASE_URL" < backup.sql
+psql "postgresql://postgres:password@db.xxx.supabase.co:5432/postgres" < backup.sql
 ```
 
 ### Resetting the Database
 
 ```bash
-# Drop and recreate schema
-psql "$DATABASE_URL" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-psql "$DATABASE_URL" -f schema.sql
+# Get your DATABASE_URL from Supabase Dashboard → Settings → Database → Connection string
+psql "postgresql://postgres:password@db.xxx.supabase.co:5432/postgres" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+psql "postgresql://postgres:password@db.xxx.supabase.co:5432/postgres" -f schema.sql
 npx tsx scripts/seed.ts
 ```
 
 ### Backfill Missing AI Data
 
-The backfill scanner runs automatically on a cron schedule (`*/15 * * * *` by default). To trigger manually:
+The backfill scanner runs automatically on a cron schedule (`*/15 * * * *` by default). To trigger manually, set `BACKFILL_ENABLED=true` and restart the worker, or run:
 
 ```bash
-# Trigger via API (requires API key)
-curl -X POST https://your-nexus.app/api/queue/backfill \
-  -H "X-API-Key: nx_YOUR_API_KEY"
+npx tsx scripts/backfill.mjs
 ```
 
 ---
@@ -230,7 +230,7 @@ curl -X POST https://your-nexus.app/api/queue/backfill \
 | Ollama not responding     | Run `ollama serve` on the host. Check `OLLAMA_URL`. Ensure models are pulled.             |
 | AI jobs stuck in queue    | Restart the worker: `docker compose restart worker`. Check Redis connectivity.            |
 | Pages not loading         | Check Supabase credentials. Verify `NEXT_PUBLIC_SUPABASE_URL` is correct.                 |
-| Rate limited              | Wait 1 minute. Consider increasing rate limit in `lib/rate-limit.ts`.                     |
+| Rate limited              | Wait 1 minute. Rate limits are configured in the middleware layer.                        |
 | Worker crashes on startup | The worker auto-retries 5 times with exponential backoff. Check Ollama is reachable.      |
 
 ---
