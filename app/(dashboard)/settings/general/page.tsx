@@ -78,19 +78,27 @@ const ALERTS: AlertInfo[] = [
 
 function severityBadge(severity: string): string {
   switch (severity) {
-    case "critical": return "bg-red-500/10 text-red-400";
-    case "warning": return "bg-yellow-500/10 text-yellow-400";
-    case "info": return "bg-blue-500/10 text-blue-400";
-    default: return "bg-muted text-muted-foreground";
+    case "critical":
+      return "bg-red-500/10 text-red-400";
+    case "warning":
+      return "bg-yellow-500/10 text-yellow-400";
+    case "info":
+      return "bg-blue-500/10 text-blue-400";
+    default:
+      return "bg-muted text-muted-foreground";
   }
 }
 
 function severityIcon(severity: string): string {
   switch (severity) {
-    case "critical": return "🔴";
-    case "warning": return "🟡";
-    case "info": return "🔵";
-    default: return "⚪";
+    case "critical":
+      return "🔴";
+    case "warning":
+      return "🟡";
+    case "info":
+      return "🔵";
+    default:
+      return "⚪";
   }
 }
 
@@ -254,7 +262,10 @@ export default function GeneralSettingsPage() {
           <h2 className="text-xl font-semibold mb-2">Could not load preferences</h2>
           <p className="text-muted-foreground mb-6">Make sure Redis is running and try again.</p>
           <button
-            onClick={() => { setLoading(true); fetchPreferences(); }}
+            onClick={() => {
+              setLoading(true);
+              fetchPreferences();
+            }}
             className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
           >
             Retry
@@ -275,11 +286,7 @@ export default function GeneralSettingsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {dirty && (
-            <span className="text-xs text-yellow-400 font-medium">
-              Unsaved changes
-            </span>
-          )}
+          {dirty && <span className="text-xs text-yellow-400 font-medium">Unsaved changes</span>}
 
           {/* Reset to Defaults */}
           <button
@@ -341,7 +348,9 @@ export default function GeneralSettingsPage() {
                   <div className="flex items-center gap-2">
                     <span>{severityIcon(alert.severity)}</span>
                     <span className="text-sm font-medium">{alert.title}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium ${severityBadge(alert.severity)}`}>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium ${severityBadge(alert.severity)}`}
+                    >
                       {alert.severity}
                     </span>
                   </div>
@@ -407,8 +416,8 @@ export default function GeneralSettingsPage() {
               <h3 className="text-lg font-semibold">Reset to Defaults?</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
-              This will enable <strong>all notification routes</strong> — every alert will be sent to
-              every configured channel. Any custom toggles you've set will be lost.
+              This will enable <strong>all notification routes</strong> — every alert will be sent
+              to every configured channel. Any custom toggles you've set will be lost.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
@@ -446,7 +455,9 @@ export default function GeneralSettingsPage() {
                 Configure when system alerts are triggered (failures, inactivity, backlog)
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
           <Link
             href="/settings/notifications"
@@ -461,7 +472,9 @@ export default function GeneralSettingsPage() {
                 Configure webhook URLs, test channels, view notification history
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
           <Link
             href="/status"
@@ -476,7 +489,9 @@ export default function GeneralSettingsPage() {
                 Monitor Redis, queues, backfill, and system health
               </p>
             </div>
-            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">→</span>
+            <span className="ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform shrink-0">
+              →
+            </span>
           </Link>
         </div>
       </div>

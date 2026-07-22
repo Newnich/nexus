@@ -4,7 +4,7 @@ import { backfillQueue } from "@/lib/queue/backfill";
 import { getRedisConnection } from "@/lib/queue/config";
 import { createServiceClient } from "@/lib/supabase/server";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const CURSOR_KEY = "nexus:backfill:cursor";
 
@@ -47,9 +47,7 @@ export async function GET() {
       redis.get(CURSOR_KEY).catch(() => null),
     ]);
 
-    const nextBackfill = backfillSchedulers.length > 0
-      ? backfillSchedulers[0].next
-      : null;
+    const nextBackfill = backfillSchedulers.length > 0 ? backfillSchedulers[0].next : null;
 
     // Get unprocessed item count from database
     let unprocessedCount: number | null = null;
@@ -156,7 +154,7 @@ export async function GET() {
         database: null,
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

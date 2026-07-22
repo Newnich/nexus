@@ -152,7 +152,13 @@ const SEED_ITEMS: SeedItem[] = [
     },
     is_favorite: true,
     category: "AI",
-    tags: ["rag", "retrieval-augmented-generation", "llm", "knowledge-management", "ai-architecture"],
+    tags: [
+      "rag",
+      "retrieval-augmented-generation",
+      "llm",
+      "knowledge-management",
+      "ai-architecture",
+    ],
     summary:
       "Personal notes on RAG systems: how they combine retrieval with generative AI, key benefits like reduced hallucinations and source transparency, and architecture considerations for effective implementation.",
     keyPoints: [
@@ -634,35 +640,149 @@ interface SeedConnection {
 // Connections based on thematic similarity between items
 const SEED_CONNECTIONS: SeedConnection[] = [
   // AI cluster
-  { fromIndex: 0, toIndex: 1, strength: 0.85, type: "semantic", description: "Both cover AI technology topics - software dev and transformers" },
-  { fromIndex: 0, toIndex: 2, strength: 0.75, type: "semantic", description: "AI development tools relate to RAG systems architecture" },
-  { fromIndex: 1, toIndex: 3, strength: 0.8, type: "semantic", description: "Transformer architectures are the foundation of modern deep learning" },
-  { fromIndex: 2, toIndex: 4, strength: 0.7, type: "semantic", description: "RAG discussion relates to team's AI strategy decisions" },
-  { fromIndex: 1, toIndex: 2, strength: 0.65, type: "semantic", description: "Understanding transformers helps in building RAG systems" },
+  {
+    fromIndex: 0,
+    toIndex: 1,
+    strength: 0.85,
+    type: "semantic",
+    description: "Both cover AI technology topics - software dev and transformers",
+  },
+  {
+    fromIndex: 0,
+    toIndex: 2,
+    strength: 0.75,
+    type: "semantic",
+    description: "AI development tools relate to RAG systems architecture",
+  },
+  {
+    fromIndex: 1,
+    toIndex: 3,
+    strength: 0.8,
+    type: "semantic",
+    description: "Transformer architectures are the foundation of modern deep learning",
+  },
+  {
+    fromIndex: 2,
+    toIndex: 4,
+    strength: 0.7,
+    type: "semantic",
+    description: "RAG discussion relates to team's AI strategy decisions",
+  },
+  {
+    fromIndex: 1,
+    toIndex: 2,
+    strength: 0.65,
+    type: "semantic",
+    description: "Understanding transformers helps in building RAG systems",
+  },
 
   // Web Dev cluster
-  { fromIndex: 5, toIndex: 6, strength: 0.9, type: "semantic", description: "Next.js and React Server Components are closely related" },
-  { fromIndex: 5, toIndex: 7, strength: 0.6, type: "semantic", description: "API design is part of full-stack Next.js development" },
-  { fromIndex: 6, toIndex: 8, strength: 0.55, type: "semantic", description: "React architecture relates to microservices system design" },
-  { fromIndex: 7, toIndex: 9, strength: 0.65, type: "semantic", description: "API design and database performance are both backend concerns" },
-  { fromIndex: 5, toIndex: 9, strength: 0.7, type: "semantic", description: "Next.js apps often use PostgreSQL for data persistence" },
+  {
+    fromIndex: 5,
+    toIndex: 6,
+    strength: 0.9,
+    type: "semantic",
+    description: "Next.js and React Server Components are closely related",
+  },
+  {
+    fromIndex: 5,
+    toIndex: 7,
+    strength: 0.6,
+    type: "semantic",
+    description: "API design is part of full-stack Next.js development",
+  },
+  {
+    fromIndex: 6,
+    toIndex: 8,
+    strength: 0.55,
+    type: "semantic",
+    description: "React architecture relates to microservices system design",
+  },
+  {
+    fromIndex: 7,
+    toIndex: 9,
+    strength: 0.65,
+    type: "semantic",
+    description: "API design and database performance are both backend concerns",
+  },
+  {
+    fromIndex: 5,
+    toIndex: 9,
+    strength: 0.7,
+    type: "semantic",
+    description: "Next.js apps often use PostgreSQL for data persistence",
+  },
 
   // Design cluster
-  { fromIndex: 10, toIndex: 11, strength: 0.8, type: "semantic", description: "Design system implementation informs weekly design reviews" },
-  { fromIndex: 10, toIndex: 12, strength: 0.75, type: "semantic", description: "Design systems produce dashboard mockups and patterns" },
-  { fromIndex: 11, toIndex: 12, strength: 0.6, type: "semantic", description: "Design review feedback leads to updated mockups" },
+  {
+    fromIndex: 10,
+    toIndex: 11,
+    strength: 0.8,
+    type: "semantic",
+    description: "Design system implementation informs weekly design reviews",
+  },
+  {
+    fromIndex: 10,
+    toIndex: 12,
+    strength: 0.75,
+    type: "semantic",
+    description: "Design systems produce dashboard mockups and patterns",
+  },
+  {
+    fromIndex: 11,
+    toIndex: 12,
+    strength: 0.6,
+    type: "semantic",
+    description: "Design review feedback leads to updated mockups",
+  },
 
   // Science cluster
-  { fromIndex: 13, toIndex: 14, strength: 0.5, type: "semantic", description: "Climate science and systems thinking are connected through complex systems" },
-  { fromIndex: 14, toIndex: 15, strength: 0.45, type: "semantic", description: "Systems thinking principles apply to understanding quantum mechanics" },
+  {
+    fromIndex: 13,
+    toIndex: 14,
+    strength: 0.5,
+    type: "semantic",
+    description: "Climate science and systems thinking are connected through complex systems",
+  },
+  {
+    fromIndex: 14,
+    toIndex: 15,
+    strength: 0.45,
+    type: "semantic",
+    description: "Systems thinking principles apply to understanding quantum mechanics",
+  },
 
   // Productivity cluster
-  { fromIndex: 16, toIndex: 17, strength: 0.85, type: "semantic", description: "Remote productivity tips directly inform personal workflow optimization" },
+  {
+    fromIndex: 16,
+    toIndex: 17,
+    strength: 0.85,
+    type: "semantic",
+    description: "Remote productivity tips directly inform personal workflow optimization",
+  },
 
   // Cross-domain
-  { fromIndex: 0, toIndex: 5, strength: 0.4, type: "semantic", description: "AI-assisted development relates to modern web frameworks" },
-  { fromIndex: 2, toIndex: 16, strength: 0.35, type: "semantic", description: "Both discuss optimization and efficiency in different contexts" },
-  { fromIndex: 10, toIndex: 5, strength: 0.5, type: "semantic", description: "Design systems and web development overlap in frontend implementation" },
+  {
+    fromIndex: 0,
+    toIndex: 5,
+    strength: 0.4,
+    type: "semantic",
+    description: "AI-assisted development relates to modern web frameworks",
+  },
+  {
+    fromIndex: 2,
+    toIndex: 16,
+    strength: 0.35,
+    type: "semantic",
+    description: "Both discuss optimization and efficiency in different contexts",
+  },
+  {
+    fromIndex: 10,
+    toIndex: 5,
+    strength: 0.5,
+    type: "semantic",
+    description: "Design systems and web development overlap in frontend implementation",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -677,7 +797,9 @@ async function main() {
   // ── Connect to Supabase ──
   const { url, serviceKey } = loadEnv();
   if (!url || !serviceKey) {
-    console.error("❌ Missing Supabase credentials. Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in .env.local");
+    console.error(
+      "❌ Missing Supabase credentials. Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in .env.local",
+    );
     process.exit(1);
   }
 
@@ -698,11 +820,14 @@ async function main() {
 
   if (existingUser) {
     userId = existingUser.id;
-    console.log(`   ✅ Found existing user: ${existingUser.name || existingUser.email} (${userId})`);
+    console.log(
+      `   ✅ Found existing user: ${existingUser.name || existingUser.email} (${userId})`,
+    );
   } else {
     // Check auth users table
     const { data: authUsers } = await supabase.auth.admin.listUsers();
-    const usersList = (authUsers as { users: Array<{ id: string; email?: string }> } | null)?.users || [];
+    const usersList =
+      (authUsers as { users: Array<{ id: string; email?: string }> } | null)?.users || [];
     const authUser = usersList.find((u) => u.email === TARGET_EMAIL);
 
     if (authUser) {
@@ -804,16 +929,19 @@ async function main() {
   for (const col of SEED_COLLECTIONS) {
     const { data, error } = await supabase
       .from("collections")
-      .upsert({
-        user_id: userId,
-        name: col.name,
-        description: col.description,
-        type: col.type,
-        icon: col.icon,
-        color: col.color,
-        visibility: col.visibility,
-        item_count: col.itemIndices.length,
-      }, { onConflict: "user_id, name" })
+      .upsert(
+        {
+          user_id: userId,
+          name: col.name,
+          description: col.description,
+          type: col.type,
+          icon: col.icon,
+          color: col.color,
+          visibility: col.visibility,
+          item_count: col.itemIndices.length,
+        },
+        { onConflict: "user_id, name" },
+      )
       .select("id")
       .single();
 
@@ -849,26 +977,24 @@ async function main() {
   // ── Step 4: Create connections ──
   console.log(`\n🔗 Creating ${SEED_CONNECTIONS.length} connections...`);
 
-  const connectionRecords = SEED_CONNECTIONS
-    .map((conn) => {
-      const fromId = itemIds[conn.fromIndex];
-      const toId = itemIds[conn.toIndex];
-      if (!fromId || !toId) return null;
-      return {
-        user_id: userId,
-        from_item_id: fromId,
-        to_item_id: toId,
-        type: conn.type,
-        strength: conn.strength,
-        description: conn.description,
-      };
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
+  const connectionRecords = SEED_CONNECTIONS.map((conn) => {
+    const fromId = itemIds[conn.fromIndex];
+    const toId = itemIds[conn.toIndex];
+    if (!fromId || !toId) return null;
+    return {
+      user_id: userId,
+      from_item_id: fromId,
+      to_item_id: toId,
+      type: conn.type,
+      strength: conn.strength,
+      description: conn.description,
+    };
+  }).filter((r): r is NonNullable<typeof r> => r !== null);
 
-  const { error: connError } = await supabase.from("connections").upsert(
-    connectionRecords,
-    { onConflict: "from_item_id, to_item_id, type", ignoreDuplicates: true }
-  );
+  const { error: connError } = await supabase.from("connections").upsert(connectionRecords, {
+    onConflict: "from_item_id, to_item_id, type",
+    ignoreDuplicates: true,
+  });
 
   if (connError) {
     console.error(`   ⚠️  Warning creating connections:`, connError.message);
@@ -1005,9 +1131,9 @@ async function main() {
   // Insert in batches (insert only, no upsert — ai_queue has no unique constraint on item_id)
   for (let i = 0; i < queueEntries.length; i += BATCH_SIZE) {
     const batch = queueEntries.slice(i, i + BATCH_SIZE);
-    const { error: qError } = await supabase.from("ai_queue").insert(
-      batch.map((e) => ({ item_id: e.item_id, status: e.status }))
-    );
+    const { error: qError } = await supabase
+      .from("ai_queue")
+      .insert(batch.map((e) => ({ item_id: e.item_id, status: e.status })));
     if (qError) {
       console.error(`   ⚠️  Warning creating queue entries:`, qError.message);
     }
@@ -1029,7 +1155,9 @@ async function main() {
   console.log(`   📋 Activity Log:   ${activityEntries.length}`);
   console.log(`   📋 AI Queue:       ${queueEntries.length}\n`);
   console.log("   Sign in with: demo@nexus.app / demo123456\n");
-  console.log("   If the user doesn't exist, create them in Supabase Auth first,\n   then re-run this script.\n");
+  console.log(
+    "   If the user doesn't exist, create them in Supabase Auth first,\n   then re-run this script.\n",
+  );
 }
 
 main().catch((err) => {

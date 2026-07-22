@@ -6,11 +6,7 @@ import { ShortcutsModal } from "@/components/shortcuts-modal";
 import { QuickCapture } from "@/components/quick-capture";
 import { ThemeProvider } from "@/components/theme-toggle";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-background">

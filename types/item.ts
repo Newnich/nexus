@@ -1,4 +1,5 @@
-export type ItemType = "link" | "note" | "file" | "image" | "screenshot" | "voice_memo" | "pdf" | "video";
+export type ItemType =
+  "link" | "note" | "file" | "image" | "screenshot" | "voice_memo" | "pdf" | "video";
 
 export type ItemVisibility = "private" | "team" | "public";
 

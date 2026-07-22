@@ -26,24 +26,22 @@ export async function middleware(request: NextRequest) {
     // Extract API key from Authorization header or X-API-Key header
     const authHeader = request.headers.get("Authorization") || "";
     const apiKeyHeader = request.headers.get("X-API-Key") || "";
-    const apiKey = authHeader.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : apiKeyHeader;
+    const apiKey = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : apiKeyHeader;
 
     if (!apiKey || !apiKey.startsWith("nx_")) {
       return NextResponse.json(
-        { error: "Missing or invalid API key. Use Authorization: Bearer nx_... or X-API-Key header." },
-        { status: 401 }
+        {
+          error:
+            "Missing or invalid API key. Use Authorization: Bearer nx_... or X-API-Key header.",
+        },
+        { status: 401 },
       );
     }
 
     // Validate using shared utility
     const result = await validateApiKey(apiKey);
     if (!result) {
-      return NextResponse.json(
-        { error: "Invalid API key" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
     // Forward the authenticated user info to the API route

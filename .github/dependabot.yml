@@ -1,0 +1,85 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# NEXUS — Dependabot Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+# Automated dependency updates for security and maintenance.
+#
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+# ═══════════════════════════════════════════════════════════════════════════════
+
+version: 2
+updates:
+  # ── npm (production & development dependencies) ──
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    # Group non-major updates into fewer PRs
+    groups:
+      production-deps:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-deps:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    # Labels applied to all npm PRs
+    labels:
+      - "dependencies"
+      - "npm"
+    # Maximum number of open PRs at once
+    open-pull-requests-limit: 10
+    # Specify reviewers for security-critical PRs
+    reviewers:
+      - "Newnich"
+    # Auto-rebase and update PRs
+    rebase-strategy: "auto"
+    # Version update strategies
+    versioning-strategy: "increase"
+    # Ignore major version bumps that may require manual migration
+    ignore:
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+
+  # ── Docker (app & worker images) ──
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "America/New_York"
+    labels:
+      - "dependencies"
+      - "docker"
+    open-pull-requests-limit: 5
+
+  # ── GitHub Actions (CI/CD workflows) ──
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+      timezone: "America/New_York"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Newnich"

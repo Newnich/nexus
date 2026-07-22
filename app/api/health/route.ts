@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/health
@@ -76,6 +76,6 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     },
-    { status: httpStatus }
+    { status: httpStatus },
   );
 }

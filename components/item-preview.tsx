@@ -27,8 +27,14 @@ interface ItemPreviewProps {
 }
 
 const TYPE_ICONS: Record<string, string> = {
-  link: "🔗", note: "📝", file: "📄", image: "🖼",
-  screenshot: "📸", voice_memo: "🎤", pdf: "📕", video: "🎬",
+  link: "🔗",
+  note: "📝",
+  file: "📄",
+  image: "🖼",
+  screenshot: "📸",
+  voice_memo: "🎤",
+  pdf: "📕",
+  video: "🎬",
 };
 
 const PLACEHOLDER = { icon: "📌", gradient: "from-slate-500/20 to-zinc-500/20" };
@@ -119,28 +125,23 @@ export function ItemPreview({ itemId, children, className }: ItemPreviewProps) {
               <div className="h-3 w-3/4 skeleton rounded" />
             </div>
           ) : preview ? (
-            <div
-              onClick={() => router.push(`/items/${itemId}`)}
-              className="cursor-pointer"
-            >
+            <div onClick={() => router.push(`/items/${itemId}`)} className="cursor-pointer">
               <div className={`h-1 bg-gradient-to-r ${gradient}`} />
               <div className="p-4">
                 <div className="flex items-start gap-3 mb-2">
-                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-sm shrink-0`}>
+                  <div
+                    className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-sm shrink-0`}
+                  >
                     {typeIcon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate">
-                      {preview.title || "Untitled"}
-                    </p>
+                    <p className="text-xs font-semibold truncate">{preview.title || "Untitled"}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[9px] text-nexus-400 bg-nexus-500/10 px-1.5 py-0.5 rounded uppercase">
                         {preview.type}
                       </span>
                       {aiData?.category && (
-                        <span className="text-[9px] text-muted-foreground">
-                          {aiData.category}
-                        </span>
+                        <span className="text-[9px] text-muted-foreground">{aiData.category}</span>
                       )}
                     </div>
                   </div>
@@ -166,12 +167,8 @@ export function ItemPreview({ itemId, children, className }: ItemPreviewProps) {
                 )}
 
                 <div className="flex items-center justify-between text-[9px] text-muted-foreground/60">
-                  <span>
-                    {preview.metadata?.domain || ""}
-                  </span>
-                  {preview.created_at && (
-                    <span>{formatDateRelative(preview.created_at)}</span>
-                  )}
+                  <span>{preview.metadata?.domain || ""}</span>
+                  {preview.created_at && <span>{formatDateRelative(preview.created_at)}</span>}
                 </div>
               </div>
             </div>

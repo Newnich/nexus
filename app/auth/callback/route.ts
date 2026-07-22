@@ -1,7 +1,7 @@
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const VALID_NEXT_PATTERN = /^\/[a-zA-Z0-9\-_./]*$/;
 
@@ -34,28 +34,21 @@ export async function GET(request: Request) {
       error: providerError,
       error_description: errorDescription || "Authentication failed",
     });
-    return NextResponse.redirect(
-      `${origin}/auth/login?${params.toString()}`
-    );
+    return NextResponse.redirect(`${origin}/auth/login?${params.toString()}`);
   }
 
   if (!code) {
-    return NextResponse.redirect(
-      `${origin}/auth/login?error=missing_code`
-    );
+    return NextResponse.redirect(`${origin}/auth/login?error=missing_code`);
   }
 
   try {
     const supabase = await createServerSupabaseClient();
-    const { error: exchangeError } =
-      await supabase.auth.exchangeCodeForSession(code);
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
       console.error("Auth code exchange failed:", exchangeError.message);
       return NextResponse.redirect(
-        `${origin}/auth/login?error=${encodeURIComponent(
-          exchangeError.message
-        )}`
+        `${origin}/auth/login?error=${encodeURIComponent(exchangeError.message)}`,
       );
     }
 
@@ -67,9 +60,7 @@ export async function GET(request: Request) {
 
     if (userError || !authUser) {
       console.error("Failed to get authenticated user:", userError?.message);
-      return NextResponse.redirect(
-        `${origin}/auth/login?error=session_not_found`
-      );
+      return NextResponse.redirect(`${origin}/auth/login?error=session_not_found`);
     }
 
     // Sync user record — create one in the `users` table if it doesn't exist.
@@ -87,7 +78,7 @@ export async function GET(request: Request) {
           "User",
         avatar_url: authUser.user_metadata?.avatar_url ?? null,
       },
-      { onConflict: "id", ignoreDuplicates: false }
+      { onConflict: "id", ignoreDuplicates: false },
     );
 
     if (upsertError) {
@@ -107,8 +98,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}${safeRedirect}`);
   } catch (err) {
     console.error("Auth callback error:", err);
-    return NextResponse.redirect(
-      `${origin}/auth/login?error=unexpected_error`
-    );
+    return NextResponse.redirect(`${origin}/auth/login?error=unexpected_error`);
   }
 }

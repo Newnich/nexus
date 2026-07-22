@@ -20,13 +20,13 @@ npm run dev         # Start development server
 
 ## 🌿 Branch Strategy
 
-| Branch | Purpose | Protected |
-|--------|---------|-----------|
-| `master` | Production — deploys to Vercel automatically | ✅ CI must pass, PR required |
-| `feat/*` | New features (e.g. `feat/dark-mode`) | ❌ |
-| `fix/*` | Bug fixes (e.g. `fix/login-error`) | ❌ |
-| `chore/*` | Maintenance (e.g. `chore/update-deps`) | ❌ |
-| `docs/*` | Documentation (e.g. `docs/api-guide`) | ❌ |
+| Branch    | Purpose                                      | Protected                    |
+| --------- | -------------------------------------------- | ---------------------------- |
+| `master`  | Production — deploys to Vercel automatically | ✅ CI must pass, PR required |
+| `feat/*`  | New features (e.g. `feat/dark-mode`)         | ❌                           |
+| `fix/*`   | Bug fixes (e.g. `fix/login-error`)           | ❌                           |
+| `chore/*` | Maintenance (e.g. `chore/update-deps`)       | ❌                           |
+| `docs/*`  | Documentation (e.g. `docs/api-guide`)        | ❌                           |
 
 **Rule:** All work happens on feature branches. `master` is always deployable.
 
@@ -39,6 +39,7 @@ Create branch → Commit → Push → Open PR → CI passes → Merge
 ### Step-by-step
 
 1. **Create a branch** from the latest `master`:
+
    ```bash
    git checkout master
    git pull origin master
@@ -46,15 +47,18 @@ Create branch → Commit → Push → Open PR → CI passes → Merge
    ```
 
 2. **Make changes and commit**:
+
    ```bash
    git add .
    git commit -m "feat: add my feature"
    ```
 
 3. **Push and open a PR**:
+
    ```bash
    git push origin feat/my-feature
    ```
+
    Then open a PR at **https://github.com/Newnich/nexus/pulls**
 
 4. **CI runs automatically** — the pipeline checks:
@@ -85,6 +89,7 @@ All checks must pass before merging into `master`.
 ## 🌐 Preview Deployments
 
 When you open a PR, **Vercel** automatically:
+
 1. Builds your branch
 2. Deploys it to a unique preview URL
 3. Posts the preview link as a comment on the PR
@@ -111,6 +116,7 @@ npx playwright test --ui
 ### Adding Tests
 
 When adding new features, include E2E tests that verify:
+
 - The page renders without errors
 - Key interactive elements work
 - Data loads correctly from the API
@@ -119,13 +125,13 @@ When adding new features, include E2E tests that verify:
 
 Use descriptive commit messages in the present tense:
 
-| Prefix | Example |
-|--------|---------|
-| `feat:` | `feat: add dark mode toggle` |
-| `fix:` | `fix: handle empty search results` |
-| `chore:` | `chore: update dependencies` |
-| `docs:` | `docs: add API reference` |
-| `test:` | `test: add graph page E2E tests` |
+| Prefix   | Example                            |
+| -------- | ---------------------------------- |
+| `feat:`  | `feat: add dark mode toggle`       |
+| `fix:`   | `fix: handle empty search results` |
+| `chore:` | `chore: update dependencies`       |
+| `docs:`  | `docs: add API reference`          |
+| `test:`  | `test: add graph page E2E tests`   |
 
 ## 🔧 Environment Variables
 
@@ -138,5 +144,6 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
 Supabase credentials are also configured in:
+
 - **GitHub Secrets** (for CI)
 - **Vercel Environment Variables** (for production & preview)

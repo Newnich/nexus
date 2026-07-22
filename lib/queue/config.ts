@@ -22,7 +22,7 @@ const REDIS_OPTIONS: RedisOptions = {
   password: process.env.REDIS_PASSWORD || undefined,
   db: parseInt(process.env.REDIS_DB || "0", 10),
   maxRetriesPerRequest: null, // BullMQ requires this
-  enableReadyCheck: false,    // BullMQ recommended
+  enableReadyCheck: false, // BullMQ recommended
   retryStrategy: (times: number) => {
     // Exponential backoff with a 30s cap
     return Math.min(times * 200, 30000);
@@ -30,8 +30,7 @@ const REDIS_OPTIONS: RedisOptions = {
   // Enable TLS for remote hosts (e.g. Upstash, Redis Cloud)
   // Required by most managed Redis providers
   ...(process.env.REDIS_TLS === "true" ||
-  (process.env.REDIS_HOST &&
-    !["localhost", "127.0.0.1", "redis"].includes(process.env.REDIS_HOST))
+  (process.env.REDIS_HOST && !["localhost", "127.0.0.1", "redis"].includes(process.env.REDIS_HOST))
     ? { tls: {} }
     : {}),
 };

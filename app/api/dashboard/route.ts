@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 // GET /api/dashboard — Returns aggregated stats for the dashboard
 export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -22,10 +24,7 @@ export async function GET() {
       typeDistributionResult,
     ] = await Promise.all([
       // Total items count
-      supabase
-        .from("items")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id),
+      supabase.from("items").select("*", { count: "exact", head: true }).eq("user_id", user.id),
 
       // Total collections count
       supabase
@@ -56,10 +55,7 @@ export async function GET() {
         .limit(10),
 
       // Type distribution
-      supabase
-        .from("items")
-        .select("type")
-        .eq("user_id", user.id),
+      supabase.from("items").select("type").eq("user_id", user.id),
     ]);
 
     // Extract counts
@@ -127,9 +123,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/dashboard error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

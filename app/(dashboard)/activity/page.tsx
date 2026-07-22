@@ -53,42 +53,40 @@ export default function ActivityPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const PAGE_SIZE = 30;
 
-  const fetchActivity = useCallback(async (
-    action: string,
-    entity: string,
-    pageNum: number,
-    append: boolean = false
-  ) => {
-    if (append) setLoadingMore(true);
-    else setLoading(true);
-    setError(null);
+  const fetchActivity = useCallback(
+    async (action: string, entity: string, pageNum: number, append: boolean = false) => {
+      if (append) setLoadingMore(true);
+      else setLoading(true);
+      setError(null);
 
-    try {
-      const params = new URLSearchParams({
-        limit: String(PAGE_SIZE),
-        offset: String(pageNum * PAGE_SIZE),
-      });
-      if (action) params.set("action", action);
-      if (entity) params.set("entityType", entity);
+      try {
+        const params = new URLSearchParams({
+          limit: String(PAGE_SIZE),
+          offset: String(pageNum * PAGE_SIZE),
+        });
+        if (action) params.set("action", action);
+        if (entity) params.set("entityType", entity);
 
-      const res = await fetch(`/api/activity?${params}`);
-      if (!res.ok) throw new Error("Failed to load activity");
-      const data = await res.json();
+        const res = await fetch(`/api/activity?${params}`);
+        if (!res.ok) throw new Error("Failed to load activity");
+        const data = await res.json();
 
-      if (append) {
-        setEntries((prev) => [...prev, ...(data.entries || [])]);
-      } else {
-        setEntries(data.entries || []);
+        if (append) {
+          setEntries((prev) => [...prev, ...(data.entries || [])]);
+        } else {
+          setEntries(data.entries || []);
+        }
+        setCount(data.count || 0);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        if (!append) setEntries([]);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-      setCount(data.count || 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      if (!append) setEntries([]);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     setPage(0);
@@ -134,12 +132,15 @@ export default function ActivityPage() {
         {ACTION_FILTERS.map((f) => (
           <button
             key={f.value}
-            onClick={() => { setActionFilter(f.value); setPage(0); }}
+            onClick={() => {
+              setActionFilter(f.value);
+              setPage(0);
+            }}
             className={cn(
               "px-3 py-1.5 rounded-lg text-xs transition-all",
               actionFilter === f.value
                 ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30"
-                : "glass-card text-muted-foreground hover:text-foreground border border-transparent"
+                : "glass-card text-muted-foreground hover:text-foreground border border-transparent",
             )}
           >
             {f.label}
@@ -149,12 +150,15 @@ export default function ActivityPage() {
         {ENTITY_FILTERS.map((f) => (
           <button
             key={f.value}
-            onClick={() => { setEntityFilter(f.value); setPage(0); }}
+            onClick={() => {
+              setEntityFilter(f.value);
+              setPage(0);
+            }}
             className={cn(
               "px-3 py-1.5 rounded-lg text-xs transition-all",
               entityFilter === f.value
                 ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30"
-                : "glass-card text-muted-foreground hover:text-foreground border border-transparent"
+                : "glass-card text-muted-foreground hover:text-foreground border border-transparent",
             )}
           >
             {f.label}
@@ -237,12 +241,12 @@ export default function ActivityPage() {
                     >
                       {/* Timeline dot + line */}
                       <div className="flex flex-col items-center shrink-0">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center text-base`}>
+                        <div
+                          className={`w-10 h-10 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center text-base`}
+                        >
                           {config.icon}
                         </div>
-                        {!isLast && (
-                          <div className="w-px flex-1 min-h-[8px] bg-border/30 mt-1" />
-                        )}
+                        {!isLast && <div className="w-px flex-1 min-h-[8px] bg-border/30 mt-1" />}
                       </div>
 
                       <div className="flex-1 min-w-0 pt-1">

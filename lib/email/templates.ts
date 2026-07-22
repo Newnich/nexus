@@ -114,5 +114,3 @@ export function buildAlertEmailHtml(alert: Alert): string {
 </body>
 </html>`;
 }
-
-

@@ -11,7 +11,11 @@
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
 const FETCH_TIMEOUT = 30000; // 30 seconds
 
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = FETCH_TIMEOUT): Promise<Response> {
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs = FETCH_TIMEOUT,
+): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -48,7 +52,7 @@ async function generate(prompt: string, system?: string): Promise<string> {
 
 export async function generateSummary(
   text: string,
-  maxLength: "short" | "medium" | "detailed" = "medium"
+  maxLength: "short" | "medium" | "detailed" = "medium",
 ): Promise<string> {
   const lengthGuide = {
     short: "2-3 sentences",
@@ -58,7 +62,7 @@ export async function generateSummary(
 
   const result = await generate(
     `Summarize the following content in ${lengthGuide[maxLength]}. Focus on key points, main arguments, and actionable insights. Be concise and objective.\n\nContent:\n${text.slice(0, 8000)}`,
-    "You are NEXUS, an AI knowledge assistant. Provide clear, concise summaries."
+    "You are NEXUS, an AI knowledge assistant. Provide clear, concise summaries.",
   );
 
   return result || "Summary unavailable.";
@@ -67,30 +71,48 @@ export async function generateSummary(
 export async function generateTags(text: string): Promise<string[]> {
   const result = await generate(
     `Generate 5-10 relevant tags for the following content. Tags should be lowercase, single words or short phrases. Return ONLY a comma-separated list, nothing else.\n\n${text.slice(0, 5000)}`,
-    "You are a tagging system. Output only comma-separated tags."
+    "You are a tagging system. Output only comma-separated tags.",
   );
 
   return result
     .split(",")
-    .map((t) => t.trim().toLowerCase().replace(/[^a-z0-9-_]/g, ""))
+    .map((t) =>
+      t
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-_]/g, ""),
+    )
     .filter(Boolean)
     .slice(0, 10);
 }
 
-export async function categorizeContent(
-  text: string,
-  title: string
-): Promise<string> {
+export async function categorizeContent(text: string, title: string): Promise<string> {
   const categories = [
-    "Technology", "Science", "Business", "Design", "Productivity",
-    "Health", "Education", "Finance", "Politics", "Culture",
-    "Programming", "AI", "Security", "Research", "Tutorial",
-    "News", "Opinion", "Reference", "Tool", "Entertainment",
+    "Technology",
+    "Science",
+    "Business",
+    "Design",
+    "Productivity",
+    "Health",
+    "Education",
+    "Finance",
+    "Politics",
+    "Culture",
+    "Programming",
+    "AI",
+    "Security",
+    "Research",
+    "Tutorial",
+    "News",
+    "Opinion",
+    "Reference",
+    "Tool",
+    "Entertainment",
   ];
 
   const result = await generate(
     `Categorize the following content into EXACTLY ONE of these categories: ${categories.join(", ")}. Return ONLY the category name.\n\nTitle: ${title}\n\nContent: ${text.slice(0, 3000)}`,
-    "You are a categorization system. Output exactly one category name."
+    "You are a categorization system. Output exactly one category name.",
   );
 
   const category = result.trim();
@@ -118,7 +140,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 export async function extractKeyPoints(text: string): Promise<string[]> {
   const result = await generate(
     `Extract 3-5 key points from the following content. Return as a numbered list. Be specific and actionable.\n\n${text.slice(0, 6000)}`,
-    "You extract key information. Output a numbered list."
+    "You extract key information. Output a numbered list.",
   );
 
   return result
@@ -130,7 +152,7 @@ export async function extractKeyPoints(text: string): Promise<string[]> {
 export async function analyzeSentiment(text: string): Promise<"positive" | "negative" | "neutral"> {
   const result = await generate(
     `Analyze the sentiment of the following text. Return exactly one word: positive, negative, or neutral.\n\n${text.slice(0, 3000)}`,
-    "You are a sentiment analyzer. Output one word only."
+    "You are a sentiment analyzer. Output one word only.",
   );
 
   const sentiment = result.trim().toLowerCase();
@@ -142,7 +164,7 @@ export async function analyzeSentiment(text: string): Promise<"positive" | "nega
 
 export async function findConnections(
   newText: string,
-  existingSummaries: Array<{ id: string; summary: string; title: string }>
+  existingSummaries: Array<{ id: string; summary: string; title: string }>,
 ): Promise<Array<{ itemId: string; reason: string; strength: number }>> {
   const maxItems = 20;
   const itemsToCheck = existingSummaries.slice(0, maxItems);
@@ -153,7 +175,7 @@ export async function findConnections(
 
   const result = await generate(
     `Given NEW content and a list of EXISTING items, find the top 3-5 strongest connections. For each connection: explain WHY they're related and assign a strength score (0.0-1.0).\n\nRespond with a JSON array ONLY, like: [{ "itemId": "id", "reason": "why", "strength": 0.0 }]\n\nNEW CONTENT:\n${newText.slice(0, 3000)}\n\nEXISTING ITEMS:\n${context}`,
-    "You are a knowledge connection engine. Output ONLY valid JSON."
+    "You are a knowledge connection engine. Output ONLY valid JSON.",
   );
 
   try {

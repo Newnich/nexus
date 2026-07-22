@@ -29,16 +29,13 @@ export function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={cn(                  "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-w-0",
-                isActive
-                  ? "text-nexus-400"
-                  : "text-muted-foreground hover:text-foreground"
+              className={cn(
+                "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all min-w-0",
+                isActive ? "text-nexus-400" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <span className="text-lg leading-none">{item.icon}</span>
-              <span className="text-[9px] font-medium truncate max-w-full">
-                {item.label}
-              </span>
+              <span className="text-[9px] font-medium truncate max-w-full">{item.label}</span>
             </Link>
           );
         })}

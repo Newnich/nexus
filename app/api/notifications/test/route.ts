@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!channel || (channel !== "slack" && channel !== "discord")) {
       return NextResponse.json(
         { success: false, error: "Invalid channel — must be 'slack' or 'discord'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

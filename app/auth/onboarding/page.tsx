@@ -147,28 +147,33 @@ export default function OnboardingPage() {
     setLoading(true);
     try {
       const sb = supabase();
-      const { data: { user } } = await sb.auth.getUser();
+      const {
+        data: { user },
+      } = await sb.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await sb.from("users").update({
-        name: name || undefined,
-        preferences: {
-          theme: "dark",
-          defaultView: "grid",
-          itemsPerPage: 50,
-          enableSpatialView: true,
-          keyboardShortcuts: {},
-        },
-        ai_settings: {
-          organizationStyle: "auto",
-          summaryLength: "medium",
-          connectionAggressiveness: 0.5,
-          autoTag: true,
-          autoCategorize: true,
-          dailyDigest: true,
-          weeklyReport: false,
-        },
-      }).eq("id", user.id);
+      const { error } = await sb
+        .from("users")
+        .update({
+          name: name || undefined,
+          preferences: {
+            theme: "dark",
+            defaultView: "grid",
+            itemsPerPage: 50,
+            enableSpatialView: true,
+            keyboardShortcuts: {},
+          },
+          ai_settings: {
+            organizationStyle: "auto",
+            summaryLength: "medium",
+            connectionAggressiveness: 0.5,
+            autoTag: true,
+            autoCategorize: true,
+            dailyDigest: true,
+            weeklyReport: false,
+          },
+        })
+        .eq("id", user.id);
 
       if (error) throw error;
 
@@ -214,8 +219,8 @@ export default function OnboardingPage() {
                     i === step
                       ? "bg-nexus-500/20 text-nexus-400 border-2 border-nexus-500/50 scale-110"
                       : i < step
-                      ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30"
-                      : "bg-muted text-muted-foreground border border-border"
+                        ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30"
+                        : "bg-muted text-muted-foreground border border-border",
                   )}
                 >
                   {i < step ? "✓" : i + 1}
@@ -224,7 +229,7 @@ export default function OnboardingPage() {
                   <div
                     className={cn(
                       "w-12 h-0.5 transition-all duration-500",
-                      i < step ? "bg-nexus-500/50" : "bg-border"
+                      i < step ? "bg-nexus-500/50" : "bg-border",
                     )}
                   />
                 )}
@@ -246,9 +251,7 @@ export default function OnboardingPage() {
             <div className="transition-all duration-500 animate-fade-in-up" key={step}>
               <div className="text-center mb-8">
                 <div className="text-5xl mb-4 inline-block">{STEPS[step].icon}</div>
-                <h1 className="text-2xl font-bold gradient-text mb-2">
-                  {STEPS[step].title}
-                </h1>
+                <h1 className="text-2xl font-bold gradient-text mb-2">{STEPS[step].title}</h1>
                 <p className="text-muted-foreground">{STEPS[step].description}</p>
               </div>
 
@@ -278,7 +281,7 @@ export default function OnboardingPage() {
                         "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200 hover-lift",
                         focus === option.id
                           ? "border-nexus-500 bg-nexus-500/10 text-nexus-400"
-                          : "border-border hover:border-nexus-500/30 hover:bg-muted/50"
+                          : "border-border hover:border-nexus-500/30 hover:bg-muted/50",
                       )}
                     >
                       <span className="text-2xl">{option.icon}</span>
@@ -294,7 +297,7 @@ export default function OnboardingPage() {
                   onClick={handleBack}
                   className={cn(
                     "px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors",
-                    step === 0 ? "invisible" : ""
+                    step === 0 ? "invisible" : "",
                   )}
                 >
                   ← Back

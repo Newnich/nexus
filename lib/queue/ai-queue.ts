@@ -1,4 +1,4 @@
-/** 
+/**
  * AI Processing Queue
  *
  * Defines the BullMQ queue for asynchronous AI item processing.
@@ -76,7 +76,7 @@ export function getAIQueue(): Queue<AIProcessJobData, AIProcessJobResult, string
 export async function enqueueAIProcessing(
   itemId: string,
   userId: string,
-  priority: number = 0
+  priority: number = 0,
 ): Promise<void> {
   const queue = getAIQueue();
   await queue.add(
@@ -85,15 +85,13 @@ export async function enqueueAIProcessing(
     {
       jobId: aiProcessingJobId(itemId),
       priority,
-    }
+    },
   );
 }
 
 // ── Worker (consumer side) ──
 
-export type AIProcessHandler = (
-  job: Job<AIProcessJobData>
-) => Promise<AIProcessJobResult>;
+export type AIProcessHandler = (job: Job<AIProcessJobData>) => Promise<AIProcessJobResult>;
 
 /**
  * Create an AI processing worker.
@@ -104,17 +102,15 @@ export type AIProcessHandler = (
  * script (workers/ai-worker.ts) calls `.run()` on it.
  */
 export function createAIWorker(
-  handler: AIProcessHandler
+  handler: AIProcessHandler,
 ): Worker<AIProcessJobData, AIProcessJobResult> {
   return new Worker<AIProcessJobData, AIProcessJobResult>(
     QUEUES.AI_PROCESSING,
     async (job) => {
-      console.log(
-        `[AI Worker] Processing job ${job.id} — item ${job.data.itemId}`
-      );
+      console.log(`[AI Worker] Processing job ${job.id} — item ${job.data.itemId}`);
       const result = await handler(job);
       console.log(
-        `[AI Worker] Completed job ${job.id} — ${result.processingTimeMs.toFixed(0)}ms, ${result.connectionsFound} connections`
+        `[AI Worker] Completed job ${job.id} — ${result.processingTimeMs.toFixed(0)}ms, ${result.connectionsFound} connections`,
       );
       return result;
     },
@@ -127,6 +123,6 @@ export function createAIWorker(
       },
       stalledInterval: 60_000,
       lockDuration: 120_000,
-    }
+    },
   );
 }

@@ -7,7 +7,9 @@ export const dynamic = "force-dynamic";
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -26,13 +28,16 @@ export async function PATCH(request: NextRequest) {
     if (!addTags && !removeTags) {
       return NextResponse.json(
         { error: "Provide addTags and/or removeTags arrays" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Sanitize tags
     const sanitizeTag = (tag: string) =>
-      tag.toLowerCase().replace(/[^a-z0-9-_\s]/g, "").trim();
+      tag
+        .toLowerCase()
+        .replace(/[^a-z0-9-_\s]/g, "")
+        .trim();
     const tagsToAdd = addTags?.map(sanitizeTag).filter(Boolean) || [];
     const tagsToRemove = removeTags?.map(sanitizeTag).filter(Boolean) || [];
 
@@ -73,8 +78,7 @@ export async function PATCH(request: NextRequest) {
       }
 
       // Only update if tags actually changed
-      if (newTags.length !== currentTags.length ||
-          newTags.some((t, i) => t !== currentTags[i])) {
+      if (newTags.length !== currentTags.length || newTags.some((t, i) => t !== currentTags[i])) {
         const { error: updateError } = await serviceClient
           .from("items")
           .update({ ai_data: { ...aiData, tags: newTags } })
@@ -93,9 +97,6 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error) {
     console.error("PATCH /api/items/batch error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

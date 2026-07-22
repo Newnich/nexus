@@ -11,12 +11,7 @@
 import type { Alert } from "@/lib/queue/alerts";
 import { sendCriticalAlertEmail } from "@/lib/email";
 import { sendAlertToSlack, sendAlertToDiscord } from "./webhook";
-import {
-  loadPreferences,
-  shouldNotify,
-  ALL_CHANNEL_KEYS,
-  type ChannelId,
-} from "./preferences";
+import { loadPreferences, shouldNotify, ALL_CHANNEL_KEYS, type ChannelId } from "./preferences";
 
 export interface NotificationResult {
   channel: "email" | "slack" | "discord";
@@ -31,7 +26,7 @@ export interface NotificationResult {
  * affect other channels.
  */
 export async function sendCriticalAlertNotifications(
-  alerts: Alert[]
+  alerts: Alert[],
 ): Promise<NotificationResult[]> {
   // Only send fresh alerts (not recurring ones the user has already seen)
   const freshAlerts = alerts.filter((a) => a.fresh);
@@ -40,14 +35,15 @@ export async function sendCriticalAlertNotifications(
   // Load user preferences (defaults to all enabled)
   const prefs = await loadPreferences();
 
-  console.log(
-    "[Notifications] Processing " + freshAlerts.length + " alert(s) against preferences"
-  );
+  console.log("[Notifications] Processing " + freshAlerts.length + " alert(s) against preferences");
 
   const results: NotificationResult[] = [];
 
   // Helper: send an alert to a specific channel, handling errors
-  async function sendToChannel(alert: Alert, channelId: ChannelId): Promise<NotificationResult | null> {
+  async function sendToChannel(
+    alert: Alert,
+    channelId: ChannelId,
+  ): Promise<NotificationResult | null> {
     if (!shouldNotify(prefs, alert.id, channelId)) return null;
 
     try {

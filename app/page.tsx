@@ -141,16 +141,12 @@ const FEATURES = [
   },
 ];
 
+const PHRASES = ["Save anything.", "Find everything.", "Know more."];
+
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const [typedText, setTypedText] = useState("");
   const [showCursor, setShowCursor] = useState(true);
-
-  const phrases = [
-    "Save anything.",
-    "Find everything.",
-    "Know more.",
-  ];
 
   useEffect(() => {
     setMounted(true);
@@ -162,7 +158,7 @@ export default function HomePage() {
     let timeout: ReturnType<typeof setTimeout>;
 
     function type() {
-      const currentPhrase = phrases[phraseIndex];
+      const currentPhrase = PHRASES[phraseIndex];
 
       if (!isDeleting) {
         setTypedText(currentPhrase.slice(0, charIndex + 1));
@@ -181,7 +177,7 @@ export default function HomePage() {
 
         if (charIndex === 0) {
           isDeleting = false;
-          phraseIndex = (phraseIndex + 1) % phrases.length;
+          phraseIndex = (phraseIndex + 1) % PHRASES.length;
         }
       }
 
@@ -228,9 +224,7 @@ export default function HomePage() {
             {/* Badge */}
             <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 glass-card rounded-full animate-fade-in-up">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-sm text-muted-foreground">
-                AI-Native Knowledge OS
-              </span>
+              <span className="text-sm text-muted-foreground">AI-Native Knowledge OS</span>
             </div>
 
             {/* Headline */}
@@ -244,9 +238,7 @@ export default function HomePage() {
 
             {/* Typewriter */}
             <div className="h-10 mb-10 animate-fade-in-up-delayed-2">
-              <span className="text-lg text-nexus-400 font-medium typing-cursor">
-                {typedText}
-              </span>
+              <span className="text-lg text-nexus-400 font-medium typing-cursor">{typedText}</span>
             </div>
 
             {/* CTA Buttons */}
@@ -256,8 +248,18 @@ export default function HomePage() {
                 className="group inline-flex items-center gap-2 px-8 py-3.5 bg-nexus-500 hover:bg-nexus-600 text-white font-medium rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-nexus-500/25 hover-scale"
               >
                 <span>Enter NEXUS</span>
-                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                <svg
+                  className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
                 </svg>
               </Link>
               <Link
@@ -285,12 +287,10 @@ export default function HomePage() {
         {/* ── Features ── */}
         <section className="px-4 py-24 max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold gradient-text mb-4">
-              Everything your mind needs
-            </h2>
+            <h2 className="text-4xl font-bold gradient-text mb-4">Everything your mind needs</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              NEXUS transforms how you capture, organize, and discover knowledge.
-              It's a second brain that actually works.
+              NEXUS transforms how you capture, organize, and discover knowledge. It's a second
+              brain that actually works.
             </p>
           </div>
 
@@ -301,15 +301,15 @@ export default function HomePage() {
                 className="group glass-card p-6 rounded-2xl hover:border-nexus-500/30 transition-all duration-500 hover-lift stagger-item"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-2xl mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                <div
+                  className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-2xl mb-5 group-hover:scale-110 transition-transform duration-300`}
+                >
                   {feature.icon}
                 </div>
                 <h3 className="text-lg font-semibold mb-2 group-hover:text-nexus-400 transition-colors duration-300">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {feature.desc}
-                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -318,9 +318,7 @@ export default function HomePage() {
         {/* ── How It Works ── */}
         <section className="px-4 py-24 max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold gradient-text mb-4">
-              How it works
-            </h2>
+            <h2 className="text-4xl font-bold gradient-text mb-4">How it works</h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
               Three simple steps to a perfectly organized mind.
             </p>
@@ -361,9 +359,7 @@ export default function HomePage() {
                   </span>
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {item.desc}
-                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -376,8 +372,8 @@ export default function HomePage() {
               Built for <span className="gradient-text">knowledge workers</span>
             </h2>
             <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
-              Whether you're a researcher, writer, developer, or lifelong learner —
-              NEXUS adapts to how you think.
+              Whether you're a researcher, writer, developer, or lifelong learner — NEXUS adapts to
+              how you think.
             </p>
             <div className="grid grid-cols-3 gap-8 mb-10">
               {[
@@ -397,7 +393,12 @@ export default function HomePage() {
             >
               Start your knowledge OS
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                />
               </svg>
             </Link>
           </div>

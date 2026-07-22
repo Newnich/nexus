@@ -59,9 +59,10 @@ export function QuickCapture() {
 
     setSaving(true);
     try {
-      const body = mode === "link"
-        ? { type: "link", title: title.trim(), metadata: { sourceUrl: url.trim() } }
-        : { type: "note", title: title.trim(), content: content.trim() };
+      const body =
+        mode === "link"
+          ? { type: "link", title: title.trim(), metadata: { sourceUrl: url.trim() } }
+          : { type: "note", title: title.trim(), content: content.trim() };
 
       const res = await fetch("/api/items", {
         method: "POST",
@@ -93,7 +94,7 @@ export function QuickCapture() {
           "absolute bottom-16 right-0 w-72 md:w-80 glass-card rounded-2xl overflow-hidden transition-all duration-300 origin-bottom-right",
           isOpen
             ? "opacity-100 scale-100 translate-y-0"
-            : "opacity-0 scale-95 translate-y-4 pointer-events-none"
+            : "opacity-0 scale-95 translate-y-4 pointer-events-none",
         )}
       >
         {/* Mode tabs */}
@@ -104,7 +105,7 @@ export function QuickCapture() {
               "flex-1 px-4 py-2.5 text-xs font-medium transition-all",
               mode === "link"
                 ? "text-nexus-400 border-b-2 border-nexus-500"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             🔗 Link
@@ -115,7 +116,7 @@ export function QuickCapture() {
               "flex-1 px-4 py-2.5 text-xs font-medium transition-all",
               mode === "note"
                 ? "text-nexus-400 border-b-2 border-nexus-500"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             📝 Note
@@ -196,7 +197,7 @@ export function QuickCapture() {
           "w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl transition-all duration-300 hover:scale-110 active:scale-95",
           isOpen
             ? "bg-red-500 hover:bg-red-600 rotate-45 shadow-red-500/30"
-            : "bg-nexus-500 hover:bg-nexus-600 shadow-nexus-500/30 hover:shadow-xl hover:shadow-nexus-500/40"
+            : "bg-nexus-500 hover:bg-nexus-600 shadow-nexus-500/30 hover:shadow-xl hover:shadow-nexus-500/40",
         )}
         title={isOpen ? "Close" : "Quick capture"}
       >

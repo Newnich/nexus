@@ -15,6 +15,6 @@ export function renderHighlighted(text: string, query: string) {
       </mark>
     ) : (
       <span key={i}>{seg.text}</span>
-    )
+    ),
   );
 }

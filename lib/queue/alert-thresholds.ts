@@ -49,15 +49,21 @@ function sanitize(raw: Partial<AlertThresholds>): AlertThresholds {
   return {
     consecutiveFailuresThreshold: clamp(
       raw.consecutiveFailuresThreshold ?? DEFAULT_THRESHOLDS.consecutiveFailuresThreshold,
-      1, 50, DEFAULT_THRESHOLDS.consecutiveFailuresThreshold
+      1,
+      50,
+      DEFAULT_THRESHOLDS.consecutiveFailuresThreshold,
     ),
     workerInactivityHours: clamp(
       raw.workerInactivityHours ?? DEFAULT_THRESHOLDS.workerInactivityHours,
-      0.5, 168, DEFAULT_THRESHOLDS.workerInactivityHours // 0.5h to 7 days
+      0.5,
+      168,
+      DEFAULT_THRESHOLDS.workerInactivityHours, // 0.5h to 7 days
     ),
     backlogThreshold: clamp(
       raw.backlogThreshold ?? DEFAULT_THRESHOLDS.backlogThreshold,
-      10, 100000, DEFAULT_THRESHOLDS.backlogThreshold
+      10,
+      100000,
+      DEFAULT_THRESHOLDS.backlogThreshold,
     ),
   };
 }
@@ -87,9 +93,7 @@ export async function loadAlertThresholds(): Promise<AlertThresholds> {
  * Save alert thresholds to Redis.
  * Sanitizes values before saving.
  */
-export async function saveAlertThresholds(
-  thresholds: Partial<AlertThresholds>
-): Promise<boolean> {
+export async function saveAlertThresholds(thresholds: Partial<AlertThresholds>): Promise<boolean> {
   try {
     const sanitized = sanitize(thresholds);
     const redis = getRedisConnection();

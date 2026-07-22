@@ -7,7 +7,9 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -39,10 +41,7 @@ export async function GET() {
     return NextResponse.json({ tags, total: tags.length });
   } catch (error) {
     console.error("GET /api/tags error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -50,7 +49,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -63,17 +64,11 @@ export async function POST(request: NextRequest) {
     };
 
     if (!tag || !action) {
-      return NextResponse.json(
-        { error: "Tag name and action are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Tag name and action are required" }, { status: 400 });
     }
 
     if (action === "rename" && !newName) {
-      return NextResponse.json(
-        { error: "New name is required for rename" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "New name is required for rename" }, { status: 400 });
     }
 
     // Fetch all items that have this tag in their ai_data
@@ -111,10 +106,7 @@ export async function POST(request: NextRequest) {
           }
           break;
         default:
-          return NextResponse.json(
-            { error: "Invalid action" },
-            { status: 400 }
-          );
+          return NextResponse.json({ error: "Invalid action" }, { status: 400 });
       }
 
       const { error: updateError } = await serviceClient
@@ -134,9 +126,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("POST /api/tags error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

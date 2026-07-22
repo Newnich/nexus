@@ -89,48 +89,70 @@ function timeAgo(iso: string | null): string {
 
 function statusColor(status: string): string {
   switch (status) {
-    case "connected": return "text-green-400";
-    case "ready": return "text-green-400";
-    case "connecting": return "text-yellow-400";
-    case "error": return "text-red-400";
-    default: return "text-muted-foreground";
+    case "connected":
+      return "text-green-400";
+    case "ready":
+      return "text-green-400";
+    case "connecting":
+      return "text-yellow-400";
+    case "error":
+      return "text-red-400";
+    default:
+      return "text-muted-foreground";
   }
 }
 
 function statusIndicator(status: string): string {
   switch (status) {
-    case "connected": return "bg-green-400";
-    case "ready": return "bg-green-400";
-    case "connecting": return "bg-yellow-400";
-    case "error": return "bg-red-400";
-    default: return "bg-muted-foreground";
+    case "connected":
+      return "bg-green-400";
+    case "ready":
+      return "bg-green-400";
+    case "connecting":
+      return "bg-yellow-400";
+    case "error":
+      return "bg-red-400";
+    default:
+      return "bg-muted-foreground";
   }
 }
 
 function getAlertIcon(severity: string): string {
   switch (severity) {
-    case "critical": return "🔴";
-    case "warning": return "🟡";
-    case "info": return "🔵";
-    default: return "⚪";
+    case "critical":
+      return "🔴";
+    case "warning":
+      return "🟡";
+    case "info":
+      return "🔵";
+    default:
+      return "⚪";
   }
 }
 
 function getAlertBorder(severity: string): string {
   switch (severity) {
-    case "critical": return "border-red-500/30";
-    case "warning": return "border-yellow-500/30";
-    case "info": return "border-blue-500/30";
-    default: return "border-border/50";
+    case "critical":
+      return "border-red-500/30";
+    case "warning":
+      return "border-yellow-500/30";
+    case "info":
+      return "border-blue-500/30";
+    default:
+      return "border-border/50";
   }
 }
 
 function getAlertBg(severity: string): string {
   switch (severity) {
-    case "critical": return "bg-red-500/5";
-    case "warning": return "bg-yellow-500/5";
-    case "info": return "bg-blue-500/5";
-    default: return "bg-muted/20";
+    case "critical":
+      return "bg-red-500/5";
+    case "warning":
+      return "bg-yellow-500/5";
+    case "info":
+      return "bg-blue-500/5";
+    default:
+      return "bg-muted/20";
   }
 }
 
@@ -172,20 +194,16 @@ export default function StatusPage() {
 
       // Show toast for fresh critical/warning alerts
       for (const alert of newAlerts) {
-        if (
-          alert.fresh &&
-          (alert.severity === "critical" || alert.severity === "warning")
-        ) {
+        if (alert.fresh && (alert.severity === "critical" || alert.severity === "warning")) {
           const emoji = alert.severity === "critical" ? "🚨" : "⚠️";
           toast(emoji + " " + alert.title + " — " + alert.message, {
             duration: 6000,
             style: {
-              background: alert.severity === "critical"
-                ? "hsl(0 63% 6%)"
-                : "hsl(38 92% 6%)",
-              border: alert.severity === "critical"
-                ? "1px solid hsl(0 63% 31%)"
-                : "1px solid hsl(38 92% 31%)",
+              background: alert.severity === "critical" ? "hsl(0 63% 6%)" : "hsl(38 92% 6%)",
+              border:
+                alert.severity === "critical"
+                  ? "1px solid hsl(0 63% 31%)"
+                  : "1px solid hsl(38 92% 31%)",
             },
           });
         }
@@ -241,7 +259,10 @@ export default function StatusPage() {
           <h2 className="text-xl font-semibold mb-2">Could not load status</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
           <button
-            onClick={() => { setLoading(true); fetchStatus(); }}
+            onClick={() => {
+              setLoading(true);
+              fetchStatus();
+            }}
             className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
           >
             Retry
@@ -285,7 +306,10 @@ export default function StatusPage() {
             Auto-refresh
           </label>
           <button
-            onClick={() => { setLoading(true); fetchStatus(); }}
+            onClick={() => {
+              setLoading(true);
+              fetchStatus();
+            }}
             className="flex items-center gap-2 px-4 py-2 glass-card hover:bg-card/70 rounded-lg text-sm transition-all"
           >
             <span>⟳</span>
@@ -307,12 +331,16 @@ export default function StatusPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm">{alert.title}</span>
-                    <span className={
-                      "text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium " +
-                      (alert.severity === "critical" ? "bg-red-500/10 text-red-400" :
-                       alert.severity === "warning" ? "bg-yellow-500/10 text-yellow-400" :
-                       "bg-blue-500/10 text-blue-400")
-                    }>
+                    <span
+                      className={
+                        "text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium " +
+                        (alert.severity === "critical"
+                          ? "bg-red-500/10 text-red-400"
+                          : alert.severity === "warning"
+                            ? "bg-yellow-500/10 text-yellow-400"
+                            : "bg-blue-500/10 text-blue-400")
+                      }
+                    >
                       {alert.severity}
                     </span>
                   </div>
@@ -338,7 +366,9 @@ export default function StatusPage() {
         {/* Redis */}
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-3">
-            <span className={`w-2.5 h-2.5 rounded-full ${statusIndicator(data?.redis || "disconnected")}`} />
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${statusIndicator(data?.redis || "disconnected")}`}
+            />
             <span className="font-semibold">Redis</span>
           </div>
           <p className={`text-2xl font-bold ${statusColor(data?.redis || "disconnected")}`}>
@@ -352,7 +382,9 @@ export default function StatusPage() {
         {/* AI Processing Queue */}
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-3">
-            <span className={`w-2.5 h-2.5 rounded-full ${(aiQueue?.active || 0) > 0 ? "bg-green-400" : "bg-muted-foreground"}`} />
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${(aiQueue?.active || 0) > 0 ? "bg-green-400" : "bg-muted-foreground"}`}
+            />
             <span className="font-semibold">AI Queue</span>
           </div>
           <p className="text-2xl font-bold gradient-text">
@@ -366,10 +398,14 @@ export default function StatusPage() {
         {/* Backfill */}
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-3">
-            <span className={`w-2.5 h-2.5 rounded-full ${backfill?.enabled ? "bg-green-400" : "bg-yellow-400"}`} />
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${backfill?.enabled ? "bg-green-400" : "bg-yellow-400"}`}
+            />
             <span className="font-semibold">Backfill</span>
           </div>
-          <p className={`text-2xl font-bold ${backfill?.hasMore ? "text-yellow-400" : "text-green-400"}`}>
+          <p
+            className={`text-2xl font-bold ${backfill?.hasMore ? "text-yellow-400" : "text-green-400"}`}
+          >
             {backfill?.hasMore ? "In progress" : "Caught up"}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -380,15 +416,17 @@ export default function StatusPage() {
         {/* Unprocessed Items */}
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-3">
-            <span className={`w-2.5 h-2.5 rounded-full ${(db?.unprocessedItems || 0) > 0 ? "bg-yellow-400" : "bg-green-400"}`} />
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${(db?.unprocessedItems || 0) > 0 ? "bg-yellow-400" : "bg-green-400"}`}
+            />
             <span className="font-semibold">Unprocessed</span>
           </div>
-          <p className={`text-2xl font-bold ${(db?.unprocessedItems || 0) > 0 ? "text-yellow-400" : "text-green-400"}`}>
+          <p
+            className={`text-2xl font-bold ${(db?.unprocessedItems || 0) > 0 ? "text-yellow-400" : "text-green-400"}`}
+          >
             {db?.unprocessedItems?.toLocaleString() || 0}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Items missing AI embeddings
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">Items missing AI embeddings</p>
         </div>
       </div>
 
@@ -403,7 +441,14 @@ export default function StatusPage() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-nexus-400">AI Processing</span>
               <span className="text-xs text-muted-foreground">
-                Total: {((aiQueue?.waiting || 0) + (aiQueue?.active || 0) + (aiQueue?.completed || 0) + (aiQueue?.failed || 0) + (aiQueue?.delayed || 0)).toLocaleString()}
+                Total:{" "}
+                {(
+                  (aiQueue?.waiting || 0) +
+                  (aiQueue?.active || 0) +
+                  (aiQueue?.completed || 0) +
+                  (aiQueue?.failed || 0) +
+                  (aiQueue?.delayed || 0)
+                ).toLocaleString()}
               </span>
             </div>
             <div className="space-y-1.5">
@@ -414,11 +459,18 @@ export default function StatusPage() {
                 { label: "Failed", value: aiQueue?.failed || 0, color: "bg-red-500" },
                 { label: "Delayed", value: aiQueue?.delayed || 0, color: "bg-yellow-500" },
               ].map((item) => {
-                const total = (aiQueue?.waiting || 0) + (aiQueue?.active || 0) + (aiQueue?.completed || 0) + (aiQueue?.failed || 0) + (aiQueue?.delayed || 0);
+                const total =
+                  (aiQueue?.waiting || 0) +
+                  (aiQueue?.active || 0) +
+                  (aiQueue?.completed || 0) +
+                  (aiQueue?.failed || 0) +
+                  (aiQueue?.delayed || 0);
                 const pct = total > 0 ? (item.value / total) * 100 : 0;
                 return (
                   <div key={item.label} className="flex items-center gap-2 text-xs">
-                    <span className="w-20 shrink-0 text-right text-muted-foreground">{item.label}</span>
+                    <span className="w-20 shrink-0 text-right text-muted-foreground">
+                      {item.label}
+                    </span>
                     <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${item.color}`}
@@ -439,22 +491,40 @@ export default function StatusPage() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-yellow-400">Maintenance</span>
               <span className="text-xs text-muted-foreground">
-                Total: {((maintQueue?.waiting || 0) + (maintQueue?.active || 0) + (maintQueue?.completed || 0) + (maintQueue?.failed || 0) + (maintQueue?.delayed || 0)).toLocaleString()}
+                Total:{" "}
+                {(
+                  (maintQueue?.waiting || 0) +
+                  (maintQueue?.active || 0) +
+                  (maintQueue?.completed || 0) +
+                  (maintQueue?.failed || 0) +
+                  (maintQueue?.delayed || 0)
+                ).toLocaleString()}
               </span>
             </div>
             <div className="space-y-1.5">
               {[
                 { label: "Waiting", value: maintQueue?.waiting || 0, color: "bg-blue-500" },
                 { label: "Active", value: maintQueue?.active || 0, color: "bg-green-500" },
-                { label: "Completed", value: maintQueue?.completed || 0, color: "bg-emerald-500/50" },
+                {
+                  label: "Completed",
+                  value: maintQueue?.completed || 0,
+                  color: "bg-emerald-500/50",
+                },
                 { label: "Failed", value: maintQueue?.failed || 0, color: "bg-red-500" },
                 { label: "Delayed", value: maintQueue?.delayed || 0, color: "bg-yellow-500" },
               ].map((item) => {
-                const total = (maintQueue?.waiting || 0) + (maintQueue?.active || 0) + (maintQueue?.completed || 0) + (maintQueue?.failed || 0) + (maintQueue?.delayed || 0);
+                const total =
+                  (maintQueue?.waiting || 0) +
+                  (maintQueue?.active || 0) +
+                  (maintQueue?.completed || 0) +
+                  (maintQueue?.failed || 0) +
+                  (maintQueue?.delayed || 0);
                 const pct = total > 0 ? (item.value / total) * 100 : 0;
                 return (
                   <div key={item.label} className="flex items-center gap-2 text-xs">
-                    <span className="w-20 shrink-0 text-right text-muted-foreground">{item.label}</span>
+                    <span className="w-20 shrink-0 text-right text-muted-foreground">
+                      {item.label}
+                    </span>
                     <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${item.color}`}
@@ -479,7 +549,9 @@ export default function StatusPage() {
             {/* Status row */}
             <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
               <span className="text-sm text-muted-foreground">Status</span>
-              <span className={`text-sm font-medium ${backfill?.enabled ? "text-green-400" : "text-yellow-400"}`}>
+              <span
+                className={`text-sm font-medium ${backfill?.enabled ? "text-green-400" : "text-yellow-400"}`}
+              >
                 {backfill?.enabled ? "Active" : "Disabled"}
               </span>
             </div>
@@ -496,7 +568,9 @@ export default function StatusPage() {
               <span className="text-sm font-medium">
                 {backfill?.nextRun ? (
                   <span className="text-nexus-400">{timeAgo(backfill.nextRun)}</span>
-                ) : "—"}
+                ) : (
+                  "—"
+                )}
               </span>
             </div>
 
@@ -524,12 +598,32 @@ export default function StatusPage() {
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { label: "Scanned", value: backfill.lastRun.scanned.toLocaleString(), color: "text-blue-400" },
-                      { label: "Enqueued", value: backfill.lastRun.enqueued.toLocaleString(), color: "text-green-400" },
-                      { label: "Skipped", value: backfill.lastRun.skipped.toLocaleString(), color: "text-muted-foreground" },
-                      { label: "Errors", value: backfill.lastRun.errors.toLocaleString(), color: backfill.lastRun.errors > 0 ? "text-red-400" : "text-muted-foreground" },
+                      {
+                        label: "Scanned",
+                        value: backfill.lastRun.scanned.toLocaleString(),
+                        color: "text-blue-400",
+                      },
+                      {
+                        label: "Enqueued",
+                        value: backfill.lastRun.enqueued.toLocaleString(),
+                        color: "text-green-400",
+                      },
+                      {
+                        label: "Skipped",
+                        value: backfill.lastRun.skipped.toLocaleString(),
+                        color: "text-muted-foreground",
+                      },
+                      {
+                        label: "Errors",
+                        value: backfill.lastRun.errors.toLocaleString(),
+                        color:
+                          backfill.lastRun.errors > 0 ? "text-red-400" : "text-muted-foreground",
+                      },
                     ].map((item) => (
-                      <div key={item.label} className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
+                      <div
+                        key={item.label}
+                        className="flex items-center justify-between p-2 bg-muted/20 rounded-lg"
+                      >
                         <span className="text-xs text-muted-foreground">{item.label}</span>
                         <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
                       </div>
@@ -544,7 +638,9 @@ export default function StatusPage() {
                   {backfill.lastRun.hasMore && (
                     <div className="flex items-center gap-2 p-2 bg-yellow-500/10 rounded-lg">
                       <span className="text-yellow-400 text-xs">⚠</span>
-                      <span className="text-xs text-yellow-400/80">More items remain — next run will continue</span>
+                      <span className="text-xs text-yellow-400/80">
+                        More items remain — next run will continue
+                      </span>
                     </div>
                   )}
                 </div>
@@ -569,7 +665,10 @@ export default function StatusPage() {
             { label: "Worker Concurrency", value: data?.config?.workerConcurrency || "2" },
             { label: "Backfill Cron", value: data?.config?.backfillCron || "*/15 * * * *" },
             { label: "Backfill Batch", value: data?.config?.backfillBatch || "200" },
-            { label: "DB Listener", value: data?.config?.dbListener ? "Connected" : "Not configured" },
+            {
+              label: "DB Listener",
+              value: data?.config?.dbListener ? "Connected" : "Not configured",
+            },
           ].map((item) => (
             <div key={item.label} className="p-3 bg-muted/20 rounded-xl">
               <p className="text-xs text-muted-foreground mb-1">{item.label}</p>

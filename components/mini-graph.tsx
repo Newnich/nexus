@@ -56,9 +56,7 @@ export function MiniGraph({ centerId, centerTitle, centerType, connections }: Mi
       x: number;
       y: number;
       isCenter: boolean;
-    }> = [
-      { id: centerId, title: centerTitle, type: centerType, x: cx, y: cy, isCenter: true },
-    ];
+    }> = [{ id: centerId, title: centerTitle, type: centerType, x: cx, y: cy, isCenter: true }];
 
     const graphEdges: Array<{
       sourceId: string;
@@ -127,7 +125,11 @@ export function MiniGraph({ centerId, centerTitle, centerType, connections }: Mi
                 y1={source.y}
                 x2={target.x}
                 y2={target.y}
-                stroke={edge.sourceId === centerId ? TYPE_COLORS[target.type] || DEFAULT_COLOR : TYPE_COLORS[source.type] || DEFAULT_COLOR}
+                stroke={
+                  edge.sourceId === centerId
+                    ? TYPE_COLORS[target.type] || DEFAULT_COLOR
+                    : TYPE_COLORS[source.type] || DEFAULT_COLOR
+                }
                 strokeWidth={Math.max(1, edge.strength * 4)}
                 strokeOpacity={0.3 + edge.strength * 0.3}
               />
@@ -148,7 +150,13 @@ export function MiniGraph({ centerId, centerTitle, centerType, connections }: Mi
         })}
 
         {/* Center node glow */}
-        <circle cx={nodes[0].x} cy={nodes[0].y} r={22} fill={TYPE_COLORS[centerType] || DEFAULT_COLOR} fillOpacity="0.12" />
+        <circle
+          cx={nodes[0].x}
+          cy={nodes[0].y}
+          r={22}
+          fill={TYPE_COLORS[centerType] || DEFAULT_COLOR}
+          fillOpacity="0.12"
+        />
 
         {/* Connected nodes */}
         {nodes.map((node) => {
@@ -167,7 +175,9 @@ export function MiniGraph({ centerId, centerTitle, centerType, connections }: Mi
                   stroke={color}
                   strokeWidth={node.isCenter ? 2.5 : 1.5}
                   strokeOpacity={0.8}
-                  className={node.isCenter ? "" : "cursor-pointer hover:fill-opacity-80 transition-all"}
+                  className={
+                    node.isCenter ? "" : "cursor-pointer hover:fill-opacity-80 transition-all"
+                  }
                 />
               </Link>
 

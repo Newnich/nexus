@@ -14,10 +14,27 @@ interface SearchResult extends Item {
   relevanceScore?: number;
 }
 
-const ITEM_TYPES = ["all", "link", "note", "pdf", "image", "screenshot", "file", "video", "voice_memo"] as const;
+const ITEM_TYPES = [
+  "all",
+  "link",
+  "note",
+  "pdf",
+  "image",
+  "screenshot",
+  "file",
+  "video",
+  "voice_memo",
+] as const;
 const ITEM_TYPE_ICONS: Record<string, string> = {
-  all: "⊞", link: "🔗", note: "📝", file: "📄", image: "🖼",
-  screenshot: "📸", voice_memo: "🎤", pdf: "📕", video: "🎬",
+  all: "⊞",
+  link: "🔗",
+  note: "📝",
+  file: "📄",
+  image: "🖼",
+  screenshot: "📸",
+  voice_memo: "🎤",
+  pdf: "📕",
+  video: "🎬",
 };
 
 const DATE_RANGES = [
@@ -29,10 +46,24 @@ const DATE_RANGES = [
   { label: "This year", value: "year" },
 ] as const;
 
-function ResultCard({ item, query, onQuickView }: { item: SearchResult; query: string; onQuickView?: (id: string) => void }) {
+function ResultCard({
+  item,
+  query,
+  onQuickView,
+}: {
+  item: SearchResult;
+  query: string;
+  onQuickView?: (id: string) => void;
+}) {
   const typeIcons: Record<string, string> = {
-    link: "🔗", note: "📝", file: "📄", image: "🖼",
-    screenshot: "📸", voice_memo: "🎤", pdf: "📕", video: "🎬",
+    link: "🔗",
+    note: "📝",
+    file: "📄",
+    image: "🖼",
+    screenshot: "📸",
+    voice_memo: "🎤",
+    pdf: "📕",
+    video: "🎬",
   };
 
   return (
@@ -42,75 +73,81 @@ function ResultCard({ item, query, onQuickView }: { item: SearchResult; query: s
           href={`/items/${item.id}`}
           className="block p-5 glass-card hover:bg-card/80 rounded-2xl transition-all hover-lift"
         >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-lg">{typeIcons[item.type] || "📌"}</span>
-            <span className="text-xs font-medium text-nexus-400 bg-nexus-500/10 px-2 py-0.5 rounded-full uppercase">
-              {item.type}
-            </span>
-            {item.aiData?.category && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                {item.aiData.category}
-              </span>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-lg">{typeIcons[item.type] || "📌"}</span>
+                <span className="text-xs font-medium text-nexus-400 bg-nexus-500/10 px-2 py-0.5 rounded-full uppercase">
+                  {item.type}
+                </span>
+                {item.aiData?.category && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    {item.aiData.category}
+                  </span>
+                )}
+              </div>
+              <h3 className="text-lg font-semibold truncate group-hover:text-nexus-400 transition-colors">
+                {renderHighlighted(item.title || "Untitled", query)}
+              </h3>
+              {item.aiData?.summary && (
+                <p className="text-sm text-muted-foreground mt-1.5 line-clamp-3">
+                  {renderHighlighted(item.aiData.summary, query)}
+                </p>
+              )}
+              {item.aiData?.tags && item.aiData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {item.aiData.tags.slice(0, 5).map((tag) => {
+                    const isMatch = query
+                      .toLowerCase()
+                      .split(/\s+/)
+                      .some((q) => tag.toLowerCase().includes(q));
+                    return (
+                      <span
+                        key={tag}
+                        className={`text-xs px-2 py-0.5 rounded-full transition-all ${
+                          isMatch
+                            ? "bg-nexus-500/20 text-nexus-400"
+                            : "bg-secondary text-secondary-foreground"
+                        }`}
+                      >
+                        #{tag}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {item.relevanceScore !== undefined && item.relevanceScore > 0 && (
+              <div className="flex-shrink-0 text-right">
+                <div className="text-xs text-muted-foreground">Relevance</div>
+                <div className="text-sm font-semibold text-nexus-400">
+                  {Math.round(item.relevanceScore * 100)}%
+                </div>
+              </div>
             )}
           </div>
-          <h3 className="text-lg font-semibold truncate group-hover:text-nexus-400 transition-colors">
-            {renderHighlighted(item.title || "Untitled", query)}
-          </h3>
-          {item.aiData?.summary && (
-            <p className="text-sm text-muted-foreground mt-1.5 line-clamp-3">
-              {renderHighlighted(item.aiData.summary, query)}
-            </p>
-          )}
-          {item.aiData?.tags && item.aiData.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              {item.aiData.tags.slice(0, 5).map((tag) => {
-                const isMatch = query.toLowerCase().split(/\s+/).some(
-                  (q) => tag.toLowerCase().includes(q)
-                );
-                return (
-                  <span
-                    key={tag}
-                    className={`text-xs px-2 py-0.5 rounded-full transition-all ${
-                      isMatch ? "bg-nexus-500/20 text-nexus-400" : "bg-secondary text-secondary-foreground"
-                    }`}
-                  >
-                    #{tag}
-                  </span>
-                );
-              })}
+          {item.metadata?.domain && (
+            <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2">
+              {item.metadata.favicon && (
+                <img src={item.metadata.favicon} alt="" className="w-4 h-4 rounded" />
+              )}
+              <span>{item.metadata.domain}</span>
+              <span>·</span>
+              <span>{new Date(item.createdAt).toLocaleDateString()}</span>
             </div>
           )}
-        </div>
-        {(item.relevanceScore !== undefined && item.relevanceScore > 0) && (
-          <div className="flex-shrink-0 text-right">
-            <div className="text-xs text-muted-foreground">Relevance</div>
-            <div className="text-sm font-semibold text-nexus-400">
-              {Math.round(item.relevanceScore * 100)}%
-            </div>
-          </div>
-        )}
+        </a>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            onQuickView?.(item.id);
+          }}
+          className="absolute top-3 right-3 px-2 py-1 rounded-lg glass-card hover:bg-card/70 text-[10px] transition-all opacity-0 group-hover/card:opacity-100"
+          title="Quick view"
+        >
+          👁️
+        </button>
       </div>
-      {item.metadata?.domain && (
-        <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2">
-          {item.metadata.favicon && (
-            <img src={item.metadata.favicon} alt="" className="w-4 h-4 rounded" />
-          )}
-          <span>{item.metadata.domain}</span>
-          <span>·</span>
-          <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-        </div>
-      )}
-    </a>
-    <button
-      onClick={(e) => { e.preventDefault(); onQuickView?.(item.id); }}
-      className="absolute top-3 right-3 px-2 py-1 rounded-lg glass-card hover:bg-card/70 text-[10px] transition-all opacity-0 group-hover/card:opacity-100"
-      title="Quick view"
-    >
-      👁️
-    </button>
-    </div>
     </ItemPreview>
   );
 }
@@ -124,7 +161,7 @@ function SearchContent() {
 
   const [query, setQuery] = useState(initialQuery);
   const [searchMode, setSearchMode] = useState<"semantic" | "fulltext">(
-    (searchParams.get("mode") as "semantic" | "fulltext") || "semantic"
+    (searchParams.get("mode") as "semantic" | "fulltext") || "semantic",
   );
   const [selectedType, setSelectedType] = useState(initialType);
   const [selectedRange, setSelectedRange] = useState(initialRange);
@@ -136,58 +173,61 @@ function SearchContent() {
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const { searches, addSearch, removeSearch } = useSavedSearches();
 
-  const performSearch = useCallback(async (q: string, mode: string, typeFilter: string, rangeFilter: string) => {
-    if (!q.trim()) {
-      setResults([]);
-      setSearched(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSearched(true);
-
-    try {
-      const params = new URLSearchParams({ q, mode });
-      if (typeFilter !== "all") params.set("type", typeFilter);
-      const res = await fetch(`/api/search?${params}`);
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Search failed");
+  const performSearch = useCallback(
+    async (q: string, mode: string, typeFilter: string, rangeFilter: string) => {
+      if (!q.trim()) {
+        setResults([]);
+        setSearched(false);
+        return;
       }
-      const data = await res.json();
 
-      // Client-side filtering (handles semantic mode + date range)
-      let filtered = data.items || [];
-      if (typeFilter !== "all") {
-        filtered = filtered.filter((i: { type: string }) => i.type === typeFilter);
-      }
-      if (rangeFilter !== "all") {
-        const now = Date.now();
-        const ranges: Record<string, number> = {
-          today: now - 86400000,
-          "7d": now - 7 * 86400000,
-          "30d": now - 30 * 86400000,
-          "90d": now - 90 * 86400000,
-          year: now - 365 * 86400000,
-        };
-        const cutoff = ranges[rangeFilter];
-        if (cutoff) {
-          filtered = filtered.filter(
-            (item: { createdAt?: string; created_at?: string }) =>
-              new Date(item.createdAt || item.created_at || "").getTime() > cutoff
-          );
+      setLoading(true);
+      setError(null);
+      setSearched(true);
+
+      try {
+        const params = new URLSearchParams({ q, mode });
+        if (typeFilter !== "all") params.set("type", typeFilter);
+        const res = await fetch(`/api/search?${params}`);
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Search failed");
         }
-      }
+        const data = await res.json();
 
-      setResults(filtered);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        // Client-side filtering (handles semantic mode + date range)
+        let filtered = data.items || [];
+        if (typeFilter !== "all") {
+          filtered = filtered.filter((i: { type: string }) => i.type === typeFilter);
+        }
+        if (rangeFilter !== "all") {
+          const now = Date.now();
+          const ranges: Record<string, number> = {
+            today: now - 86400000,
+            "7d": now - 7 * 86400000,
+            "30d": now - 30 * 86400000,
+            "90d": now - 90 * 86400000,
+            year: now - 365 * 86400000,
+          };
+          const cutoff = ranges[rangeFilter];
+          if (cutoff) {
+            filtered = filtered.filter(
+              (item: { createdAt?: string; created_at?: string }) =>
+                new Date(item.createdAt || item.created_at || "").getTime() > cutoff,
+            );
+          }
+        }
+
+        setResults(filtered);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   // Run search on mount if initial query exists
   useEffect(() => {
@@ -229,9 +269,7 @@ function SearchContent() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold gradient-text">Search</h1>
-        <p className="text-muted-foreground mt-1">
-          Search across your entire knowledge base
-        </p>
+        <p className="text-muted-foreground mt-1">Search across your entire knowledge base</p>
       </div>
 
       {/* Saved Searches Bar */}
@@ -259,7 +297,10 @@ function SearchContent() {
               <span>⌕</span>
               {s.label || s.query.length > 20 ? s.query.slice(0, 20) + "…" : s.query}
               <button
-                onClick={(e) => { e.stopPropagation(); removeSearch(s.id); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeSearch(s.id);
+                }}
                 className="text-muted-foreground hover:text-foreground ml-0.5"
               >
                 ✕
@@ -280,7 +321,9 @@ function SearchContent() {
       {/* Search Input */}
       <form onSubmit={handleSearch}>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">⌕</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">
+            ⌕
+          </span>
           <input
             type="text"
             value={query}
@@ -300,7 +343,9 @@ function SearchContent() {
             onClick={() => setSearchMode("semantic")}
             className={cn(
               "px-3 py-1.5 rounded-lg text-xs transition-all",
-              searchMode === "semantic" ? "bg-nexus-500/20 text-nexus-400 font-medium" : "text-muted-foreground hover:text-foreground"
+              searchMode === "semantic"
+                ? "bg-nexus-500/20 text-nexus-400 font-medium"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             🧠 Semantic
@@ -309,7 +354,9 @@ function SearchContent() {
             onClick={() => setSearchMode("fulltext")}
             className={cn(
               "px-3 py-1.5 rounded-lg text-xs transition-all",
-              searchMode === "fulltext" ? "bg-nexus-500/20 text-nexus-400 font-medium" : "text-muted-foreground hover:text-foreground"
+              searchMode === "fulltext"
+                ? "bg-nexus-500/20 text-nexus-400 font-medium"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             📖 Full Text
@@ -326,11 +373,13 @@ function SearchContent() {
                 "px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1",
                 selectedType === type
                   ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30"
-                  : "glass-card text-muted-foreground hover:text-foreground border border-transparent"
+                  : "glass-card text-muted-foreground hover:text-foreground border border-transparent",
               )}
             >
               {type !== "all" && <span>{ITEM_TYPE_ICONS[type]}</span>}
-              {type === "all" ? "All" : type.charAt(0).toUpperCase() + type.slice(1).replace("_", " ")}
+              {type === "all"
+                ? "All"
+                : type.charAt(0).toUpperCase() + type.slice(1).replace("_", " ")}
             </button>
           ))}
         </div>
@@ -345,7 +394,7 @@ function SearchContent() {
                 "px-2.5 py-1.5 rounded-lg text-[10px] transition-all",
                 selectedRange === range.value
                   ? "bg-nexus-500/20 text-nexus-400 font-medium"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {range.label}
@@ -360,7 +409,8 @@ function SearchContent() {
           <div className="text-5xl mb-4">⌕</div>
           <h2 className="text-xl font-semibold mb-2">Ask anything about your knowledge</h2>
           <p className="text-muted-foreground max-w-md mx-auto">
-            NEXUS understands natural language. Try &ldquo;what did I save about neural networks last month?&rdquo;
+            NEXUS understands natural language. Try &ldquo;what did I save about neural networks
+            last month?&rdquo;
           </p>
           <div className="mt-8 grid grid-cols-2 gap-3 max-w-lg mx-auto">
             {[
@@ -409,9 +459,18 @@ function SearchContent() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Found {results.length} result{results.length !== 1 ? "s" : ""} for &ldquo;{query}&rdquo;
+              Found {results.length} result{results.length !== 1 ? "s" : ""} for &ldquo;{query}
+              &rdquo;
               {selectedType !== "all" && <span> in {selectedType}</span>}
-              {selectedRange !== "all" && <span> from <strong>{DATE_RANGES.find((r) => r.value === selectedRange)?.label.toLowerCase()}</strong></span>}
+              {selectedRange !== "all" && (
+                <span>
+                  {" "}
+                  from{" "}
+                  <strong>
+                    {DATE_RANGES.find((r) => r.value === selectedRange)?.label.toLowerCase()}
+                  </strong>
+                </span>
+              )}
             </p>
             <button
               onClick={() => {
@@ -460,24 +519,21 @@ function SearchContent() {
       )}
 
       {/* Quick View Modal */}
-      {quickViewId && (
-        <QuickViewModal
-          itemId={quickViewId}
-          onClose={() => setQuickViewId(null)}
-        />
-      )}
+      {quickViewId && <QuickViewModal itemId={quickViewId} onClose={() => setQuickViewId(null)} />}
     </div>
   );
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="space-y-6">
-        <div className="h-8 w-48 skeleton rounded" />
-        <div className="h-16 skeleton rounded-2xl" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="space-y-6">
+          <div className="h-8 w-48 skeleton rounded" />
+          <div className="h-16 skeleton rounded-2xl" />
+        </div>
+      }
+    >
       <SearchContent />
     </Suspense>
   );

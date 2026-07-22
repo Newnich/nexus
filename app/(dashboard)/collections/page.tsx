@@ -33,8 +33,14 @@ const TYPE_FILTERS = [
 ];
 
 const ITEM_TYPE_ICONS: Record<string, string> = {
-  link: "🔗", note: "📝", file: "📄", image: "🖼",
-  screenshot: "📸", voice_memo: "🎤", pdf: "📕", video: "🎬",
+  link: "🔗",
+  note: "📝",
+  file: "📄",
+  image: "🖼",
+  screenshot: "📸",
+  voice_memo: "🎤",
+  pdf: "📕",
+  video: "🎬",
 };
 
 export default function CollectionsPage() {
@@ -154,7 +160,7 @@ export default function CollectionsPage() {
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all",
               selectedFilter === type
                 ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30"
-                : "glass-card text-muted-foreground hover:text-foreground border border-transparent"
+                : "glass-card text-muted-foreground hover:text-foreground border border-transparent",
             )}
           >
             <span>{icon}</span>
@@ -211,7 +217,11 @@ export default function CollectionsPage() {
                       {collection.name}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {collection.type === "manual" ? "📁 Manual" : collection.type === "auto" ? "🤖 Auto" : "🔍 Query"}
+                      {collection.type === "manual"
+                        ? "📁 Manual"
+                        : collection.type === "auto"
+                          ? "🤖 Auto"
+                          : "🔍 Query"}
                       {" · "}
                       {collection.itemCount} item{collection.itemCount !== 1 ? "s" : ""}
                       {collection.visibility !== "private" && (
@@ -265,7 +275,9 @@ export default function CollectionsPage() {
               {/* Footer */}
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border/50">
                 <span>Created {formatDateRelative(collection.createdAt)}</span>
-                <span className="text-nexus-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs">View →</span>
+                <span className="text-nexus-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+                  View →
+                </span>
               </div>
             </div>
           ))}

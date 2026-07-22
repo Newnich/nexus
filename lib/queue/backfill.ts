@@ -69,9 +69,9 @@ export interface BackfillJobData {
 export interface BackfillJobResult {
   scanned: number;
   enqueued: number;
-  skipped: number;   // already queued or already being processed
+  skipped: number; // already queued or already being processed
   errors: number;
-  hasMore: boolean;   // true if there are more items to scan
+  hasMore: boolean; // true if there are more items to scan
   cursor: string | null; // current cursor position for monitoring
 }
 
@@ -84,27 +84,28 @@ const BACKFILL_JOB_ID = "backfill:scan";
 
 // ── Backfill queue ──
 
-export const backfillQueue = new Queue<BackfillJobData, BackfillJobResult>(
-  QUEUES.MAINTENANCE,
-  {
-    connection: getRedisConnection(),
-    defaultJobOptions: {
-      attempts: 2,
-      backoff: { type: "exponential", delay: 10_000 },
-      removeOnComplete: { age: 7200 },
-      removeOnFail: { age: 86400 },
-    },
-  }
-);
+export const backfillQueue = new Queue<BackfillJobData, BackfillJobResult>(QUEUES.MAINTENANCE, {
+  connection: getRedisConnection(),
+  defaultJobOptions: {
+    attempts: 2,
+    backoff: { type: "exponential", delay: 10_000 },
+    removeOnComplete: { age: 7200 },
+    removeOnFail: { age: 86400 },
+  },
+});
 
 // ── Backfill scan logic ──
 
 export async function runBackfillScan(
-  batchSize: number = BACKFILL_BATCH
+  batchSize: number = BACKFILL_BATCH,
 ): Promise<BackfillJobResult> {
   const result: BackfillJobResult = {
-    scanned: 0, enqueued: 0, skipped: 0, errors: 0,
-    hasMore: false, cursor: null,
+    scanned: 0,
+    enqueued: 0,
+    skipped: 0,
+    errors: 0,
+    hasMore: false,
+    cursor: null,
   };
 
   const supabase = await createServiceClient();
@@ -158,8 +159,13 @@ export async function runBackfillScan(
     result.skipped = skippedCount;
 
     console.log(
-      "[Backfill] Found " + rawItems.length + " items (" +
-      unprocessed.length + " new, " + skippedCount + " already queued)"
+      "[Backfill] Found " +
+        rawItems.length +
+        " items (" +
+        unprocessed.length +
+        " new, " +
+        skippedCount +
+        " already queued)",
     );
 
     // 3. Enqueue each unprocessed item
@@ -170,8 +176,7 @@ export async function runBackfillScan(
       } catch (err) {
         if (
           err instanceof Error &&
-          (err.message.includes("duplicate") ||
-            err.message.includes("already exists"))
+          (err.message.includes("duplicate") || err.message.includes("already exists"))
         ) {
           result.skipped++;
         } else {
@@ -197,7 +202,6 @@ export async function runBackfillScan(
       result.hasMore = false;
       console.log("[Backfill] All caught up — cursor reset");
     }
-
   } catch (err) {
     console.error("[Backfill] Scan error:", err);
     result.errors++;
@@ -221,8 +225,12 @@ export async function registerBackfillSchedule(): Promise<void> {
       {
         name: "backfill",
         data: { startedAt: new Date().toISOString(), batchSize: BACKFILL_BATCH },
-        opts: { jobId: BACKFILL_JOB_ID, removeOnComplete: { age: 7200 }, removeOnFail: { age: 86400 } } as JobsOptions,
-      }
+        opts: {
+          jobId: BACKFILL_JOB_ID,
+          removeOnComplete: { age: 7200 },
+          removeOnFail: { age: 86400 },
+        } as JobsOptions,
+      },
     );
 
     console.log("[Backfill] Scheduled - cron: " + BACKFILL_CRON + ", batch: " + BACKFILL_BATCH);
@@ -251,9 +259,16 @@ export function createMaintenanceWorker(): Worker<BackfillJobData, BackfillJobRe
         console.log("[Backfill] Starting scan (batch: " + job.data.batchSize + ")");
         const result = await runBackfillScan(job.data.batchSize);
         console.log(
-          "[Backfill] Scan complete - scanned: " + result.scanned +
-          ", enqueued: " + result.enqueued + ", skipped: " + result.skipped +
-          ", errors: " + result.errors + ", hasMore: " + result.hasMore
+          "[Backfill] Scan complete - scanned: " +
+            result.scanned +
+            ", enqueued: " +
+            result.enqueued +
+            ", skipped: " +
+            result.skipped +
+            ", errors: " +
+            result.errors +
+            ", hasMore: " +
+            result.hasMore,
         );
         return result;
       }
@@ -262,15 +277,21 @@ export function createMaintenanceWorker(): Worker<BackfillJobData, BackfillJobRe
     {
       connection: getRedisConnection(),
       concurrency: 1,
-    }
+    },
   );
 
   worker.on("completed", (job: Job<BackfillJobData, BackfillJobResult>) => {
     const r = job.returnvalue;
     // Track success — resets consecutive failure counter in Redis
     resetBackfillFailures().catch(() => {});
-    console.log("[Backfill] " + r.enqueued + " items enqueued, " + r.errors + " errors" +
-      (r.hasMore ? " (more items remain)" : " (all caught up)"));
+    console.log(
+      "[Backfill] " +
+        r.enqueued +
+        " items enqueued, " +
+        r.errors +
+        " errors" +
+        (r.hasMore ? " (more items remain)" : " (all caught up)"),
+    );
   });
 
   worker.on("failed", (job: Job<BackfillJobData, BackfillJobResult> | undefined, err: Error) => {

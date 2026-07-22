@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { enqueueAIProcessing } from "@/lib/queue/ai-queue";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * POST /api/ai/process
@@ -17,17 +17,16 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { itemId } = await request.json();
     if (!itemId) {
-      return NextResponse.json(
-        { error: "itemId is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "itemId is required" }, { status: 400 });
     }
 
     // Verify the item exists and belongs to the user
@@ -39,10 +38,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (itemError || !item) {
-      return NextResponse.json(
-        { error: "Item not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
     // Create a DB queue entry if one doesn't exist
@@ -76,9 +72,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("POST /api/ai/process error:", error);
-    return NextResponse.json(
-      { error: "Failed to queue AI processing" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to queue AI processing" }, { status: 500 });
   }
 }

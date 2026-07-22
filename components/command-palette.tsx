@@ -18,22 +18,126 @@ interface Command {
 
 // ── Navigation commands ──
 const NAV_COMMANDS: Command[] = [
-  { id: "dashboard", label: "Dashboard", description: "Home overview", icon: "◈", section: "navigation", href: "/dashboard", keywords: "home main" },
-  { id: "items", label: "Items", description: "All saved items", icon: "⊞", section: "navigation", href: "/items", keywords: "links notes files" },
-  { id: "collections", label: "Collections", description: "Organize items", icon: "▦", section: "navigation", href: "/collections", keywords: "folders groups" },
-  { id: "search", label: "Search", description: "Find anything", icon: "⌕", section: "navigation", href: "/search", keywords: "find query" },
-  { id: "graph", label: "Graph", description: "Knowledge connections", icon: "⬡", section: "navigation", href: "/graph", keywords: "map visualize" },
-  { id: "status", label: "System Status", description: "Monitor services", icon: "⚙", section: "navigation", href: "/status", keywords: "health queue" },
-  { id: "settings", label: "Settings", description: "General preferences", icon: "🔧", section: "navigation", href: "/settings/general", keywords: "preferences config" },
-  { id: "alerts", label: "Alert Settings", description: "Configure alert thresholds", icon: "🔔", section: "navigation", href: "/settings/alerts", keywords: "thresholds notifications" },
-  { id: "channels", label: "Channel Config", description: "Webhook & email settings", icon: "📡", section: "navigation", href: "/settings/notifications", keywords: "slack discord email" },
-  { id: "cooldown", label: "Cooldown Settings", description: "Notification cooldown periods", icon: "⏳", section: "navigation", href: "/settings/cooldown", keywords: "rate limit delay" },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    description: "Home overview",
+    icon: "◈",
+    section: "navigation",
+    href: "/dashboard",
+    keywords: "home main",
+  },
+  {
+    id: "items",
+    label: "Items",
+    description: "All saved items",
+    icon: "⊞",
+    section: "navigation",
+    href: "/items",
+    keywords: "links notes files",
+  },
+  {
+    id: "collections",
+    label: "Collections",
+    description: "Organize items",
+    icon: "▦",
+    section: "navigation",
+    href: "/collections",
+    keywords: "folders groups",
+  },
+  {
+    id: "search",
+    label: "Search",
+    description: "Find anything",
+    icon: "⌕",
+    section: "navigation",
+    href: "/search",
+    keywords: "find query",
+  },
+  {
+    id: "graph",
+    label: "Graph",
+    description: "Knowledge connections",
+    icon: "⬡",
+    section: "navigation",
+    href: "/graph",
+    keywords: "map visualize",
+  },
+  {
+    id: "status",
+    label: "System Status",
+    description: "Monitor services",
+    icon: "⚙",
+    section: "navigation",
+    href: "/status",
+    keywords: "health queue",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    description: "General preferences",
+    icon: "🔧",
+    section: "navigation",
+    href: "/settings/general",
+    keywords: "preferences config",
+  },
+  {
+    id: "alerts",
+    label: "Alert Settings",
+    description: "Configure alert thresholds",
+    icon: "🔔",
+    section: "navigation",
+    href: "/settings/alerts",
+    keywords: "thresholds notifications",
+  },
+  {
+    id: "channels",
+    label: "Channel Config",
+    description: "Webhook & email settings",
+    icon: "📡",
+    section: "navigation",
+    href: "/settings/notifications",
+    keywords: "slack discord email",
+  },
+  {
+    id: "cooldown",
+    label: "Cooldown Settings",
+    description: "Notification cooldown periods",
+    icon: "⏳",
+    section: "navigation",
+    href: "/settings/cooldown",
+    keywords: "rate limit delay",
+  },
 ];
 
 const ACTION_COMMANDS: Command[] = [
-  { id: "new-link", label: "Save Link", description: "Save a webpage or article", icon: "🔗", section: "actions", href: "/items/new", keywords: "bookmark url add" },
-  { id: "new-note", label: "Write Note", description: "Write your own thoughts", icon: "📝", section: "actions", href: "/items/new?type=note", keywords: "create text" },
-  { id: "new-file", label: "Upload File", description: "Upload a document or image", icon: "📄", section: "actions", href: "/items/new?type=file", keywords: "upload document" },
+  {
+    id: "new-link",
+    label: "Save Link",
+    description: "Save a webpage or article",
+    icon: "🔗",
+    section: "actions",
+    href: "/items/new",
+    keywords: "bookmark url add",
+  },
+  {
+    id: "new-note",
+    label: "Write Note",
+    description: "Write your own thoughts",
+    icon: "📝",
+    section: "actions",
+    href: "/items/new?type=note",
+    keywords: "create text",
+  },
+  {
+    id: "new-file",
+    label: "Upload File",
+    description: "Upload a document or image",
+    icon: "📄",
+    section: "actions",
+    href: "/items/new?type=file",
+    keywords: "upload document",
+  },
 ];
 
 // ── Fuzzy matching score ──
@@ -75,8 +179,14 @@ function useRecentItems() {
         if (!res.ok || !mounted) return;
         const data = await res.json();
         const typeIcons: Record<string, string> = {
-          link: "🔗", note: "📝", file: "📄", image: "🖼",
-          screenshot: "📸", voice_memo: "🎤", pdf: "📕", video: "🎬",
+          link: "🔗",
+          note: "📝",
+          file: "📄",
+          image: "🖼",
+          screenshot: "📸",
+          voice_memo: "🎤",
+          pdf: "📕",
+          video: "🎬",
         };
         if (!mounted) return;
         setItems(
@@ -85,12 +195,14 @@ function useRecentItems() {
             title: i.title || "Untitled",
             type: i.type,
             icon: typeIcons[i.type] || "📄",
-          }))
+          })),
         );
       } catch {}
     }
     loadItems();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return items;
@@ -191,7 +303,7 @@ export function CommandPalette() {
         router.push(cmd.href);
       }
     },
-    [router]
+    [router],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -298,15 +410,12 @@ export function CommandPalette() {
                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left",
                         isSelected
                           ? "bg-nexus-500/15 text-nexus-400"
-                          : "hover:bg-muted/50 text-foreground"
+                          : "hover:bg-muted/50 text-foreground",
                       )}
                     >
                       <span className="text-lg shrink-0">{cmd.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <p className={cn(
-                          "font-medium truncate",
-                          isSelected && "text-nexus-400"
-                        )}>
+                        <p className={cn("font-medium truncate", isSelected && "text-nexus-400")}>
                           {cmd.label}
                         </p>
                         {cmd.description && (
@@ -331,13 +440,16 @@ export function CommandPalette() {
         {/* Footer */}
         <div className="flex items-center gap-3 px-5 py-2.5 border-t border-border/50">
           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-            <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[8px]">↑↓</kbd> Navigate
+            <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[8px]">↑↓</kbd>{" "}
+            Navigate
           </span>
           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-            <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[8px]">↵</kbd> Open
+            <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[8px]">↵</kbd>{" "}
+            Open
           </span>
           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-            <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[8px]">⌘K</kbd> Toggle
+            <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-[8px]">⌘K</kbd>{" "}
+            Toggle
           </span>
         </div>
       </div>

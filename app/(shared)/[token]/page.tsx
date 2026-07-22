@@ -18,11 +18,7 @@ interface SharedData {
   expiresAt?: string;
 }
 
-export default function SharedPage({
-  params,
-}: {
-  params: { token: string };
-}) {
+export default function SharedPage({ params }: { params: { token: string } }) {
   const [data, setData] = useState<SharedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,13 +26,9 @@ export default function SharedPage({
   useEffect(() => {
     // Look up the token in localStorage
     const allLinks = JSON.parse(
-      typeof window !== "undefined"
-        ? localStorage.getItem("nexus:share-links") || "[]"
-        : "[]"
+      typeof window !== "undefined" ? localStorage.getItem("nexus:share-links") || "[]" : "[]",
     );
-    const link = allLinks.find(
-      (l: { token: string }) => l.token === params.token
-    );
+    const link = allLinks.find((l: { token: string }) => l.token === params.token);
 
     if (!link) {
       setError("This shared link is invalid or has been revoked.");
@@ -119,9 +111,7 @@ export default function SharedPage({
             <span className="text-lg">⟠</span>
             <span className="font-semibold gradient-text">NEXUS</span>
           </Link>
-          <span className="text-xs text-muted-foreground">
-            Shared content
-          </span>
+          <span className="text-xs text-muted-foreground">Shared content</span>
         </div>
       </header>
 
@@ -145,9 +135,7 @@ export default function SharedPage({
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl sm:text-3xl font-bold gradient-text mb-4">
-              {data?.title}
-            </h1>
+            <h1 className="text-2xl sm:text-3xl font-bold gradient-text mb-4">{data?.title}</h1>
 
             {/* Item details */}
             {data?.type === "item" && (

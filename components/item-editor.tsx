@@ -13,15 +13,7 @@ interface ItemEditorProps {
 }
 
 export function ItemEditor({ item, onSave, onCancel }: ItemEditorProps) {
-  const {
-    present,
-    takeSnapshot,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    snapshotCount,
-  } = useUndoRedo({
+  const { present, takeSnapshot, undo, redo, canUndo, canRedo, snapshotCount } = useUndoRedo({
     title: item.title,
     content: item.content || "",
     tags: item.aiData?.tags || [],
@@ -59,24 +51,36 @@ export function ItemEditor({ item, onSave, onCancel }: ItemEditorProps) {
     setVisibility(present.visibility);
   }, [present]);
 
-  const handleFieldChange = useCallback((field: string, value: string) => {
-    // Take snapshot before changing
-    takeSnapshot({
-      title,
-      content,
-      tags: tagsInput.split(/[,\s]+/).map((t) => t.trim().toLowerCase().replace(/[^a-z0-9-\s]/g, "")).filter(Boolean),
-      visibility,
-    });
-    // Update the specific field
-    if (field === "title") setTitle(value);
-    else if (field === "content") setContent(value);
-    else if (field === "tags") setTagsInput(value);
-    else if (field === "visibility") {
-      // Safe: only ever called with one of the three valid values from the UI
-      const vis: "private" | "team" | "public" = value as unknown as "private" | "team" | "public";
-      setVisibility(vis);
-    }
-  }, [title, content, tagsInput, visibility, takeSnapshot]);
+  const handleFieldChange = useCallback(
+    (field: string, value: string) => {
+      // Take snapshot before changing
+      takeSnapshot({
+        title,
+        content,
+        tags: tagsInput
+          .split(/[,\s]+/)
+          .map((t) =>
+            t
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9-\s]/g, ""),
+          )
+          .filter(Boolean),
+        visibility,
+      });
+      // Update the specific field
+      if (field === "title") setTitle(value);
+      else if (field === "content") setContent(value);
+      else if (field === "tags") setTagsInput(value);
+      else if (field === "visibility") {
+        // Safe: only ever called with one of the three valid values from the UI
+        const vis: "private" | "team" | "public" = value as unknown as
+          "private" | "team" | "public";
+        setVisibility(vis);
+      }
+    },
+    [title, content, tagsInput, visibility, takeSnapshot],
+  );
 
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
@@ -88,7 +92,12 @@ export function ItemEditor({ item, onSave, onCancel }: ItemEditorProps) {
     try {
       const tags = tagsInput
         .split(/[,\s]+/)
-        .map((t) => t.trim().toLowerCase().replace(/[^a-z0-9-\s]/g, ""))
+        .map((t) =>
+          t
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9-\s]/g, ""),
+        )
         .filter(Boolean);
 
       const updates: Record<string, unknown> = {
@@ -100,8 +109,8 @@ export function ItemEditor({ item, onSave, onCancel }: ItemEditorProps) {
       // Include tags if changed
       if (tags.length > 0 || (item.aiData?.tags?.length || 0) > 0) {
         const currentTags = item.aiData?.tags || [];
-        const changed = tags.length !== currentTags.length ||
-          tags.some((t, i) => t !== currentTags[i]);
+        const changed =
+          tags.length !== currentTags.length || tags.some((t, i) => t !== currentTags[i]);
         if (changed) {
           updates.aiData = { ...item.aiData, tags };
         }
@@ -140,7 +149,9 @@ export function ItemEditor({ item, onSave, onCancel }: ItemEditorProps) {
           </button>
           <span className="text-xs text-muted-foreground/50 mx-1">|</span>
           <span className="text-xs text-muted-foreground/60">
-            {snapshotCount > 0 ? `${snapshotCount} snapshot${snapshotCount !== 1 ? "s" : ""}` : "No history"}
+            {snapshotCount > 0
+              ? `${snapshotCount} snapshot${snapshotCount !== 1 ? "s" : ""}`
+              : "No history"}
           </span>
         </div>
 
@@ -176,7 +187,10 @@ export function ItemEditor({ item, onSave, onCancel }: ItemEditorProps) {
         {/* Tags */}
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
-            Tags <span className="font-normal lowercase text-muted-foreground/60">(comma separated)</span>
+            Tags{" "}
+            <span className="font-normal lowercase text-muted-foreground/60">
+              (comma separated)
+            </span>
           </label>
           <input
             type="text"
@@ -187,11 +201,17 @@ export function ItemEditor({ item, onSave, onCancel }: ItemEditorProps) {
           />
           {tagsInput.trim() && (
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {tagsInput.split(/[,\s]+/).filter(Boolean).map((t) => (
-                <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-nexus-500/10 text-nexus-400">
-                  #{t.toLowerCase().replace(/[^a-z0-9-_]/g, "")}
-                </span>
-              ))}
+              {tagsInput
+                .split(/[,\s]+/)
+                .filter(Boolean)
+                .map((t) => (
+                  <span
+                    key={t}
+                    className="text-[10px] px-2 py-0.5 rounded-full bg-nexus-500/10 text-nexus-400"
+                  >
+                    #{t.toLowerCase().replace(/[^a-z0-9-_]/g, "")}
+                  </span>
+                ))}
             </div>
           )}
         </div>
@@ -210,7 +230,7 @@ export function ItemEditor({ item, onSave, onCancel }: ItemEditorProps) {
                   "px-3 py-1.5 rounded-lg text-xs transition-all",
                   visibility === v
                     ? "bg-nexus-500/20 text-nexus-400 border border-nexus-500/30"
-                    : "glass-card text-muted-foreground hover:text-foreground"
+                    : "glass-card text-muted-foreground hover:text-foreground",
                 )}
               >
                 {v === "private" ? "🔒 Private" : v === "team" ? "👥 Team" : "🌍 Public"}

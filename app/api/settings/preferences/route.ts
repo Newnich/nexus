@@ -24,7 +24,7 @@ export async function GET() {
         preferences: null,
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest) {
     if (!preferences || typeof preferences !== "object") {
       return NextResponse.json(
         { success: false, error: "Invalid preferences object" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest) {
     if (!saved) {
       return NextResponse.json(
         { success: false, error: "Failed to save preferences" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -67,7 +67,7 @@ export async function PUT(request: NextRequest) {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

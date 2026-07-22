@@ -17,7 +17,7 @@ export async function hashApiKey(key: string): Promise<string> {
 
 // ── Validate an API key and return the user_id ──
 export async function validateApiKey(
-  key: string
+  key: string,
 ): Promise<{ userId: string; keyId: string } | null> {
   if (!key.startsWith("nx_")) return null;
 
@@ -36,7 +36,7 @@ export async function validateApiKey(
           apikey: serviceKey,
           Authorization: `Bearer ${serviceKey}`,
         },
-      }
+      },
     );
 
     if (!res.ok) return null;
@@ -47,18 +47,15 @@ export async function validateApiKey(
     const keyRecord = rows[0];
 
     // Update last_used_at asynchronously (don't block on it)
-    fetch(
-      `${supabaseUrl}/rest/v1/api_keys?id=eq.${keyRecord.id}`,
-      {
-        method: "PATCH",
-        headers: {
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ last_used_at: new Date().toISOString() }),
-      }
-    ).catch(() => {});
+    fetch(`${supabaseUrl}/rest/v1/api_keys?id=eq.${keyRecord.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ last_used_at: new Date().toISOString() }),
+    }).catch(() => {});
 
     return { userId: keyRecord.user_id, keyId: keyRecord.id };
   } catch {

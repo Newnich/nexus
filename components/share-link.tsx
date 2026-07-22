@@ -21,7 +21,9 @@ const STORAGE_KEY = "nexus:share-links";
 function loadLinks(): ShareLinkData[] {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 function saveLinks(links: ShareLinkData[]) {
@@ -30,7 +32,9 @@ function saveLinks(links: ShareLinkData[]) {
 
 export function ShareLink({ itemId, itemTitle }: ShareLinkProps) {
   const [showMenu, setShowMenu] = useState(false);
-  const [links, setLinks] = useState<ShareLinkData[]>(() => loadLinks().filter((l) => l.itemId === itemId));
+  const [links, setLinks] = useState<ShareLinkData[]>(() =>
+    loadLinks().filter((l) => l.itemId === itemId),
+  );
   const [expiryHours, setExpiryHours] = useState(0);
 
   const generateToken = useCallback(() => {
@@ -49,7 +53,9 @@ export function ShareLink({ itemId, itemTitle }: ShareLinkProps) {
       itemId,
       token,
       createdAt: new Date().toISOString(),
-      ...(expiryHours > 0 ? { expiresAt: new Date(Date.now() + expiryHours * 3600000).toISOString() } : {}),
+      ...(expiryHours > 0
+        ? { expiresAt: new Date(Date.now() + expiryHours * 3600000).toISOString() }
+        : {}),
     };
 
     const allLinks = loadLinks();
@@ -84,20 +90,31 @@ export function ShareLink({ itemId, itemTitle }: ShareLinkProps) {
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 top-full mt-1.5 w-72 glass-card rounded-xl overflow-hidden animate-fade-in-up z-50 border border-border/50" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="absolute right-0 top-full mt-1.5 w-72 glass-card rounded-xl overflow-hidden animate-fade-in-up z-50 border border-border/50"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Share Link</h3>
-              <button onClick={() => setShowMenu(false)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
+              <button
+                onClick={() => setShowMenu(false)}
+                className="text-muted-foreground hover:text-foreground text-xs"
+              >
+                ✕
+              </button>
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Generate a shareable link for &ldquo;{itemTitle.length > 30 ? itemTitle.slice(0, 30) + "…" : itemTitle}&rdquo;
+              Generate a shareable link for &ldquo;
+              {itemTitle.length > 30 ? itemTitle.slice(0, 30) + "…" : itemTitle}&rdquo;
             </p>
 
             {/* Expiry selector */}
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">Link expires after:</label>
+              <label className="text-xs text-muted-foreground block mb-1">
+                Link expires after:
+              </label>
               <div className="flex items-center gap-2">
                 {[
                   { label: "Never", value: 0 },
@@ -133,14 +150,21 @@ export function ShareLink({ itemId, itemTitle }: ShareLinkProps) {
                 <p className="text-xs text-muted-foreground mb-2">Active links:</p>
                 <div className="space-y-1.5">
                   {links.map((link) => (
-                    <div key={link.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 text-xs">
+                    <div
+                      key={link.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-muted/30 text-xs"
+                    >
                       <div className="flex-1 min-w-0">
                         <p className="font-mono text-[10px] truncate text-muted-foreground">
                           ...{link.token.slice(0, 8)}
                         </p>
                         {link.expiresAt && (
-                          <p className={`text-[9px] ${isExpired(link) ? "text-red-400" : "text-muted-foreground/60"}`}>
-                            {isExpired(link) ? "Expired" : `Expires ${new Date(link.expiresAt).toLocaleDateString()}`}
+                          <p
+                            className={`text-[9px] ${isExpired(link) ? "text-red-400" : "text-muted-foreground/60"}`}
+                          >
+                            {isExpired(link)
+                              ? "Expired"
+                              : `Expires ${new Date(link.expiresAt).toLocaleDateString()}`}
                           </p>
                         )}
                       </div>

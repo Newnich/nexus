@@ -53,7 +53,7 @@ export function useDraft() {
         } catch {}
       }, 1000);
     },
-    [key]
+    [key],
   );
 
   // Load draft data

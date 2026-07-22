@@ -33,16 +33,14 @@ export function Sidebar() {
       className={cn(
         "fixed left-0 top-0 h-full z-40 flex-col border-r border-border bg-background/80 backdrop-blur-xl transition-all duration-300",
         collapsed ? "w-16" : "w-60",
-        "hidden md:flex"
+        "hidden md:flex",
       )}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-border">
         <Link href="/dashboard" className="flex items-center gap-3">
           <span className="text-2xl">⟠</span>
-          {!collapsed && (
-            <span className="font-bold gradient-text text-lg">NEXUS</span>
-          )}
+          {!collapsed && <span className="font-bold gradient-text text-lg">NEXUS</span>}
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -58,7 +56,7 @@ export function Sidebar() {
           href="/items/new"
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 bg-nexus-500 hover:bg-nexus-600 text-white font-medium rounded-lg transition-all",
-            collapsed && "justify-center px-0"
+            collapsed && "justify-center px-0",
           )}
         >
           <span className="text-lg">+</span>
@@ -79,7 +77,7 @@ export function Sidebar() {
                 isActive
                   ? "bg-nexus-500/10 text-nexus-400 font-medium"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                collapsed && "justify-center px-0"
+                collapsed && "justify-center px-0",
               )}
             >
               <span className="text-base">{item.icon}</span>
@@ -107,7 +105,13 @@ export function Sidebar() {
                 title={item.title}
               >
                 <span className="text-xs shrink-0">
-                  {item.type === "link" ? "🔗" : item.type === "note" ? "📝" : item.type === "pdf" ? "📕" : "📄"}
+                  {item.type === "link"
+                    ? "🔗"
+                    : item.type === "note"
+                      ? "📝"
+                      : item.type === "pdf"
+                        ? "📕"
+                        : "📄"}
                 </span>
                 <span className="truncate">{item.title}</span>
               </Link>
@@ -118,10 +122,7 @@ export function Sidebar() {
 
       {/* Bottom Section */}
       <div className="p-3 border-t border-border">
-        <div className={cn(
-          "flex items-center gap-3 px-3 py-2",
-          collapsed && "justify-center"
-        )}>
+        <div className={cn("flex items-center gap-3 px-3 py-2", collapsed && "justify-center")}>
           <div className="w-8 h-8 rounded-full bg-nexus-500/20 flex items-center justify-center text-sm font-medium text-nexus-400">
             U
           </div>

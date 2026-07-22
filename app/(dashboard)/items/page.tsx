@@ -17,11 +17,27 @@ interface ListItem {
   updated_at: string;
 }
 
-const ITEM_TYPES = ["all", "link", "note", "pdf", "image", "screenshot", "file", "video", "voice_memo"] as const;
+const ITEM_TYPES = [
+  "all",
+  "link",
+  "note",
+  "pdf",
+  "image",
+  "screenshot",
+  "file",
+  "video",
+  "voice_memo",
+] as const;
 
 const TYPE_ICONS: Record<string, string> = {
-  link: "🔗", note: "📝", file: "📄", image: "🖼",
-  screenshot: "📸", voice_memo: "🎤", pdf: "📕", video: "🎬",
+  link: "🔗",
+  note: "📝",
+  file: "📄",
+  image: "🖼",
+  screenshot: "📸",
+  voice_memo: "🎤",
+  pdf: "📕",
+  video: "🎬",
 };
 
 const TYPE_GRADIENTS: Record<string, string> = {
@@ -70,43 +86,46 @@ export default function ItemsPage() {
     );
   });
 
-  const fetchItems = useCallback(async (type: string, pageNum: number, append: boolean = false) => {
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({
-        limit: String(PAGE_SIZE),
-        offset: String(pageNum * PAGE_SIZE),
-      });
-      if (type !== "all") params.set("type", type);
-      if (showArchived) params.set("includeArchived", "true");
-
-      const res = await fetch(`/api/items?${params}`);
-      if (!res.ok) {
-        if (res.status === 401) throw new Error("Please sign in to view your items");
-        throw new Error("Failed to load items");
-      }
-      const data = await res.json();
-
+  const fetchItems = useCallback(
+    async (type: string, pageNum: number, append: boolean = false) => {
       if (append) {
-        setItems((prev) => [...prev, ...(data.items || [])]);
+        setLoadingMore(true);
       } else {
-        setItems(data.items || []);
+        setLoading(true);
       }
-      setCount(data.count || 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      if (!append) setItems([]);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [showArchived]);
+      setError(null);
+
+      try {
+        const params = new URLSearchParams({
+          limit: String(PAGE_SIZE),
+          offset: String(pageNum * PAGE_SIZE),
+        });
+        if (type !== "all") params.set("type", type);
+        if (showArchived) params.set("includeArchived", "true");
+
+        const res = await fetch(`/api/items?${params}`);
+        if (!res.ok) {
+          if (res.status === 401) throw new Error("Please sign in to view your items");
+          throw new Error("Failed to load items");
+        }
+        const data = await res.json();
+
+        if (append) {
+          setItems((prev) => [...prev, ...(data.items || [])]);
+        } else {
+          setItems(data.items || []);
+        }
+        setCount(data.count || 0);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        if (!append) setItems([]);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [showArchived],
+  );
 
   useEffect(() => {
     setPage(0);
@@ -149,13 +168,14 @@ export default function ItemsPage() {
 
   const handleBatchDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Delete ${selectedIds.size} item${selectedIds.size !== 1 ? "s" : ""} permanently?`)) return;
+    if (
+      !confirm(`Delete ${selectedIds.size} item${selectedIds.size !== 1 ? "s" : ""} permanently?`)
+    )
+      return;
     setDeleting(true);
     try {
       const results = await Promise.allSettled(
-        Array.from(selectedIds).map((id) =>
-          fetch(`/api/items/${id}`, { method: "DELETE" })
-        )
+        Array.from(selectedIds).map((id) => fetch(`/api/items/${id}`, { method: "DELETE" })),
       );
       const succeeded = results.filter((r) => r.status === "fulfilled").length;
       const failed = results.filter((r) => r.status === "rejected").length;
@@ -184,7 +204,7 @@ export default function ItemsPage() {
       if (!res.ok) return;
       const data = await res.json();
       const collection = (data.collections || []).find(
-        (c: { name: string }) => c.name.toLowerCase() === input.trim().toLowerCase()
+        (c: { name: string }) => c.name.toLowerCase() === input.trim().toLowerCase(),
       );
       if (!collection) {
         toast.error(`Collection "${input}" not found`);
@@ -196,7 +216,9 @@ export default function ItemsPage() {
         body: JSON.stringify({ itemIds: Array.from(selectedIds) }),
       });
       if (!addRes.ok) throw new Error("Failed to add items");
-      toast.success(`Added ${selectedIds.size} item${selectedIds.size !== 1 ? "s" : ""} to "${collection.name}"`);
+      toast.success(
+        `Added ${selectedIds.size} item${selectedIds.size !== 1 ? "s" : ""} to "${collection.name}"`,
+      );
       setSelectedIds(new Set());
       setSelectMode(false);
     } catch {
@@ -211,9 +233,7 @@ export default function ItemsPage() {
         <div>
           <h1 className="text-2xl font-bold gradient-text">Items</h1>
           <p className="text-muted-foreground mt-1">
-            {loading
-              ? "Loading your knowledge..."
-              : `${count} item${count !== 1 ? "s" : ""} saved`}
+            {loading ? "Loading your knowledge..." : `${count} item${count !== 1 ? "s" : ""} saved`}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -264,7 +284,9 @@ export default function ItemsPage() {
 
       {/* ── Search Bar ── */}
       <div className="relative">
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">⌕</span>
+        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+          ⌕
+        </span>
         <input
           type="text"
           placeholder="Search items by title, tag, or content..."
@@ -285,7 +307,10 @@ export default function ItemsPage() {
       {/* ── Type Filters + Archive Toggle ── */}
       <div className="flex items-center gap-2 flex-wrap">
         <button
-          onClick={() => { setShowArchived(!showArchived); setPage(0); }}
+          onClick={() => {
+            setShowArchived(!showArchived);
+            setPage(0);
+          }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
             showArchived
               ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
@@ -319,12 +344,18 @@ export default function ItemsPage() {
 
       {/* ── Loading State ── */}
       {loading && (
-        <div className={viewMode === "grid"
-          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-          : "space-y-3"
-        }>
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              : "space-y-3"
+          }
+        >
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className={`skeleton rounded-2xl ${viewMode === "grid" ? "h-44" : "h-20"}`} />
+            <div
+              key={i}
+              className={`skeleton rounded-2xl ${viewMode === "grid" ? "h-44" : "h-20"}`}
+            />
           ))}
         </div>
       )}
@@ -350,8 +381,12 @@ export default function ItemsPage() {
           {searchQuery ? (
             <>
               <div className="text-5xl mb-6">🔍</div>
-              <h2 className="text-xl font-semibold mb-2">No results for &ldquo;{searchQuery}&rdquo;</h2>
-              <p className="text-muted-foreground mb-6">Try a different search term or clear the filter</p>
+              <h2 className="text-xl font-semibold mb-2">
+                No results for &ldquo;{searchQuery}&rdquo;
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Try a different search term or clear the filter
+              </p>
               <button
                 onClick={() => setSearchQuery("")}
                 className="px-6 py-3 glass-card hover:bg-card/70 rounded-xl transition-all"
@@ -396,7 +431,8 @@ export default function ItemsPage() {
           {/* Results info */}
           {searchQuery && (
             <p className="text-xs text-muted-foreground">
-              Found {filteredItems.length} result{filteredItems.length !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
+              Found {filteredItems.length} result{filteredItems.length !== 1 ? "s" : ""} for &ldquo;
+              {searchQuery}&rdquo;
             </p>
           )}
 
@@ -427,10 +463,14 @@ export default function ItemsPage() {
 
                 <input
                   type="text"
-                  placeholder={tagEditorMode === "add" ? "e.g. important, ai, research" : "e.g. draft, temp"}
+                  placeholder={
+                    tagEditorMode === "add" ? "e.g. important, ai, research" : "e.g. draft, temp"
+                  }
                   value={tagEditorInput}
                   onChange={(e) => setTagEditorInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && document.getElementById("save-tags-btn")?.click()}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && document.getElementById("save-tags-btn")?.click()
+                  }
                   className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-xl text-sm focus:outline-none focus:border-nexus-500/50 focus:ring-1 focus:ring-nexus-500/20 transition-all"
                   autoFocus
                 />
@@ -441,7 +481,10 @@ export default function ItemsPage() {
                       .split(/[\s,]+/)
                       .filter((t) => t.trim())
                       .map((t) => (
-                        <span key={t} className="text-xs px-2 py-1 rounded-full bg-nexus-500/10 text-nexus-400">
+                        <span
+                          key={t}
+                          className="text-xs px-2 py-1 rounded-full bg-nexus-500/10 text-nexus-400"
+                        >
                           #{t.toLowerCase().replace(/[^a-z0-9-_]/g, "")}
                         </span>
                       ))}
@@ -482,7 +525,7 @@ export default function ItemsPage() {
                         toast.success(
                           tagEditorMode === "add"
                             ? `Added tags to ${data.updatedCount} item${data.updatedCount !== 1 ? "s" : ""}`
-                            : `Removed tags from ${data.updatedCount} item${data.updatedCount !== 1 ? "s" : ""}`
+                            : `Removed tags from ${data.updatedCount} item${data.updatedCount !== 1 ? "s" : ""}`,
                         );
                         setShowTagEditor(false);
                         setTagEditorInput("");
@@ -501,8 +544,8 @@ export default function ItemsPage() {
                     {tagSaving
                       ? "Saving..."
                       : tagEditorMode === "add"
-                      ? `Add Tags (${selectedIds.size})`
-                      : `Remove Tags (${selectedIds.size})`}
+                        ? `Add Tags (${selectedIds.size})`
+                        : `Remove Tags (${selectedIds.size})`}
                   </button>
                 </div>
               </div>
@@ -518,11 +561,13 @@ export default function ItemsPage() {
                   selectedIds.size === displayItems.length
                     ? "border-nexus-500 bg-nexus-500"
                     : selectedIds.size > 0
-                    ? "border-nexus-500 bg-nexus-500/30"
-                    : "border-muted-foreground/30"
+                      ? "border-nexus-500 bg-nexus-500/30"
+                      : "border-muted-foreground/30"
                 }`}
               >
-                {selectedIds.size === displayItems.length && <span className="text-white text-[10px]">✓</span>}
+                {selectedIds.size === displayItems.length && (
+                  <span className="text-white text-[10px]">✓</span>
+                )}
               </button>
               <span className="text-xs text-muted-foreground">
                 {selectedIds.size === 0
@@ -532,13 +577,21 @@ export default function ItemsPage() {
               {selectedIds.size > 0 && (
                 <div className="flex items-center gap-2 ml-auto">
                   <button
-                    onClick={() => { setShowTagEditor(true); setTagEditorMode("add"); setTagEditorInput(""); }}
+                    onClick={() => {
+                      setShowTagEditor(true);
+                      setTagEditorMode("add");
+                      setTagEditorInput("");
+                    }}
                     className="px-3 py-1 glass-card hover:bg-card/70 rounded-lg text-xs transition-all"
                   >
                     🏷️ Add Tags
                   </button>
                   <button
-                    onClick={() => { setShowTagEditor(true); setTagEditorMode("remove"); setTagEditorInput(""); }}
+                    onClick={() => {
+                      setShowTagEditor(true);
+                      setTagEditorMode("remove");
+                      setTagEditorInput("");
+                    }}
                     className="px-3 py-1 glass-card hover:bg-card/70 rounded-lg text-xs transition-all"
                   >
                     🚫 Remove Tags
@@ -553,15 +606,17 @@ export default function ItemsPage() {
                               method: "PATCH",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ isFavorite: true }),
-                            })
-                          )
+                            }),
+                          ),
                         );
                         const succeeded = results.filter((r) => r.status === "fulfilled").length;
                         if (succeeded > 0) {
                           toast.success(`Favorited ${succeeded} item${succeeded !== 1 ? "s" : ""}`);
-                          setItems((prev) => prev.map((i) =>
-                            selectedIds.has(i.id) ? { ...i, is_favorite: true } : i
-                          ));
+                          setItems((prev) =>
+                            prev.map((i) =>
+                              selectedIds.has(i.id) ? { ...i, is_favorite: true } : i,
+                            ),
+                          );
                           setSelectedIds(new Set());
                           setSelectMode(false);
                         }
@@ -586,15 +641,19 @@ export default function ItemsPage() {
                               method: "PATCH",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ isFavorite: false }),
-                            })
-                          )
+                            }),
+                          ),
                         );
                         const succeeded = results.filter((r) => r.status === "fulfilled").length;
                         if (succeeded > 0) {
-                          toast.success(`Unfavorited ${succeeded} item${succeeded !== 1 ? "s" : ""}`);
-                          setItems((prev) => prev.map((i) =>
-                            selectedIds.has(i.id) ? { ...i, is_favorite: false } : i
-                          ));
+                          toast.success(
+                            `Unfavorited ${succeeded} item${succeeded !== 1 ? "s" : ""}`,
+                          );
+                          setItems((prev) =>
+                            prev.map((i) =>
+                              selectedIds.has(i.id) ? { ...i, is_favorite: false } : i,
+                            ),
+                          );
                           setSelectedIds(new Set());
                           setSelectMode(false);
                         }
@@ -617,7 +676,12 @@ export default function ItemsPage() {
                   </button>
                   <button
                     onClick={async () => {
-                      if (!confirm(`Archive ${selectedIds.size} item${selectedIds.size !== 1 ? "s" : ""}?`)) return;
+                      if (
+                        !confirm(
+                          `Archive ${selectedIds.size} item${selectedIds.size !== 1 ? "s" : ""}?`,
+                        )
+                      )
+                        return;
                       setArchiving(true);
                       try {
                         const results = await Promise.allSettled(
@@ -626,8 +690,8 @@ export default function ItemsPage() {
                               method: "PATCH",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ isArchived: true }),
-                            })
-                          )
+                            }),
+                          ),
                         );
                         const succeeded = results.filter((r) => r.status === "fulfilled").length;
                         if (succeeded > 0) {
@@ -661,14 +725,17 @@ export default function ItemsPage() {
 
           <div
             ref={gridRef}
-            className={viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-              : "space-y-2"
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                : "space-y-2"
             }
           >
             {displayItems.map((item, index) => {
               const isSelected = selectedIds.has(item.id);
-              const config = ITEM_TYPE_CONFIG[item.type as keyof typeof ITEM_TYPE_CONFIG] || ITEM_TYPE_CONFIG.note;
+              const config =
+                ITEM_TYPE_CONFIG[item.type as keyof typeof ITEM_TYPE_CONFIG] ||
+                ITEM_TYPE_CONFIG.note;
               const aiData = item.ai_data as Record<string, unknown> | null;
               const summary = aiData?.summary as string | undefined;
               const tags = (aiData?.tags as string[]) || [];
@@ -683,7 +750,9 @@ export default function ItemsPage() {
                   <div
                     key={item.id}
                     className={`group glass-card rounded-2xl overflow-hidden transition-all duration-500 hover-lift stagger-item ${
-                      selectMode && isSelected ? "border-nexus-500 ring-1 ring-nexus-500/30" : "hover:border-nexus-500/30"
+                      selectMode && isSelected
+                        ? "border-nexus-500 ring-1 ring-nexus-500/30"
+                        : "hover:border-nexus-500/30"
                     }`}
                     style={{ animationDelay: `${(index % 12) * 60}ms` }}
                   >
@@ -694,7 +763,10 @@ export default function ItemsPage() {
                       {/* Select checkbox */}
                       {selectMode && (
                         <button
-                          onClick={(e) => { e.preventDefault(); toggleSelect(item.id); }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleSelect(item.id);
+                          }}
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center mb-2 transition-all ${
                             isSelected
                               ? "border-nexus-500 bg-nexus-500"
@@ -709,9 +781,7 @@ export default function ItemsPage() {
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-base shrink-0">
                           {config.icon}
                         </div>
-                        {item.is_favorite && (
-                          <span className="text-yellow-400 text-xs">★</span>
-                        )}
+                        {item.is_favorite && <span className="text-yellow-400 text-xs">★</span>}
                       </div>
 
                       {/* Title */}
@@ -735,14 +805,15 @@ export default function ItemsPage() {
                             ↗ {domain.length > 20 ? domain.slice(0, 20) + "…" : domain}
                           </span>
                         )}
-                        {tags.length > 0 && tags.slice(0, 2).map((tag: string) => (
-                          <span
-                            key={tag}
-                            className="text-[9px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
+                        {tags.length > 0 &&
+                          tags.slice(0, 2).map((tag: string) => (
+                            <span
+                              key={tag}
+                              className="text-[9px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
                       </div>
 
                       {/* Bottom actions */}
@@ -792,7 +863,10 @@ export default function ItemsPage() {
                   <div className="flex items-start gap-4">
                     {selectMode && (
                       <button
-                        onClick={(e) => { e.preventDefault(); toggleSelect(item.id); }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleSelect(item.id);
+                        }}
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-1 transition-all ${
                           isSelected
                             ? "border-nexus-500 bg-nexus-500"
@@ -802,7 +876,9 @@ export default function ItemsPage() {
                         {isSelected && <span className="text-white text-[10px]">✓</span>}
                       </button>
                     )}
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-lg shrink-0`}>
+                    <div
+                      className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-lg shrink-0`}
+                    >
                       {config.icon}
                     </div>
 
@@ -844,12 +920,17 @@ export default function ItemsPage() {
                         {tags.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {tags.slice(0, 3).map((tag: string) => (
-                              <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                              <span
+                                key={tag}
+                                className="text-[9px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground"
+                              >
                                 #{tag}
                               </span>
                             ))}
                             {tags.length > 3 && (
-                              <span className="text-[9px] text-muted-foreground">+{tags.length - 3}</span>
+                              <span className="text-[9px] text-muted-foreground">
+                                +{tags.length - 3}
+                              </span>
                             )}
                           </div>
                         )}

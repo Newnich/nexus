@@ -74,9 +74,15 @@ function buildSlackPayload(alert: Alert): Record<string, unknown> {
         elements: [
           {
             type: "mrkdwn",
-            text: "Severity: *" + alert.severity.toUpperCase() + "* | " +
+            text:
+              "Severity: *" +
+              alert.severity.toUpperCase() +
+              "* | " +
               new Date(alert.lastSeen).toLocaleString("en-US", {
-                month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
               }),
           },
         ],
@@ -155,7 +161,7 @@ async function sendToWebhook(
   url: string,
   payload: Record<string, unknown>,
   channel: "slack" | "discord",
-  alertId: string
+  alertId: string,
 ): Promise<WebhookResult> {
   try {
     // Validate URL format
@@ -189,12 +195,12 @@ async function sendToWebhook(
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error("[Webhook/" + channel + "] Error:", msg);
-    recordNotification({ channel, type: "alert", sent: false, alertId, error: msg }).catch(() => {});
+    recordNotification({ channel, type: "alert", sent: false, alertId, error: msg }).catch(
+      () => {},
+    );
     return { channel, sent: false, alertId, error: msg };
   }
 }
-
-
 
 // ── Individual channel senders (used by the dispatcher for per-channel preference filtering) ──
 
@@ -221,9 +227,7 @@ export async function sendAlertToDiscord(alert: Alert): Promise<WebhookResult | 
 /**
  * Send a critical alert to both Slack and Discord (legacy — new dispatcher uses per-channel senders).
  */
-export async function sendCriticalAlertToWebhooks(
-  alert: Alert
-): Promise<WebhookResult[]> {
+export async function sendCriticalAlertToWebhooks(alert: Alert): Promise<WebhookResult[]> {
   const results: WebhookResult[] = [];
 
   if (SLACK_WEBHOOK_URL) {
@@ -265,9 +269,14 @@ function buildTestPayload(channel: "slack" | "discord"): Record<string, unknown>
           elements: [
             {
               type: "mrkdwn",
-              text: "Sent from *NEXUS* · " + new Date().toLocaleString("en-US", {
-                month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-              }),
+              text:
+                "Sent from *NEXUS* · " +
+                new Date().toLocaleString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
             },
           ],
         },
@@ -291,7 +300,8 @@ function buildTestPayload(channel: "slack" | "discord"): Record<string, unknown>
     embeds: [
       {
         title: "🔧 NEXUS Test Notification",
-        description: "This is a test message from your NEXUS system to verify your Discord webhook configuration is working correctly.",
+        description:
+          "This is a test message from your NEXUS system to verify your Discord webhook configuration is working correctly.",
         color: 0x6366f1,
         timestamp: new Date().toISOString(),
         footer: {
@@ -314,14 +324,15 @@ function buildTestPayload(channel: "slack" | "discord"): Record<string, unknown>
  * Used from the settings page to verify configuration.
  */
 export async function sendTestWebhookNotification(
-  channel: "slack" | "discord"
+  channel: "slack" | "discord",
 ): Promise<WebhookResult> {
   const url = channel === "slack" ? SLACK_WEBHOOK_URL : DISCORD_WEBHOOK_URL;
 
   if (!url) {
-    const error = channel === "slack"
-      ? "SLACK_WEBHOOK_URL not configured"
-      : "DISCORD_WEBHOOK_URL not configured";
+    const error =
+      channel === "slack"
+        ? "SLACK_WEBHOOK_URL not configured"
+        : "DISCORD_WEBHOOK_URL not configured";
     return { channel, sent: false, alertId: "test", error };
   }
 
