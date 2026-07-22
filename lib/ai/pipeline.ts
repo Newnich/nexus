@@ -95,7 +95,7 @@ export async function batchProcessItems(
   items: Array<{ id: string; title: string; content: string; extractedText?: string }>,
 ): Promise<Map<string, ProcessingResult>> {
   const results = new Map<string, ProcessingResult>();
-  const batchSize = 3; // Reduced from 5 to avoid rate limits
+  const batchSize = parseInt(process.env.AI_BATCH_SIZE || "3", 10);
 
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);

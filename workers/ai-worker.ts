@@ -206,6 +206,44 @@ async function handleAIProcess(job: Job<AIProcessJobData>): Promise<AIProcessJob
   }
 }
 
+// ── Helpers ──
+
+/** Retry an async function with exponential backoff. */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: {
+    label: string;
+    maxRetries?: number;
+    baseDelayMs?: number;
+    onRetry?: (attempt: number, error: Error) => void;
+  },
+): Promise<T | null> {
+  const { label, maxRetries = 5, baseDelayMs = 1000, onRetry } = options;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+
+      if (attempt === maxRetries) {
+        console.warn(`⚠️ [Worker] ${label} failed after ${maxRetries} attempts: ${error.message}`);
+        return null;
+      }
+
+      const delay = baseDelayMs * Math.pow(2, attempt - 1);
+      console.warn(
+        `⚠️ [Worker] ${label} attempt ${attempt}/${maxRetries} failed, retrying in ${delay}ms...`,
+      );
+
+      if (onRetry) onRetry(attempt, error);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  return null;
+}
+
 // ── Start the worker ──
 
 async function main() {
@@ -224,11 +262,21 @@ async function main() {
   console.log();
 
   // Start the Postgres LISTEN/NOTIFY listener to auto-enqueue AI jobs
-  // when items are created via the database trigger
-  await startDbListener();
+  // when items are created via the database trigger.
+  // Retry with exponential backoff in case Supabase isn't ready yet.
+  await withRetry(() => startDbListener(), {
+    label: "Database listener startup",
+    maxRetries: 5,
+    baseDelayMs: 2000,
+  });
 
-  // Register the repeatable backfill scan schedule
-  await registerBackfillSchedule();
+  // Register the repeatable backfill scan schedule.
+  // If Redis isn't ready yet, retry with exponential backoff.
+  await withRetry(() => registerBackfillSchedule(), {
+    label: "Backfill schedule registration",
+    maxRetries: 5,
+    baseDelayMs: 2000,
+  });
 
   // ── Create workers ──
   const aiWorker = createAIWorker(handleAIProcess);

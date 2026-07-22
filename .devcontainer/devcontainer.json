@@ -50,7 +50,7 @@
       "onAutoForward": "silent"
     }
   },
-  "postCreateCommand": "npm install && npx playwright install chromium",
+  "postCreateCommand": "npx playwright install chromium",
   "remoteUser": "root",
   "features": {
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
