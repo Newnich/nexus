@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { formatDateRelative, extractDomain, ITEM_TYPE_CONFIG } from "@/lib/utils";
+import { ItemSkeleton } from "@/components/item-skeleton";
 
 interface ListItem {
   id: string;
@@ -343,22 +344,7 @@ export default function ItemsPage() {
       </div>
 
       {/* ── Loading State ── */}
-      {loading && (
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-              : "space-y-3"
-          }
-        >
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className={`skeleton rounded-2xl ${viewMode === "grid" ? "h-44" : "h-20"}`}
-            />
-          ))}
-        </div>
-      )}
+      {loading && <ItemSkeleton viewMode={viewMode} count={viewMode === "grid" ? 8 : 5} />}
 
       {/* ── Error State ── */}
       {error && !loading && (
