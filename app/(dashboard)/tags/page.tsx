@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { PageSkeleton } from "@/components/page-skeleton";
 
 interface TagEntry {
   name: string;
@@ -242,11 +243,13 @@ export default function TagsPage() {
 
       {/* ── Loading ── */}
       {loading && (
-        <div className="space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-16 skeleton rounded-2xl" />
-          ))}
-        </div>
+        <PageSkeleton titleWidth="w-24" subtitleWidth="w-56" actionWidths={["w-32"]} searchBar>
+          <div className="space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-16 skeleton rounded-2xl" />
+            ))}
+          </div>
+        </PageSkeleton>
       )}
 
       {/* ── Error ── */}
