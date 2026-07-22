@@ -144,9 +144,6 @@ services:
       - nexus-net
     depends_on:
       - worker
-    labels:
-      caddy: nexus.yourdomain.com
-      caddy.reverse_proxy: "{{upstreams 3000}}"
 
   # ── AI Worker ──
   worker:

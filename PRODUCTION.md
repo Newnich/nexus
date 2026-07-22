@@ -23,20 +23,22 @@ cp .env.example .env
 
 ### 2. Set Required Environment Variables
 
-| Variable                        | Required | Description                                           |
-| ------------------------------- | -------- | ----------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | ✅       | Supabase project URL                                  |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅       | Supabase anon/public key                              |
-| `SUPABASE_SERVICE_ROLE_KEY`     | ✅       | Supabase service role key (admin)                     |
-| `REDIS_HOST`                    | ✅       | Redis host (e.g., upstash.io or localhost)            |
-| `REDIS_PORT`                    | ✅       | Redis port (default: 6379)                            |
-| `REDIS_PASSWORD`                | ✅       | Redis password                                        |
-| `REDIS_TLS`                     | ⬜       | Set `true` for managed Redis (Upstash, Redis Cloud)   |
-| `OLLAMA_URL`                    | ⬜       | Ollama server URL (default: `http://localhost:11434`) |
-| `BACKFILL_CRON`                 | ⬜       | Cron schedule for backfill (default: `*/15 * * * *`)  |
-| `BACKFILL_BATCH`                | ⬜       | Batch size for backfill (default: `200`)              |
-| `BACKFILL_ENABLED`              | ⬜       | Enable backfill scanner (`true`/`false`)              |
-| `WORKER_CONCURRENCY`            | ⬜       | AI worker concurrency (default: `2`)                  |
+| Variable                        | Required | Description                                             |
+| ------------------------------- | -------- | ------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | ✅       | Supabase project URL                                    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅       | Supabase anon/public key                                |
+| `SUPABASE_SERVICE_ROLE_KEY`     | ✅       | Supabase service role key (admin)                       |
+| `REDIS_HOST`                    | ✅       | Redis host (e.g., upstash.io or localhost)              |
+| `REDIS_PORT`                    | ✅       | Redis port (default: 6379)                              |
+| `REDIS_PASSWORD`                | ✅       | Redis password                                          |
+| `REDIS_TLS`                     | ⬜       | Set `true` for managed Redis (Upstash, Redis Cloud)     |
+| `OLLAMA_URL`                    | ⬜       | Ollama server URL (default: `http://localhost:11434`)   |
+| `BACKFILL_CRON`                 | ⬜       | Cron schedule for backfill (default: `*/15 * * * *`)    |
+| `BACKFILL_BATCH`                | ⬜       | Batch size for backfill (default: `200`)                |
+| `BACKFILL_ENABLED`              | ⬜       | Enable backfill scanner (`true`/`false`)                |
+| `WORKER_CONCURRENCY`            | ⬜       | AI worker concurrency (default: `2`)                    |
+| `SENTRY_DSN`                    | ⬜       | Sentry DSN for error tracking                           |
+| `NEXT_PUBLIC_SENTRY_DSN`        | ⬜       | Sentry DSN for client-side errors (same value as above) |
 
 ### 3. Launch All Services
 
