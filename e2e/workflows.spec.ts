@@ -195,13 +195,13 @@ test.describe("Search Workflow", () => {
     await page.goto("/search");
     const searchInput = page.locator('input[placeholder*="find"i]');
     await searchInput.waitFor({ state: "visible", timeout: 5000 });
-    await searchInput.fill("AI");
+    // Search for an exact seed item title for reliable matching
+    await searchInput.fill("Getting Started with Next.js");
     await searchInput.press("Enter");
-    await page.waitForTimeout(2000);
-    // Either shows results or a "no results" message
-    const results = page.getByText(/Found .+ result/i);
-    const noResults = page.getByText(/no results/i);
-    await expect(results.or(noResults)).toBeVisible({ timeout: 10000 });
+    // Wait for the search result to appear in the results list
+    await expect(page.getByText("Getting Started with Next.js").first()).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("Saved search suggestions are visible", async ({ page }) => {
@@ -315,16 +315,13 @@ test.describe("Graph Interactions", () => {
     const circles = page.locator("svg circle");
     const count = await circles.count();
     if (count > 0) {
-      // Use 'attached' state since circles may be outside viewport in force layout
+      // Use dispatchEvent to bypass viewport checks — SVG circles may be outside
+      // the rendered viewport in the force layout's virtual viewBox coordinates
       await circles.first().waitFor({ state: "attached", timeout: 5000 });
-      await circles.first().scrollIntoViewIfNeeded();
-      await circles.first().click({ force: true });
-      // Clicking a node should navigate or show a tooltip/popover
-      await page.waitForTimeout(1500);
-      const tooltip = page.locator("[role='tooltip'], .popover, .tooltip").first();
-      await expect(tooltip)
-        .toBeVisible({ timeout: 5000 })
-        .catch(() => {});
+      await circles.first().dispatchEvent("click");
+      // Clicking a node should navigate to the item detail page
+      await page.waitForURL(/\/items\//, { timeout: 10000 });
+      await expect(page.locator("h1").first()).toBeVisible({ timeout: 5000 });
     }
   });
 });
