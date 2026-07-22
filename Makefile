@@ -56,7 +56,7 @@
 .PHONY: lint typecheck format format-check check
 .PHONY: migrate seed db-reset
 .PHONY: worker worker-dev
-.PHONY: test test-ui
+.PHONY: test test-e2e test-ui
 .PHONY: install setup
 
 # ── Default target ──
@@ -108,6 +108,7 @@ help:
 	@echo ""
 	@echo "  ── Testing ──"
 	@echo "  test               Run Playwright E2E tests"
+	@echo "  test-e2e           Alias for 'make test'"
 	@echo "  test-ui            Run Playwright with interactive UI"
 	@echo ""
 	@echo "  ── Setup ──"
