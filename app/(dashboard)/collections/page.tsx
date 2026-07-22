@@ -197,6 +197,7 @@ export default function CollectionsPage() {
           {collections.map((collection) => (
             <div
               key={collection.id}
+              data-testid="collection-card"
               onClick={() => router.push(`/collections/${collection.id}`)}
               className="glass-card p-6 rounded-2xl hover:border-nexus-500/30 transition-all group cursor-pointer"
             >

@@ -11,19 +11,19 @@ test.describe("Quick Capture", () => {
   });
 
   test("Quick capture button is visible on dashboard", async ({ page }) => {
-    const quickCaptureBtn = page.locator("text=Quick Capture").first();
+    const quickCaptureBtn = page.locator('button[title="Quick capture"]');
     await expect(quickCaptureBtn).toBeVisible({ timeout: 5000 });
   });
 
   test("Quick capture opens a modal", async ({ page }) => {
-    const quickCaptureBtn = page.locator("text=Quick Capture").first();
+    const quickCaptureBtn = page.locator('button[title="Quick capture"]');
     await quickCaptureBtn.click();
     // Modal should appear with an input field
     await expect(page.locator('input[placeholder*="url"i]').first()).toBeVisible({ timeout: 5000 });
   });
 
   test("Quick capture can submit a URL", async ({ page }) => {
-    const quickCaptureBtn = page.locator("text=Quick Capture").first();
+    const quickCaptureBtn = page.locator('button[title="Quick capture"]');
     await quickCaptureBtn.click();
     await page
       .locator('input[placeholder*="url"i]')
@@ -218,7 +218,7 @@ test.describe("Settings Pages", () => {
 
   test("Notifications settings page loads", async ({ page }) => {
     await page.goto("/settings/notifications");
-    await expect(page.locator("h1").filter({ hasText: /Notifications/i })).toBeVisible({
+    await expect(page.locator("h1").filter({ hasText: /Notification Settings/i })).toBeVisible({
       timeout: 10000,
     });
   });
@@ -232,7 +232,7 @@ test.describe("Settings Pages", () => {
 
   test("Alert thresholds page loads", async ({ page }) => {
     await page.goto("/settings/alerts");
-    await expect(page.getByText(/threshold/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/threshold/i).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Import/Export page loads", async ({ page }) => {

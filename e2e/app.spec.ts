@@ -6,9 +6,10 @@ import { signIn, TEST_EMAIL, TEST_PASSWORD } from "./helpers";
 // ═════════════════════════════════════════════════════════════════════════════
 
 test.describe("Auth Guard", () => {
-  test("Dashboard shows sign-in prompt when unauthenticated", async ({ page }) => {
+  test("Dashboard redirects to login when unauthenticated", async ({ page }) => {
     await page.goto("/dashboard");
-    await expect(page.getByText(/please sign in/i).first()).toBeVisible({ timeout: 10000 });
+    // Middleware redirects to /auth/login — verify the login page rendered
+    await expect(page.getByText(/Welcome back/i).first()).toBeVisible({ timeout: 10000 });
   });
 });
 
