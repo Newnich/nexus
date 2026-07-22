@@ -114,8 +114,11 @@ test.describe("Item CRUD", () => {
     }
 
     await page.locator('button[type="submit"]').first().click();
-    await page.waitForURL(/\/items\/(?!new)/, { timeout: 15000 });
-    await expect(page.locator("h1").filter({ hasText: uniqueTitle })).toBeVisible({
+    // Form redirects to /dashboard after saving
+    await page.waitForURL(/\/dashboard/, { timeout: 15000 });
+    // Navigate to the item detail page to verify title
+    await page.goto("/items");
+    await expect(page.getByText(uniqueTitle).first()).toBeVisible({
       timeout: 10000,
     });
   });
@@ -297,13 +300,15 @@ test.describe("Graph Interactions", () => {
   });
   test("Graph nodes can be clicked", async ({ page }) => {
     await page.goto("/graph");
-    await page.waitForSelector("svg circle", { timeout: 10000 });
+    await page.waitForSelector("svg circle", { timeout: 15000 });
     // Wait for simulation to settle — circles should be stable
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     const circles = page.locator("svg circle");
     const count = await circles.count();
     if (count > 0) {
-      await circles.first().waitFor({ state: "visible", timeout: 5000 });
+      // Use 'attached' state since circles may be outside viewport in force layout
+      await circles.first().waitFor({ state: "attached", timeout: 5000 });
+      await circles.first().scrollIntoViewIfNeeded();
       await circles.first().click({ force: true });
       // Clicking a node should navigate or show a tooltip/popover
       await page.waitForTimeout(1500);

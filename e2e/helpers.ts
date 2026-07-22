@@ -25,12 +25,13 @@ export async function signIn(page: Page) {
 // Item Helpers
 // ═════════════════════════════════════════════════════════════════════════════
 
-/** Navigate to new-item form, fill title + URL, submit, and wait for redirect. */
+/** Navigate to new-item form, fill title + URL, submit, and wait for redirect to dashboard. */
 export async function createTestItem(page: Page, title: string, url: string) {
   await page.goto("/items/new");
   await page.waitForSelector('input[name="title"]', { timeout: 10000 });
   await page.fill('input[name="title"]', title);
   await page.fill('input[name="url"]', url);
   await page.click('button[type="submit"]');
-  await page.waitForURL(/\/items\/(?!new)/, { timeout: 15000 });
+  // Form redirects to /dashboard after saving
+  await page.waitForURL(/\/dashboard/, { timeout: 15000 });
 }
