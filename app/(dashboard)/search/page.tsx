@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { PageSkeleton } from "@/components/page-skeleton";
 import { renderHighlighted } from "@/lib/render-highlighted";
 import toast from "react-hot-toast";
 import type { Item } from "@/types/item";
@@ -434,18 +433,16 @@ function SearchContent() {
 
       {/* Loading State */}
       {loading && (
-        <PageSkeleton titleWidth="w-24" subtitleWidth="w-48" searchBar filterCount={4}>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="p-5 glass-card rounded-2xl">
-                <div className="skeleton h-4 w-16 rounded mb-3" />
-                <div className="skeleton h-6 w-3/4 rounded mb-2" />
-                <div className="skeleton h-4 w-full rounded mb-1" />
-                <div className="skeleton h-4 w-2/3 rounded" />
-              </div>
-            ))}
-          </div>
-        </PageSkeleton>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-5 glass-card rounded-2xl">
+              <div className="skeleton h-4 w-16 rounded mb-3" />
+              <div className="skeleton h-6 w-3/4 rounded mb-2" />
+              <div className="skeleton h-4 w-full rounded mb-1" />
+              <div className="skeleton h-4 w-2/3 rounded" />
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Error State */}
