@@ -56,11 +56,12 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?err}
-      - SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:?err}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?err}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:?err}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
       - BACKFILL_CRON=${BACKFILL_CRON:-*/15 * * * *}
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       redis:
         condition: service_healthy
