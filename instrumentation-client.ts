@@ -3,7 +3,13 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+// Instrument navigation transitions
+// https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#use-the-new-instrumentation
+
+// Check both server-side and client-side DSN env vars for flexibility
 const SENTRY_DSN = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 
 if (SENTRY_DSN) {
   Sentry.init({
