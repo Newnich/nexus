@@ -12,10 +12,23 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
 
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      REDIS_HOST: localhost
+      REDIS_PORT: "6379"
 
     steps:
       - uses: actions/checkout@v4
@@ -50,6 +63,27 @@ jobs:
 
       - name: Seed test data
         run: npx tsx scripts/seed.ts
+
+      - name: Seed Redis defaults
+        run: |
+          node -e "
+            (async () => {
+              const Redis = require('ioredis');
+              const redis = new Redis({ host: 'localhost', port: 6379 });
+              await redis.set('nexus:alert:thresholds', JSON.stringify({
+                consecutiveFailuresThreshold: 3,
+                workerInactivityHours: 2,
+                backlogThreshold: 1000
+              }));
+              await redis.set('nexus:notification:cooldowns', JSON.stringify({
+                slack: 30,
+                discord: 30,
+                email: 30
+              }));
+              await redis.quit();
+              console.log('Redis defaults seeded successfully');
+            })().catch(e => { console.error('Redis seeding failed:', e); process.exit(1); });
+          "
 
       - name: Build production app
         run: npm run build

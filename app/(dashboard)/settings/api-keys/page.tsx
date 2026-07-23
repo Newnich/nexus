@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { cn, formatDateRelative } from "@/lib/utils";
+import { PageSkeleton } from "@/components/page-skeleton";
 
 interface ApiKey {
   id: string;
@@ -92,15 +93,13 @@ export default function ApiKeysPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-56 skeleton rounded-lg" />
-        <div className="h-5 w-72 skeleton rounded" />
+      <PageSkeleton titleWidth="w-56" subtitleWidth="w-72">
         <div className="space-y-3">
           {[1, 2].map((i) => (
             <div key={i} className="h-20 skeleton rounded-2xl" />
           ))}
         </div>
-      </div>
+      </PageSkeleton>
     );
   }
 

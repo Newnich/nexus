@@ -22,7 +22,7 @@
 import { Queue, Worker } from "bullmq";
 import type { JobsOptions, Job } from "bullmq";
 import { getRedisConnection, QUEUES } from "./config";
-import { enqueueAIProcessing } from "./ai-queue";
+import { enqueueAIProcessing, AI_PRIORITY } from "./ai-queue";
 import { createServiceClient } from "@/lib/supabase/server";
 import { incrementBackfillFailures, resetBackfillFailures } from "./alerts";
 
@@ -171,7 +171,7 @@ export async function runBackfillScan(
     // 3. Enqueue each unprocessed item
     for (const item of unprocessed) {
       try {
-        await enqueueAIProcessing(item.id, item.user_id, 10);
+        await enqueueAIProcessing(item.id, item.user_id, AI_PRIORITY.BACKFILL);
         result.enqueued++;
       } catch (err) {
         if (

@@ -23,6 +23,16 @@ import { Queue, Worker, type Job } from "bullmq";
 import { getRedisConnection, QUEUES, aiProcessingJobId } from "./config";
 import type { ItemAIData } from "@/types/item";
 
+// ── Priority levels (lower = processed sooner) ──
+// Premium users get priority ~1 (processed first)
+// Free users get priority ~5 (standard)
+// Backfill items get priority ~10 (lowest, batch background)
+export const AI_PRIORITY = {
+  PREMIUM: 1,
+  STANDARD: 5,
+  BACKFILL: 10,
+} as const;
+
 // ── Job data & result types ──
 
 export interface AIProcessJobData {
@@ -76,7 +86,7 @@ export function getAIQueue(): Queue<AIProcessJobData, AIProcessJobResult, string
 export async function enqueueAIProcessing(
   itemId: string,
   userId: string,
-  priority: number = 0,
+  priority: number = AI_PRIORITY.STANDARD,
 ): Promise<void> {
   const queue = getAIQueue();
   await queue.add(

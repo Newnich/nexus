@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { PageSkeleton } from "@/components/page-skeleton";
 
 // ── Types ──
 
@@ -244,11 +245,9 @@ export default function GeneralSettingsPage() {
   // ── Loading State ──
   if (loading) {
     return (
-      <div className="space-y-8">
-        <div className="h-8 w-64 skeleton rounded-lg" />
-        <div className="h-5 w-96 skeleton rounded" />
+      <PageSkeleton titleWidth="w-64" subtitleWidth="w-96">
         <div className="h-96 skeleton rounded-2xl" />
-      </div>
+      </PageSkeleton>
     );
   }
 

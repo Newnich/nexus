@@ -225,6 +225,7 @@ export default function NewItemForm() {
                 🔗
               </span>
               <input
+                name="url"
                 type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -298,6 +299,7 @@ export default function NewItemForm() {
             Title {saveType !== "link" && <span className="text-muted-foreground">(optional)</span>}
           </label>
           <input
+            name="title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}

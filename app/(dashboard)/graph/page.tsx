@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { PageSkeleton } from "@/components/page-skeleton";
 
 // ── Types ──
 interface GraphNode {
@@ -527,9 +528,7 @@ export default function GraphPage() {
   // ── Loading ──
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-64 skeleton rounded-lg" />
-        <div className="h-5 w-72 skeleton rounded" />
+      <PageSkeleton titleWidth="w-64" subtitleWidth="w-72">
         <div className="glass-card rounded-2xl h-[600px] flex items-center justify-center relative overflow-hidden">
           <ParticleBackground />
           <div className="text-center relative z-10">
@@ -537,12 +536,12 @@ export default function GraphPage() {
             <p className="text-muted-foreground">Loading knowledge graph...</p>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-4 mt-6">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-20 skeleton rounded-xl" />
           ))}
         </div>
-      </div>
+      </PageSkeleton>
     );
   }
 

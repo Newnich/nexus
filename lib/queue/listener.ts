@@ -17,7 +17,8 @@
  */
 
 import pg from "pg";
-import { enqueueAIProcessing } from "./ai-queue";
+import { enqueueAIProcessing, AI_PRIORITY } from "./ai-queue";
+import { createServiceClient } from "@/lib/supabase/server";
 
 const CHANNEL = "nexus:item:created";
 
@@ -59,11 +60,30 @@ export async function startDbListener(): Promise<void> {
 
       try {
         const payload: ItemCreatedPayload = JSON.parse(msg.payload);
-        console.log(`[DB Listener] Item created: ${payload.itemId} — enqueuing AI processing`);
 
-        // Also create a DB queue entry (best-effort, already done by trigger)
+        // Determine priority based on user's plan
+        let priority: number = AI_PRIORITY.STANDARD;
+        try {
+          const supabase = await createServiceClient();
+          const { data: user } = await supabase
+            .from("users")
+            .select("plan")
+            .eq("id", payload.userId)
+            .single<{ plan: string }>();
+
+          if (user && (user.plan === "pro" || user.plan === "team" || user.plan === "enterprise")) {
+            priority = AI_PRIORITY.PREMIUM;
+          }
+        } catch {
+          // Default to standard priority if lookup fails
+        }
+
+        console.log(
+          `[DB Listener] Item created: ${payload.itemId} — enqueuing AI processing (priority: ${priority})`,
+        );
+
         // Then enqueue via BullMQ
-        await enqueueAIProcessing(payload.itemId, payload.userId);
+        await enqueueAIProcessing(payload.itemId, payload.userId, priority);
       } catch (err) {
         console.error("[DB Listener] Failed to process notification:", err);
       }

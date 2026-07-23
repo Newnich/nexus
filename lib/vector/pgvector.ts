@@ -101,6 +101,6 @@ export async function getEmbeddingStats(): Promise<{
 
   return {
     totalEmbeddings: count || 0,
-    dimension: 768, // nomic-embed-text dimension
+    dimension: parseInt(process.env.VECTOR_DIMENSION || "768", 10), // nomic-embed-text default
   };
 }

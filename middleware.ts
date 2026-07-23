@@ -1,12 +1,131 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { validateApiKey } from "@/lib/auth/validate-api-key";
+
+// ── Rate limiting state (in-memory — resets on server restart) ──
+// For production, replace with Redis-based rate limiting
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 60; // 60 requests per minute per IP
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX) {
+    return true;
+  }
+
+  return false;
+}
 
 // ── Paths that require API key authentication ──
 const EXTERNAL_API_PREFIX = "/api/external/";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+
+  // ── Create base response for cookie handling ──
+  const response = NextResponse.next();
+
+  // ── Supabase session refresh (all routes except assets and external API) ──
+  if (!pathname.startsWith("/_next") && !pathname.startsWith("/api/external/")) {
+    try {
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll();
+            },
+            setAll(
+              cookiesToSet: {
+                name: string;
+                value: string;
+                options?: {
+                  path?: string;
+                  maxAge?: number;
+                  secure?: boolean;
+                  sameSite?: "lax" | "strict" | "none";
+                };
+              }[],
+            ) {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                response.cookies.set(name, value, options),
+              );
+            },
+          },
+        },
+      );
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Protect dashboard routes — redirect to login if unauthenticated
+      const isDashboardRoute =
+        pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/items") ||
+        pathname.startsWith("/collections") ||
+        pathname.startsWith("/graph") ||
+        pathname.startsWith("/search") ||
+        pathname.startsWith("/activity") ||
+        pathname.startsWith("/status") ||
+        pathname.startsWith("/settings") ||
+        pathname.startsWith("/tags");
+
+      if (isDashboardRoute && !user) {
+        const redirectUrl = new URL("/auth/login", request.url);
+        redirectUrl.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(redirectUrl);
+      }
+    } catch {
+      // Session refresh failed silently — allow request to continue
+      // The client-side components will redirect if needed
+    }
+  }
+
+  // ── Rate limiting for API routes ──
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/health")) {
+    // Periodically clean stale entries to prevent memory growth
+    if (Math.random() < 0.01) {
+      const now = Date.now();
+      for (const [key, val] of rateLimitMap) {
+        if (now > val.resetAt + RATE_LIMIT_WINDOW_MS) rateLimitMap.delete(key);
+      }
+    }
+
+    if (isRateLimited(ip)) {
+      const isExternal = pathname.startsWith("/api/external/");
+      const headers: Record<string, string> = {
+        "Retry-After": "60",
+        "X-RateLimit-Limit": String(RATE_LIMIT_MAX),
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": String(Math.ceil((Date.now() + RATE_LIMIT_WINDOW_MS) / 1000)),
+      };
+
+      // Add CORS headers for external API clients
+      if (isExternal) {
+        headers["Access-Control-Allow-Origin"] = "*";
+        headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,PATCH,OPTIONS";
+        headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-API-Key";
+      }
+
+      return NextResponse.json(
+        { error: "Too many requests. Please slow down." },
+        { status: 429, headers },
+      );
+    }
+  }
 
   // ── API Key Authentication for /api/external/* ──
   if (pathname.startsWith(EXTERNAL_API_PREFIX)) {
@@ -49,16 +168,53 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-nexus-user-id", result.userId);
     requestHeaders.set("x-nexus-key-id", result.keyId);
 
-    return NextResponse.next({
+    const apiResponse = NextResponse.next({
       request: { headers: requestHeaders },
     });
+
+    // Add security headers
+    addSecurityHeaders(apiResponse);
+
+    return apiResponse;
   }
 
-  // ── Regular request — just proceed ──
-  return NextResponse.next();
+  // ── Regular request — add security headers and proceed ──
+  addSecurityHeaders(response);
+  return response;
 }
 
-// ── Config: only run on /api/external/* paths ──
+/** Add security headers to every response. */
+function addSecurityHeaders(response: NextResponse) {
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+  );
+
+  // Strict-Transport-Security (only in production)
+  if (process.env.NODE_ENV === "production") {
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload",
+    );
+  }
+}
+
+// ── Config: covers API routes for rate limiting + dashboard routes for session refresh ──
 export const config = {
-  matcher: ["/api/external/:path*"],
+  matcher: [
+    "/api/:path*",
+    "/dashboard/:path*",
+    "/items/:path*",
+    "/collections/:path*",
+    "/graph/:path*",
+    "/search/:path*",
+    "/activity/:path*",
+    "/status/:path*",
+    "/settings/:path*",
+    "/tags/:path*",
+  ],
 };
