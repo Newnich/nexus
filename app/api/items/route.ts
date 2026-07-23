@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { enqueueAIProcessing } from "@/lib/queue/ai-queue";
 import type { CreateItemInput } from "@/types/item";
 
 export const dynamic = "force-dynamic";
@@ -83,8 +84,10 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    // Note: AI processing is automatically enqueued by the Postgres DB trigger
-    // on item insert, picked up by the LISTEN/NOTIFY listener in the worker.
+    // Enqueue AI processing directly (fire-and-forget)
+    enqueueAIProcessing(item.id, user.id).catch((err) =>
+      console.error("[Items API] Failed to enqueue AI processing:", err),
+    );
 
     // Add to collections if specified
     if (body.collectionIds?.length) {
