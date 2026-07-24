@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { cn, formatDateRelative, validatedFetcher } from "@/lib/utils";
+import { cn, formatDateRelative } from "@/lib/utils";
+import { useApiData } from "@/lib/hooks/use-api-data";
 import { AlertsResponseSchema } from "@/lib/schemas";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -23,12 +24,25 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
-  const [alerts, setAlerts] = useState<AlertEntry[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const quickCreateRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Fetch alerts via useApiData hook
+  const { data: alertsData, refetch: refetchAlerts } = useApiData(
+    "/api/queue/alerts",
+    AlertsResponseSchema,
+  );
+
+  const alerts = (alertsData?.alerts as AlertEntry[]) ?? [];
+
+  // Poll every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => refetchAlerts(), 30000);
+    return () => clearInterval(interval);
+  }, [refetchAlerts]);
 
   const activeAlerts = alerts.filter((a) => !dismissedIds.has(a.id));
   const notificationCount = activeAlerts.filter(
@@ -64,21 +78,6 @@ export function Header() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Fetch alerts on mount and poll
-  useEffect(() => {
-    async function fetchAlerts() {
-      try {
-        const data = await validatedFetcher("/api/queue/alerts", AlertsResponseSchema);
-        setAlerts(data.alerts as AlertEntry[]);
-      } catch {
-        // Silently fail — alerts are best-effort
-      }
-    }
-    fetchAlerts();
-    const interval = setInterval(fetchAlerts, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
