@@ -3,10 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import toast from "react-hot-toast";
 import { validatedFetcher } from "@/lib/utils";
+import { useApiData } from "@/lib/hooks/use-api-data";
 import { QueueStatusSchema, AlertsResponseSchema } from "@/lib/schemas";
-import { z } from "zod";
-
-type StatusData = z.infer<typeof QueueStatusSchema>;
 
 interface Alert {
   id: string;
@@ -115,24 +113,23 @@ function getAlertBg(severity: string): string {
 // ── Component ──
 
 export default function StatusPage() {
-  const [data, setData] = useState<StatusData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const dismissedAlerts = useRef<Set<string>>(new Set());
 
-  const fetchStatus = useCallback(async () => {
-    try {
-      const d = await validatedFetcher("/api/queue/status", QueueStatusSchema);
-      setData(d);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Fetch status via useApiData hook
+  const {
+    data,
+    loading,
+    error,
+    refetch: refetchStatus,
+  } = useApiData("/api/queue/status", QueueStatusSchema);
+
+  // Track initial load completion to avoid skeleton flash on interval refetches
+  useEffect(() => {
+    if (!loading) setInitialLoadDone(true);
+  }, [loading]);
 
   // Fetch alerts separately with previous IDs for fresh detection
   const fetchAlerts = useCallback(async () => {
@@ -170,23 +167,18 @@ export default function StatusPage() {
     }
   }, [alerts]);
 
-  // Initial fetch
-  useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
-
   // Auto-refresh every 10 seconds
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(() => {
-      fetchStatus();
+      refetchStatus();
       fetchAlerts();
     }, 10_000);
     return () => clearInterval(interval);
-  }, [autoRefresh, fetchStatus, fetchAlerts]);
+  }, [autoRefresh, refetchStatus, fetchAlerts]);
 
-  // ── Loading State ──
-  if (loading) {
+  // ── Loading State (initial load only — interval refetches don't show skeleton) ──
+  if (!initialLoadDone && loading) {
     return (
       <div className="space-y-8">
         <div className="h-8 w-48 skeleton rounded-lg" />
@@ -204,8 +196,8 @@ export default function StatusPage() {
     );
   }
 
-  // ── Error State ──
-  if (error) {
+  // ── Error State (only when no data at all — preserve stale data on refetch failures) ──
+  if (error && !data) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold gradient-text">System Status</h1>
@@ -215,8 +207,8 @@ export default function StatusPage() {
           <p className="text-muted-foreground mb-6">{error}</p>
           <button
             onClick={() => {
-              setLoading(true);
-              fetchStatus();
+              setInitialLoadDone(false);
+              refetchStatus();
             }}
             className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
           >
@@ -261,10 +253,7 @@ export default function StatusPage() {
             Auto-refresh
           </label>
           <button
-            onClick={() => {
-              setLoading(true);
-              fetchStatus();
-            }}
+            onClick={refetchStatus}
             className="flex items-center gap-2 px-4 py-2 glass-card hover:bg-card/70 rounded-lg text-sm transition-all"
           >
             <span>⟳</span>

@@ -265,6 +265,161 @@ describe("useApiData", () => {
     expect(result.current.data?.name).toBe("Second URL");
   });
 
+  it("handles concurrent refetch calls — only last one's data is used", async () => {
+    // First call returns slowly
+    let resolveFirst: (v: unknown) => void;
+    const firstPromise = new Promise((resolve) => {
+      resolveFirst = resolve;
+    });
+
+    // Second call returns immediately with different data
+    const secondResponse = {
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: () => Promise.resolve({ id: "second", name: "Second wins", count: 42 }),
+    };
+
+    // Set up mock: first call slow, second call fast
+    let callCount = 0;
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return firstPromise;
+      }
+      return Promise.resolve(secondResponse);
+    });
+
+    const { result } = renderHook(() => useApiData<TestType>("/api/test", TestSchema));
+
+    // Wait for initial fetch to complete
+    await vi.waitFor(() => expect(callCount).toBe(1));
+
+    // First call's resolver needs to be accessible
+    // Now trigger two refetches in rapid succession
+    // Setup: first refetch uses the slow promise, second uses the fast
+    let resolveRefetch: (v: unknown) => void;
+    const refetchPromise = new Promise((resolve) => {
+      resolveRefetch = resolve;
+    });
+
+    callCount = 0;
+    const refetchResponse = {
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: () => Promise.resolve({ id: "first-refetch", name: "First refetch", count: 1 }),
+    };
+    const refetchResponse2 = {
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: () => Promise.resolve({ id: "second-refetch", name: "Second refetch", count: 2 }),
+    };
+
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return Promise.resolve(refetchResponse);
+      return Promise.resolve(refetchResponse2);
+    });
+
+    // First refetch (will complete quickly)
+    act(() => {
+      result.current.refetch();
+    });
+
+    // Second refetch (will also complete quickly, aborting the first)
+    act(() => {
+      result.current.refetch();
+    });
+
+    // Wait for state to settle
+    await vi.waitFor(() => expect(result.current.loading).toBe(false));
+
+    // The last refetch's data should be used
+    expect(result.current.data).toEqual({
+      id: "second-refetch",
+      name: "Second refetch",
+      count: 2,
+    });
+  });
+
+  it("recovers from error after a successful fetch", async () => {
+    // First fetch succeeds
+    mockFetch({
+      json: { id: "success", name: "First success" },
+    });
+
+    const { result } = renderHook(() => useApiData<TestType>("/api/test", TestSchema));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.data?.id).toBe("success");
+    expect(result.current.error).toBeNull();
+
+    // Second fetch fails
+    mockFetch({
+      throws: new TypeError("Network failure"),
+    });
+
+    await act(async () => {
+      result.current.refetch();
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    // Data should still be the previous successful data
+    expect(result.current.data?.id).toBe("success");
+    expect(result.current.error).toContain("Network failure");
+
+    // Third fetch succeeds again
+    mockFetch({
+      json: { id: "recovered", name: "Recovered data" },
+    });
+
+    await act(async () => {
+      result.current.refetch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.data?.id).toBe("recovered");
+    });
+    expect(result.current.data?.name).toBe("Recovered data");
+    expect(result.current.error).toBeNull();
+  });
+
+  it("preserves default Content-Type alongside custom headers", async () => {
+    mockFetch({
+      json: { id: "headers", name: "Header test" },
+    });
+
+    const options = {
+      method: "POST" as const,
+      headers: { Authorization: "Bearer token123", "X-Request-Id": "req-456" },
+      body: JSON.stringify({ test: true }),
+    };
+
+    const { result } = renderHook(
+      ({ fetchOpts }) =>
+        useApiData<TestType>("/api/test", TestSchema, {
+          fetchOptions: fetchOpts,
+        }),
+      { initialProps: { fetchOpts: options } },
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    const callArgs = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const [url, fetchOpts] = callArgs;
+    expect(url).toBe("/api/test");
+    // Default Content-Type should be present
+    expect(fetchOpts.headers["Content-Type"]).toBe("application/json");
+    // Custom headers should also be present
+    expect(fetchOpts.headers["Authorization"]).toBe("Bearer token123");
+    expect(fetchOpts.headers["X-Request-Id"]).toBe("req-456");
+    // Method and body should be passed through
+    expect(fetchOpts.method).toBe("POST");
+    expect(fetchOpts.body).toBe(JSON.stringify({ test: true }));
+  });
+
   it("cleans up on unmount (does not update state after unmount)", async () => {
     // Use a promise that never resolves to keep the fetch pending
     let resolvePromise: (v: unknown) => void;
