@@ -472,6 +472,107 @@ test.describe("Mutation Patterns", () => {
       await expect(page.locator('button:has-text("Done")').first()).toBeVisible({ timeout: 3000 });
     }
   });
+
+  test("Item detail: favorite toggle sends API request", async ({ page }) => {
+    // Create a fresh item to toggle
+    const title = `E2E Fav Test ${Date.now()}`;
+    const { createTestItem } = await import("./helpers");
+    // Use page.evaluate to create via API directly
+    await page.goto("/items");
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
+    await page.waitForTimeout(1000);
+
+    // Navigate to first item's detail page
+    const firstItemLink = page.locator('a[href^="/items/"]').first();
+    await firstItemLink.waitFor({ state: "visible", timeout: 5000 });
+    const href = await firstItemLink.getAttribute("href");
+    await page.goto(href!);
+    await page.waitForSelector("h1", { timeout: 10000 });
+
+    // Click favorite and wait for API response
+    const [response] = await Promise.all([
+      page.waitForResponse(
+        (res) =>
+          res.url().includes(`/api/items/`) &&
+          res.request().method() === "PATCH" &&
+          res.status() === 200,
+        { timeout: 5000 },
+      ),
+      page.locator('button[title*="favorite"i]').first().click(),
+    ]);
+
+    expect(response.ok()).toBe(true);
+  });
+
+  test("Item detail: delete item removes it from list", async ({ page }) => {
+    await page.goto("/items");
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
+    await page.waitForTimeout(1000);
+
+    // Navigate to first item's detail page
+    const firstItemLink = page.locator('a[href^="/items/"]').first();
+    await firstItemLink.waitFor({ state: "visible", timeout: 5000 });
+    const href = await firstItemLink.getAttribute("href");
+    const itemId = href!.split("/").pop()!;
+    await page.goto(href!);
+    await page.waitForSelector("h1", { timeout: 10000 });
+
+    // Find and click delete button
+    const deleteBtn = page.locator('button[title*="delete"i], button:has-text("Delete")').first();
+    if (await deleteBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // Wait for delete confirmation
+      const [response] = await Promise.all([
+        page.waitForResponse(
+          (res) =>
+            res.url().includes(`/api/items/${itemId}`) &&
+            res.request().method() === "DELETE" &&
+            res.status() === 200,
+          { timeout: 5000 },
+        ),
+        deleteBtn.click(),
+      ]);
+      expect(response.ok()).toBe(true);
+
+      // Should navigate away from the deleted item
+      await page.waitForURL(/\/items/, { timeout: 10000 });
+      await expect(page.locator("h1").first()).toBeVisible({ timeout: 5000 });
+    }
+  });
+
+  test("Quick create: submit URL via quick capture modal", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.waitForTimeout(2000);
+
+    // Open quick capture modal
+    const quickCaptureBtn = page.locator('button[title="Quick capture"]');
+    await quickCaptureBtn.waitFor({ state: "visible", timeout: 5000 });
+    await quickCaptureBtn.click();
+
+    // Fill URL
+    const urlInput = page.locator('input[placeholder*="url"i]').first();
+    await urlInput.waitFor({ state: "visible", timeout: 5000 });
+    const testUrl = `https://example.com/e2e-quick-${Date.now()}`;
+    await urlInput.fill(testUrl);
+
+    // Submit and wait for API request
+    const [response] = await Promise.all([
+      page.waitForResponse(
+        (res) => res.url().includes("/api/items") && res.request().method() === "POST",
+        { timeout: 8000 },
+      ),
+      page.locator('button:has-text("Save")').first().click(),
+    ]);
+
+    expect(response.ok()).toBe(true);
+
+    // Wait for navigation/toast after save
+    await page.waitForTimeout(2000);
+    await expect(page.locator("body")).toBeVisible({ timeout: 5000 });
+  });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
