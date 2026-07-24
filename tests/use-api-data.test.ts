@@ -420,6 +420,75 @@ describe("useApiData", () => {
     expect(fetchOpts.body).toBe(JSON.stringify({ test: true }));
   });
 
+  it("does not fetch when URL is null", async () => {
+    mockFetch({
+      json: { id: "abc", name: "Should not fetch" },
+    });
+
+    const { result } = renderHook(() => useApiData<TestType>(null, TestSchema));
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data).toBeNull();
+    expect(result.current.error).toBeNull();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("starts fetching when URL changes from null to a value", async () => {
+    mockFetch({
+      json: { id: "started", name: "Started fetching" },
+    });
+
+    const { result, rerender } = renderHook(({ url }) => useApiData<TestType>(url, TestSchema), {
+      initialProps: { url: null as string | null },
+    });
+
+    // No fetch when URL is null
+    expect(result.current.loading).toBe(false);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+
+    // Changing to a real URL triggers fetch
+    rerender({ url: "/api/test" });
+
+    await waitFor(() => {
+      expect(result.current.data?.id).toBe("started");
+    });
+    expect(result.current.data?.name).toBe("Started fetching");
+  });
+
+  it("does not re-fetch when inline fetchOptions changes on every render", async () => {
+    let fetchCount = 0;
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      fetchCount++;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: () => Promise.resolve({ id: "stable", name: "No re-fetch" }),
+      });
+    });
+
+    const { result, rerender } = renderHook(
+      ({ headers }) =>
+        useApiData<TestType>("/api/test", TestSchema, {
+          fetchOptions: { headers },
+        }),
+      { initialProps: { headers: { "X-Custom": "a" } } },
+    );
+
+    // Initial fetch completes
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(fetchCount).toBe(1);
+
+    // Re-render with a NEW object reference for headers (simulates inline object)
+    rerender({ headers: { "X-Custom": "a" } });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Should NOT re-fetch because ref prevents the inline object from
+    // triggering the useCallback dependency chain
+    expect(fetchCount).toBe(1);
+  });
+
   it("cleans up on unmount (does not update state after unmount)", async () => {
     // Use a promise that never resolves to keep the fetch pending
     let resolvePromise: (v: unknown) => void;

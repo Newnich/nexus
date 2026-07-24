@@ -39,6 +39,11 @@ export function useApiData<T>(
 ): UseApiDataResult<T> {
   const { enabled = true, fetchOptions } = options;
 
+  // Use ref for fetchOptions to prevent infinite re-fetches when users pass
+  // inline objects (which create new references on every render)
+  const fetchOptionsRef = useRef(fetchOptions);
+  fetchOptionsRef.current = fetchOptions;
+
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +71,7 @@ export function useApiData<T>(
     try {
       const mergedOptions: RequestInit = {
         signal: controller.signal,
-        ...fetchOptions,
+        ...fetchOptionsRef.current,
       };
 
       const result = await validatedFetcher(currentUrl, schema, mergedOptions);
@@ -85,7 +90,7 @@ export function useApiData<T>(
         setLoading(false);
       }
     }
-  }, [schema, enabled, fetchOptions]);
+  }, [schema, enabled]);
 
   // Fetch on mount and when URL/schema changes
   useEffect(() => {
