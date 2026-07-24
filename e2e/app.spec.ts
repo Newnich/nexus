@@ -49,12 +49,9 @@ test.describe("Authenticated Pages", () => {
     await expect(page.locator("h1").filter({ hasText: /Your Knowledge OS/ })).toBeVisible({
       timeout: 20000,
     });
-    // Stats cards may not appear if no data, but dashboard should have rendered
-    await page.waitForTimeout(2000);
+    // Stats cards may not appear if API is unavailable
     for (const label of [/Saved Items/, /Smart Folders/, /AI Discovered/]) {
-      await expect(page.getByText(label).first())
-        .toBeVisible({ timeout: 5000 })
-        .catch(() => {});
+      await page.getByText(label).first().isVisible({ timeout: 2000 });
     }
   });
 
@@ -63,9 +60,10 @@ test.describe("Authenticated Pages", () => {
       timeout: 20000,
     });
     // Items by Type section only appears when data exists
-    await expect(page.getByText(/Items by Type/).first())
-      .toBeVisible({ timeout: 10000 })
-      .catch(() => {});
+    await page
+      .getByText(/Items by Type/)
+      .first()
+      .isVisible({ timeout: 2000 });
   });
 
   test("Items page lists items", async ({ page }) => {
@@ -120,13 +118,15 @@ test.describe("Authenticated Pages", () => {
     // Wait for the collections API and render (may be empty or error state)
     await page.waitForTimeout(3000);
     // Filter buttons should be visible when data loads; gracefully handle if API fails
-    const filterBtn = page.getByRole("button", { name: /All Collections/ });
-    await expect(filterBtn)
-      .toBeVisible({ timeout: 10000 })
+    await page
+      .getByRole("button", { name: /All Collections/ })
+      .isVisible({ timeout: 2000 })
       .catch(() => {});
     // Seed data collections may not exist in CI environment
-    await expect(page.getByText("AI & Machine Learning").first())
-      .toBeVisible({ timeout: 5000 })
+    await page
+      .getByText("AI & Machine Learning")
+      .first()
+      .isVisible({ timeout: 2000 })
       .catch(() => {});
   });
 
@@ -173,10 +173,8 @@ test.describe("Authenticated Pages", () => {
     await searchInput.fill(searchTerm);
     await searchInput.press("Enter");
     // Wait for search results — results may vary depending on seed data in CI
-    await page.waitForTimeout(3000);
-    await expect(page.getByText(searchTerm).first())
-      .toBeVisible({ timeout: 15000 })
-      .catch(() => {});
+    await page.waitForTimeout(1000);
+    await page.getByText(searchTerm).first().isVisible({ timeout: 2000 });
     // Verify at least that the search page still rendered
     await expect(page.getByText(/Semantic|Full Text/).first()).toBeVisible();
   });
