@@ -360,6 +360,90 @@ test.describe("Activity and Status", () => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
+// Mutation Patterns (validatedFetcher + useValidatedMutation)
+// ═════════════════════════════════════════════════════════════════════════════
+
+test.describe("Mutation Patterns", () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page);
+  });
+
+  test("Item detail: favorite toggle button exists and responds", async ({ page }) => {
+    await page.goto("/items");
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
+    await page.waitForTimeout(1000);
+    const firstItemLink = page.locator('a[href^="/items/"]').first();
+    await firstItemLink.waitFor({ state: "visible", timeout: 5000 });
+    const href = await firstItemLink.getAttribute("href");
+    await page.goto(href!);
+    await page.waitForSelector("h1", { timeout: 10000 });
+    // Favorite button should be visible (star toggle)
+    const favBtn = page.locator('button[title*="favorite"i]').first();
+    await expect(favBtn).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Item detail: archive button exists", async ({ page }) => {
+    await page.goto("/items");
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
+    await page.waitForTimeout(1000);
+    const firstItemLink = page.locator('a[href^="/items/"]').first();
+    const href = await firstItemLink.getAttribute("href");
+    await page.goto(href!);
+    await page.waitForSelector("h1", { timeout: 10000 });
+    // Archive button should be visible
+    const archiveBtn = page.locator('button[title*="archive"i]').first();
+    await expect(archiveBtn).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Tags page: actions (rename/merge/delete) buttons are visible", async ({ page }) => {
+    await page.goto("/tags");
+    await expect(page.locator("h1").filter({ hasText: /Tags/i })).toBeVisible({ timeout: 10000 });
+    await page.waitForTimeout(2000);
+    // Wait for tags to load - should see rename/merge/delete buttons
+    const renameBtns = page.locator('button[title="Rename"]');
+    const mergeBtns = page.locator('button[title="Merge"]');
+    const deleteBtns = page.locator('button[title="Delete"]');
+    const btnCount = await renameBtns.count();
+    if (btnCount > 0) {
+      await expect(renameBtns.first()).toBeVisible({ timeout: 5000 });
+      await expect(mergeBtns.first()).toBeVisible({ timeout: 3000 });
+      await expect(deleteBtns.first()).toBeVisible({ timeout: 3000 });
+    }
+  });
+
+  test("Settings general: notification toggles can be clicked", async ({ page }) => {
+    await page.goto("/settings/general");
+    await expect(page.locator("h1").filter({ hasText: /Settings/i })).toBeVisible({
+      timeout: 10000,
+    });
+    await page.waitForTimeout(2000);
+    // Find the first toggle button (✓ or —) in the notification preferences table
+    const toggleBtns = page.locator('button:has-text("✓"), button:has-text("—")');
+    const toggleCount = await toggleBtns.count();
+    if (toggleCount > 0) {
+      await toggleBtns.first().click();
+      // Should show "Unsaved changes" indicator
+      await expect(page.getByText(/Unsaved changes/i).first()).toBeVisible({ timeout: 3000 });
+    }
+  });
+
+  test("Items page: select mode is available for batch operations", async ({ page }) => {
+    await page.goto("/items");
+    await page.waitForResponse((res) => res.url().includes("/api/items") && res.status() === 200, {
+      timeout: 10000,
+    });
+    await page.waitForTimeout(1000);
+    // Toggle select mode button should exist when items are loaded
+    const selectBtn = page.locator('button:has-text("Select")').first();
+    await expect(selectBtn).toBeVisible({ timeout: 10000 });
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
 // Graph Interaction
 // ═════════════════════════════════════════════════════════════════════════════
 
