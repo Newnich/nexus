@@ -152,10 +152,10 @@ export async function validatedFetcher<T>(
   } catch (error) {
     // Retry once on server errors (500+) — the original request never reached
     // business logic (failed at auth check), so retrying is safe even for POST.
-    const status =
-      error instanceof Error && /^API request failed: 5\d{2}/.test(error.message)
-        ? parseInt(error.message.match(/5\d{2}/)![0])
-        : null;
+    // Extract status code from error message — single regex execution
+    const statusMatch =
+      error instanceof Error ? error.message.match(/^API request failed: (5\d{2})/) : null;
+    const status = statusMatch ? parseInt(statusMatch[1]) : null;
 
     if (status && status >= 500) {
       // Brief delay to let Supabase clock skew resolve
