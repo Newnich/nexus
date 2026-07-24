@@ -4,7 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { validatedFetcher } from "@/lib/utils";
-import { NotificationPreferencesResponseSchema } from "@/lib/schemas";
+import {
+  NotificationPreferencesResponseSchema,
+  PreferencesSaveResponseSchema,
+} from "@/lib/schemas";
 import { PageSkeleton } from "@/components/page-skeleton";
 
 // ── Types ──
@@ -173,16 +176,17 @@ export default function GeneralSettingsPage() {
     if (!preferences) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/preferences", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferences }),
-      });
+      const data = await validatedFetcher(
+        "/api/settings/preferences",
+        PreferencesSaveResponseSchema,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ preferences }),
+        },
+      );
 
-      if (!res.ok) throw new Error("Failed to save");
-
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Save failed");
+      if (!data.success) throw new Error("Save failed");
 
       toast.success("Notification preferences saved!", {
         duration: 3000,
@@ -218,16 +222,17 @@ export default function GeneralSettingsPage() {
     // Auto-save the defaults immediately
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/preferences", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferences: defaults }),
-      });
+      const data = await validatedFetcher(
+        "/api/settings/preferences",
+        PreferencesSaveResponseSchema,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ preferences: defaults }),
+        },
+      );
 
-      if (!res.ok) throw new Error("Failed to save defaults");
-
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Save failed");
+      if (!data.success) throw new Error("Save failed");
 
       toast.success("Reset to default preferences", {
         duration: 3000,

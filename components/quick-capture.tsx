@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ItemCreateResponseSchema } from "@/lib/schemas";
 import { useValidatedMutation } from "@/lib/hooks/use-validated-mutation";
+import type { z } from "zod";
 import toast from "react-hot-toast";
 
 export function QuickCapture() {
@@ -16,7 +17,7 @@ export function QuickCapture() {
   const [content, setContent] = useState("");
   const { mutate: saveItem, loading: saving } = useValidatedMutation<
     { type: string; title: string; content?: string; metadata?: { sourceUrl: string } },
-    { id: string }
+    z.infer<typeof ItemCreateResponseSchema>
   >({
     url: "/api/items",
     method: "POST",

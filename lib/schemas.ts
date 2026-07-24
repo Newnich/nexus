@@ -386,9 +386,16 @@ export const ItemCollectionsResponseSchema = z.object({
 // ── Item Create Response ──
 
 export const ItemCreateResponseSchema = z.object({
-  id: z.string(),
-  title: z.string().optional(),
-  type: z.string().optional(),
+  item: z.object({
+    id: z.string(),
+    title: z.string().optional(),
+    type: z.string().optional(),
+  }),
+});
+
+export const PreferencesSaveResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional(),
 });
 
 // ── Export / Import ──

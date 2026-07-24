@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { cn, validatedFetcher } from "@/lib/utils";
-import { TagsResponseSchema } from "@/lib/schemas";
+import { TagsResponseSchema, TagsActionResponseSchema } from "@/lib/schemas";
 
 interface TagEntry {
   name: string;
@@ -56,7 +56,7 @@ export default function TagsPage() {
 
     setProcessing(true);
     try {
-      const res = await fetch("/api/tags", {
+      const data = await validatedFetcher("/api/tags", TagsActionResponseSchema, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -72,13 +72,6 @@ export default function TagsPage() {
             : {}),
         }),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Action failed");
-      }
-
-      const data = await res.json();
 
       const actionLabels: Record<TagAction, string> = {
         rename: `Tag renamed from "${selectedTag.name}" to "${actionValue}"`,

@@ -3,7 +3,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { cn, extractDomain } from "@/lib/utils";
+import { cn, extractDomain, validatedFetcher } from "@/lib/utils";
+import { ItemCreateResponseSchema } from "@/lib/schemas";
 import { TagChips } from "@/components/shared/tag-chips";
 import { CollectionPicker } from "@/components/shared/collection-picker";
 import { useDraft } from "@/lib/hooks/use-draft";
@@ -140,18 +141,13 @@ export default function NewItemForm() {
         collectionIds: selectedCollections.size > 0 ? Array.from(selectedCollections) : undefined,
       };
 
-      const res = await fetch("/api/items", {
+      const data = await validatedFetcher("/api/items", ItemCreateResponseSchema, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to save item");
-      }
-
-      const { item } = await res.json();
+      const { item } = data;
       clearDraft();
 
       toast.success(
