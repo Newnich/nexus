@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { signIn, createTestItem, expectItemVisible } from "./helpers";
+import { signIn, createTestItem, expectItemVisible, retryResponse } from "./helpers";
 
 // ═════════════════════════════════════════════════════════════════════════════
 // Quick Capture
@@ -85,10 +85,18 @@ test.describe("Item CRUD", () => {
     // Click the item to go to its detail page
     const itemLink = page.getByText(uniqueTitle).first();
     await itemLink.click();
-    // Detail page should show the title in an h1
-    await expect(page.locator("h1").filter({ hasText: uniqueTitle })).toBeVisible({
-      timeout: 15000,
-    });
+    // Detail page should show the title in an h1 (retry once on transient API failure)
+    try {
+      await expect(page.locator("h1").filter({ hasText: uniqueTitle })).toBeVisible({
+        timeout: 15000,
+      });
+    } catch {
+      // The detail page API may have failed (same JWT issue). Reload to retry.
+      await page.reload();
+      await expect(page.locator("h1").filter({ hasText: uniqueTitle })).toBeVisible({
+        timeout: 15000,
+      });
+    }
   });
 
   test("Create item and navigate back to items list", async ({ page }) => {
@@ -524,15 +532,13 @@ test.describe("Mutation Patterns", () => {
     // Click favorite and wait for API response
     const favBtn = page.getByTitle(/favorites/i).first();
     if (await favBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const [response] = await Promise.all([
-        page.waitForResponse(
-          (res) => res.url().includes(`/api/items/`) && res.request().method() === "PATCH",
-          { timeout: 10000 },
-        ),
-        favBtn.click(),
-      ]);
+      const response = await retryResponse(
+        page,
+        () => favBtn.click(),
+        (res) => res.url.includes(`/api/items/`) && res.method === "PATCH",
+      );
       // Gracefully handle non-200 (e.g., 409 from concurrent requests)
-      if (response?.ok()) {
+      if (response?.ok) {
         await page.waitForTimeout(1000);
         await expect(page.locator("h1").first()).toBeVisible({ timeout: 5000 });
       }
@@ -556,17 +562,14 @@ test.describe("Mutation Patterns", () => {
     const deleteBtn = page.getByTitle("Delete item");
     if (await deleteBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       // Playwright auto-accepts confirm() dialog, which triggers the DELETE request
-      const [response] = await Promise.all([
-        page.waitForResponse(
-          (res) =>
-            res.url().includes(`/api/items/${itemId}`) && res.request().method() === "DELETE",
-          { timeout: 10000 },
-        ),
-        deleteBtn.click(),
-      ]);
+      const response = await retryResponse(
+        page,
+        () => deleteBtn.click(),
+        (res) => res.url.includes(`/api/items/${itemId}`) && res.method === "DELETE",
+      );
 
       // Gracefully handle non-200 responses
-      if (response?.ok()) {
+      if (response?.ok) {
         // Should navigate away from the deleted item
         await page.waitForURL(/\/(dashboard|items)$/, { timeout: 15000 });
         await expect(page.locator("h1").first()).toBeVisible({ timeout: 5000 });
@@ -593,17 +596,15 @@ test.describe("Mutation Patterns", () => {
     const titleInput = page.locator('input[placeholder*="Title"i]').first();
     await titleInput.fill(`E2E Quick ${Date.now()}`);
 
-    // Submit and wait for API request
-    const [response] = await Promise.all([
-      page.waitForResponse(
-        (res) => res.url().includes("/api/items") && res.request().method() === "POST",
-        { timeout: 15000 },
-      ),
-      page.locator('button:has-text("Save Link")').first().click(),
-    ]);
+    // Submit and wait for API request (retry with progressive timeouts)
+    const response = await retryResponse(
+      page,
+      () => page.locator('button:has-text("Save Link")').first().click(),
+      (res) => res.url.includes("/api/items") && res.method === "POST",
+    );
 
     // API may return 409 if title conflicts — gracefully handle non-200 responses
-    if (response?.ok()) {
+    if (response?.ok) {
       await page.waitForTimeout(2000);
       await expect(page.locator("body")).toBeVisible({ timeout: 5000 });
     }

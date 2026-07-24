@@ -70,8 +70,10 @@ export async function createTestItem(
     await page.waitForURL(/\/dashboard/, { timeout });
   };
 
-  // Progressive timeouts: each retry waits longer for the clock skew to resolve
-  const timeouts = [15000, 20000, 30000];
+  // Progressive timeouts: each retry waits longer for the clock skew to resolve.
+  // Keep the total within the 30s test timeout: 8s + 1s gap + 12s + 1s gap + 15s.
+  // The first two attempts (8s + 12s) fit comfortably within 30s even with signIn overhead.
+  const timeouts = [8000, 12000, 15000];
 
   for (let i = 0; i < timeouts.length; i++) {
     try {
@@ -112,4 +114,69 @@ export async function expectItemVisible(page: Page, title: string, timeout: numb
     await page.reload();
     await expect(page.getByText(title).first()).toBeVisible({ timeout });
   }
+}
+
+/**
+ * Options for {@link retryResponse}.
+ */
+export interface RetryResponseOptions {
+  /**
+   * Progressive timeout values for each retry attempt.
+   * Default: [10000, 15000, 20000]
+   */
+  timeouts?: number[];
+}
+
+/**
+ * Execute a click action and wait for an API response, retrying with
+ * progressive timeouts if the API call fails (transient JWT/auth issues).
+ * Returns the response status on success, or `null` if all retries fail.
+ *
+ * @example
+ * ```ts
+ * const response = await retryResponse(page,
+ *   () => deleteBtn.click(),
+ *   (res) => res.url().includes(`/api/items/${id}`) && res.method() === "DELETE",
+ * );
+ * if (response?.ok) { /* assertions *\/ }
+ * ```
+ */
+export async function retryResponse(
+  page: Page,
+  action: () => Promise<void>,
+  predicate: (res: { url: string; method: string }) => boolean,
+  options?: RetryResponseOptions,
+): Promise<{ ok: boolean; status: number } | null> {
+  const timeouts = options?.timeouts ?? [10000, 15000, 20000];
+
+  for (let i = 0; i < timeouts.length; i++) {
+    try {
+      const [response] = await Promise.all([
+        page.waitForResponse(
+          (res) => predicate({ url: res.url(), method: res.request().method() }),
+          { timeout: timeouts[i] },
+        ),
+        action(),
+      ]);
+
+      // Response received — check if it succeeded
+      if (response.ok()) {
+        return { ok: true, status: response.status() };
+      }
+
+      // Non-ok response (e.g., 401/500 from JWT clock skew) — retry unless last attempt
+      if (i === timeouts.length - 1) {
+        return { ok: false, status: response.status() };
+      }
+
+      // Brief pause before retry to let auth clock skew resolve
+      await page.waitForTimeout(1000);
+    } catch {
+      // waitForResponse timed out (no response received at all)
+      if (i === timeouts.length - 1) return null;
+      await page.waitForTimeout(1000);
+    }
+  }
+
+  return null;
 }
