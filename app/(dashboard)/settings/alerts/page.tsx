@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { validatedFetcher } from "@/lib/utils";
+import { useApiData } from "@/lib/hooks/use-api-data";
 import { AlertThresholdsResponseSchema, AlertThresholdsSchema } from "@/lib/schemas";
 import { PageSkeleton } from "@/components/page-skeleton";
 
@@ -74,7 +75,6 @@ const THRESHOLD_CONFIGS: ThresholdConfig[] = [
 export default function AlertThresholdsPage() {
   const [thresholds, setThresholds] = useState<AlertThresholds | null>(null);
   const [draft, setDraft] = useState<AlertThresholds | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -84,30 +84,32 @@ export default function AlertThresholdsPage() {
     THRESHOLD_CONFIGS.some((cfg) => draft[cfg.key] !== thresholds[cfg.key])
   );
 
-  // Load thresholds on mount
-  const fetchThresholds = useCallback(async () => {
-    try {
-      const data = await validatedFetcher(
-        "/api/settings/alert-thresholds",
-        AlertThresholdsResponseSchema,
-      );
-      if (!data.thresholds) throw new Error("Thresholds data is null");
-      setThresholds(data.thresholds as AlertThresholds);
-      setDraft(data.thresholds as AlertThresholds);
-    } catch (err) {
-      console.error("Failed to load thresholds:", err);
+  // Load thresholds via useApiData hook
+  const {
+    data,
+    loading,
+    error,
+    refetch: refetchThresholds,
+  } = useApiData("/api/settings/alert-thresholds", AlertThresholdsResponseSchema);
+
+  // Sync loaded data into thresholds + draft
+  useEffect(() => {
+    if (data?.thresholds) {
+      const t = data.thresholds as AlertThresholds;
+      setThresholds(t);
+      setDraft(t);
+    }
+  }, [data]);
+
+  // Show error toast on fetch failure
+  useEffect(() => {
+    if (error) {
       toast.error("Failed to load alert thresholds", {
         duration: 4000,
         style: { background: "hsl(0 63% 6%)", border: "1px solid hsl(0 63% 31%)" },
       });
-    } finally {
-      setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchThresholds();
-  }, [fetchThresholds]);
+  }, [error]);
 
   // Update a single threshold value
   const update = (key: keyof AlertThresholds, value: number) => {
@@ -212,10 +214,7 @@ export default function AlertThresholdsPage() {
           <h2 className="text-xl font-semibold mb-2">Could not load thresholds</h2>
           <p className="text-muted-foreground mb-6">Make sure Redis is running and try again.</p>
           <button
-            onClick={() => {
-              setLoading(true);
-              fetchThresholds();
-            }}
+            onClick={refetchThresholds}
             className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
           >
             Retry
