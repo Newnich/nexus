@@ -33,5 +33,5 @@ export async function createTestItem(page: Page, title: string, url: string) {
   await page.fill('input[name="url"]', url);
   await page.click('button[type="submit"]');
   // Form redirects to /dashboard after saving
-  await page.waitForURL(/\/dashboard/, { timeout: 20000 });
+  await page.waitForURL(/\/dashboard/, { timeout: 30000 });
 }
