@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { signIn, createTestItem } from "./helpers";
+import { signIn, createTestItem, expectItemVisible } from "./helpers";
 
 // ═════════════════════════════════════════════════════════════════════════════
 // Quick Capture
@@ -73,23 +73,17 @@ test.describe("Item CRUD", () => {
     await createTestItem(page, uniqueTitle, "https://example.com/e2e-test");
 
     // Navigate to items page and verify the new item appears
-    await page.goto("/items");
-    // Wait for items list to render instead of relying on API response timing
-    await page.locator('a[href^="/items/"]').first().waitFor({ state: "attached", timeout: 25000 });
-    await expect(page.getByText(uniqueTitle).first()).toBeVisible({ timeout: 15000 });
+    await expectItemVisible(page, uniqueTitle);
   });
 
   test("Create an item and view its detail page", async ({ page }) => {
     const uniqueTitle = `E2E Detail Test ${Date.now()}`;
     await createTestItem(page, uniqueTitle, "https://example.com/e2e-detail");
 
-    // Navigate to items list to find the newly created item
-    await page.goto("/items");
-    // Wait for items list to render
-    await page.locator('a[href^="/items/"]').first().waitFor({ state: "attached", timeout: 25000 });
+    // Find the newly created item on the items page
+    await expectItemVisible(page, uniqueTitle);
     // Click the item to go to its detail page
     const itemLink = page.getByText(uniqueTitle).first();
-    await itemLink.waitFor({ state: "visible", timeout: 15000 });
     await itemLink.click();
     // Detail page should show the title in an h1
     await expect(page.locator("h1").filter({ hasText: uniqueTitle })).toBeVisible({
@@ -102,34 +96,23 @@ test.describe("Item CRUD", () => {
     await createTestItem(page, originalTitle, "https://example.com/e2e-edit-list");
 
     // Navigate back to items list and verify the item appears
-    await page.goto("/items");
-    // Wait for items list to render
-    await page.locator('a[href^="/items/"]').first().waitFor({ state: "attached", timeout: 25000 });
-    await expect(page.getByText(originalTitle).first()).toBeVisible({ timeout: 15000 });
+    await expectItemVisible(page, originalTitle);
   });
 
   test("Create item with tags", async ({ page }) => {
     const uniqueTitle = `E2E Tags Test ${Date.now()}`;
-    await page.goto("/items/new");
-    await page.waitForSelector('input[name="title"]', { timeout: 10000 });
-    await page.fill('input[name="title"]', uniqueTitle);
-    await page.fill('input[name="url"]', "https://example.com/e2e-tags");
-
-    // Try to add a tag if the field exists
-    const tagInput = page.locator('input[placeholder*="tag"i]').first();
-    if (await tagInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await tagInput.fill("e2e-test");
-      await tagInput.press("Enter");
-    }
-
-    await page.locator('button[type="submit"]').first().click();
-    // Form redirects to /dashboard after saving
-    await page.waitForURL(/\/dashboard/, { timeout: 30000 });
-    // Navigate to the item detail page to verify title
-    await page.goto("/items");
-    await expect(page.getByText(uniqueTitle).first()).toBeVisible({
-      timeout: 15000,
+    await createTestItem(page, uniqueTitle, "https://example.com/e2e-tags", {
+      onBeforeSubmit: async (p) => {
+        // Try to add a tag if the field exists
+        const tagInput = p.locator('input[placeholder*="tag"i]').first();
+        if (await tagInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await tagInput.fill("e2e-test");
+          await tagInput.press("Enter");
+        }
+      },
     });
+    // Navigate to items page and verify the item with its tags appears
+    await expectItemVisible(page, uniqueTitle);
   });
 });
 
