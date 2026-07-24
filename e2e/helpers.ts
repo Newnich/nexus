@@ -71,9 +71,9 @@ export async function createTestItem(
   };
 
   // Progressive timeouts: each retry waits longer for the clock skew to resolve.
-  // Keep the total within the 30s test timeout: 8s + 1s gap + 12s + 1s gap + 15s.
-  // The first two attempts (8s + 12s) fit comfortably within 30s even with signIn overhead.
-  const timeouts = [8000, 12000, 15000];
+  // With 3 parallel workers, signIn can take ~10s. Keep the first two attempts
+  // within the 30s test timeout: 6s + 1s gap + 10s = 17s + ~12s signIn = ~29s.
+  const timeouts = [6000, 10000, 12000];
 
   for (let i = 0; i < timeouts.length; i++) {
     try {
