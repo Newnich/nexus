@@ -6,10 +6,15 @@ on:
   pull_request:
     branches: [master, main]
 
+# Cancel in-progress runs for the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  # ── Static analysis & tests ──
-  test:
-    timeout-minutes: 15
+  # ── Fast feedback: lint, typecheck, unit tests (~2 min) ──
+  quick-checks:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     services:
@@ -40,9 +45,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install chromium
 
       - name: Check formatting
         run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,css,md}"
@@ -85,6 +87,52 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 7
+
+  # ── E2E tests against production build (runs after quick-checks) ──
+  e2e:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    needs: quick-checks
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      REDIS_HOST: localhost
+      REDIS_PORT: "6379"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: Create env file
+        run: |
+          cat > .env.local << 'EOF'
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EOF
 
       - name: Seed Redis defaults
         run: |
@@ -133,7 +181,7 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  # ── Docker build check ──
+  # ── Docker build check (runs in parallel with e2e) ──
   docker:
     timeout-minutes: 10
     runs-on: ubuntu-latest
