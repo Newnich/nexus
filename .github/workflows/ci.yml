@@ -194,7 +194,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image (app)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
@@ -205,7 +205,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build Docker image (worker)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.worker
