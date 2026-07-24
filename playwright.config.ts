@@ -5,7 +5,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 3 : 1,
+  // Reduced from 3 to 2 to lower auth contention (JWT clock skew PGRST303)
+  // when multiple workers sign in simultaneously.
+  workers: process.env.CI ? 2 : 1,
   reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
   timeout: 30000,
   use: {
