@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { type ZodSchema } from "zod";
+import { type ZodType } from "zod";
 import { validatedFetcher } from "@/lib/utils";
 
 interface MutationOptions<TBody, TResponse> {
@@ -10,7 +10,7 @@ interface MutationOptions<TBody, TResponse> {
   /** URL to send the request to */
   url: string;
   /** Zod schema to validate the response */
-  schema: ZodSchema<TResponse>;
+  schema: ZodType<TResponse, any, any>;
   /** Optional success/error callbacks */
   onSuccess?: (data: TResponse) => void;
   onError?: (error: string) => void;
@@ -26,25 +26,6 @@ interface MutationState<TResponse> {
 
 type MutateFn<TBody> = (body?: TBody) => Promise<void>;
 
-/**
- * A hook for performing mutations (POST/PUT/PATCH/DELETE) with:
- * - Zod-validated responses
- * - Loading/error state management
- * - AbortController cancellation
- * - Optimistic update placeholder
- *
- * @example
- * ```ts
- * const { mutate, loading, error, data } = useValidatedMutation({
- *   url: "/api/items",
- *   method: "POST",
- *   schema: ItemCreateResponseSchema,
- *   onSuccess: (data) => toast.success(`Created item ${data.id}`),
- * });
- *
- * await mutate({ title: "My Item", type: "note" });
- * ```
- */
 export function useValidatedMutation<TBody, TResponse>(
   options: MutationOptions<TBody, TResponse>,
 ): MutationState<TResponse> & { mutate: MutateFn<TBody>; reset: () => void } {

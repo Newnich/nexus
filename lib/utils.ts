@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { nanoid } from "nanoid";
 import { format, formatDistanceToNow } from "date-fns";
-import { type ZodSchema } from "zod";
+import { type ZodType } from "zod";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -113,12 +113,15 @@ export async function fetcher<T>(url: string, options?: RequestInit): Promise<T>
  */
 export async function validatedFetcher<T>(
   url: string,
-  schema: ZodSchema<T>,
+  schema: ZodType<T, any, any>,
   options?: RequestInit,
 ): Promise<T> {
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
     ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options?.headers as Record<string, string> | undefined),
+    },
   });
   if (!res.ok) {
     throw new Error(`API request failed: ${res.status} ${res.statusText}`);

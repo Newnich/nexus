@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { type ZodSchema } from "zod";
+import { type ZodType } from "zod";
 import { validatedFetcher } from "@/lib/utils";
 
 interface UseApiDataOptions {
@@ -34,7 +34,7 @@ interface UseApiDataResult<T> {
  */
 export function useApiData<T>(
   url: string | null,
-  schema: ZodSchema<T>,
+  schema: ZodType<T, any, any>,
   options: UseApiDataOptions = {},
 ): UseApiDataResult<T> {
   const { enabled = true, fetchOptions } = options;
