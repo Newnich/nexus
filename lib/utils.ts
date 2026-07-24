@@ -105,6 +105,10 @@ export async function fetcher<T>(url: string, options?: RequestInit): Promise<T>
  * Like `fetcher` but validates the JSON response against a Zod schema at runtime.
  * Throws a descriptive error with Zod issues if validation fails.
  *
+ * Retries once on 500 responses after a short delay to handle transient
+ * Supabase JWT clock-skew issues (PGRST303 "JWT issued at future") — the
+ * error occurs before any business logic runs, so retrying is safe.
+ *
  * @example
  * ```ts
  * const item = await validatedFetcher("/api/items/123", ItemSchema);
@@ -116,28 +120,51 @@ export async function validatedFetcher<T>(
   schema: ZodType<T, any, any>,
   options?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers as Record<string, string> | undefined),
-    },
-  });
-  if (!res.ok) {
+  const attempt = async (): Promise<T> => {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options?.headers as Record<string, string> | undefined),
+      },
+    });
+
+    if (res.ok) {
+      const json: unknown = await res.json();
+
+      const result = schema.safeParse(json);
+      if (!result.success) {
+        const issues = result.error.issues
+          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+          .join("; ");
+        throw new Error(`API response validation failed for ${url}: ${issues}`);
+      }
+
+      return result.data;
+    }
+
+    // Non-ok response — throw so the retry logic can catch it
     throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+  };
+
+  try {
+    return await attempt();
+  } catch (error) {
+    // Retry once on server errors (500+) — the original request never reached
+    // business logic (failed at auth check), so retrying is safe even for POST.
+    const status =
+      error instanceof Error && /^API request failed: 5\d{2}/.test(error.message)
+        ? parseInt(error.message.match(/5\d{2}/)![0])
+        : null;
+
+    if (status && status >= 500) {
+      // Brief delay to let Supabase clock skew resolve
+      await new Promise((r) => setTimeout(r, 500));
+      return await attempt();
+    }
+
+    throw error;
   }
-
-  const json: unknown = await res.json();
-
-  const result = schema.safeParse(json);
-  if (!result.success) {
-    const issues = result.error.issues
-      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
-      .join("; ");
-    throw new Error(`API response validation failed for ${url}: ${issues}`);
-  }
-
-  return result.data;
 }
 
 export const ITEM_TYPE_CONFIG = {
