@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, validatedFetcher } from "@/lib/utils";
+import { SearchResponseSchema } from "@/lib/schemas";
 import { renderHighlighted } from "@/lib/render-highlighted";
 import toast from "react-hot-toast";
 import type { Item } from "@/types/item";
@@ -188,17 +189,12 @@ function SearchContent() {
       try {
         const params = new URLSearchParams({ q, mode });
         if (typeFilter !== "all") params.set("type", typeFilter);
-        const res = await fetch(`/api/search?${params}`);
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || "Search failed");
-        }
-        const data = await res.json();
+        const data = await validatedFetcher(`/api/search?${params}`, SearchResponseSchema);
 
         // Client-side filtering (handles semantic mode + date range)
-        let filtered = data.items || [];
+        let filtered = (data.items || []) as unknown as SearchResult[];
         if (typeFilter !== "all") {
-          filtered = filtered.filter((i: { type: string }) => i.type === typeFilter);
+          filtered = filtered.filter((i) => i.type === typeFilter);
         }
         if (rangeFilter !== "all") {
           const now = Date.now();

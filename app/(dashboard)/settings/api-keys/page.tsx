@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
-import { cn, formatDateRelative } from "@/lib/utils";
+import { cn, formatDateRelative, validatedFetcher } from "@/lib/utils";
+import {
+  ApiKeysResponseSchema,
+  ApiKeyCreateResponseSchema,
+  ApiKeyDeleteResponseSchema,
+} from "@/lib/schemas";
+import { useApiData } from "@/lib/hooks/use-api-data";
 import { PageSkeleton } from "@/components/page-skeleton";
 
 interface ApiKey {
@@ -14,55 +20,34 @@ interface ApiKey {
 }
 
 export default function ApiKeysPage() {
-  const [keys, setKeys] = useState<ApiKey[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: keysData,
+    loading,
+    error,
+    refetch: refetchKeys,
+  } = useApiData<{ keys: ApiKey[] }>("/api/settings/api-keys", ApiKeysResponseSchema);
+
+  const keys = (keysData?.keys ?? []) as ApiKey[];
+
   const [showNewKey, setShowNewKey] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [creating, setCreating] = useState(false);
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
 
-  const fetchKeys = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/settings/api-keys");
-      if (!res.ok) {
-        if (res.status === 401) throw new Error("Please sign in");
-        throw new Error("Failed to load API keys");
-      }
-      const data = await res.json();
-      setKeys(data.keys || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchKeys();
-  }, [fetchKeys]);
-
   const handleCreate = async () => {
     if (!newKeyName.trim()) return;
     setCreating(true);
     try {
-      const res = await fetch("/api/settings/api-keys", {
+      const data = await validatedFetcher("/api/settings/api-keys", ApiKeyCreateResponseSchema, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newKeyName.trim() }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create key");
-      }
-      const data = await res.json();
       setNewKeyValue(data.key);
       setNewKeyName("");
       toast.success("API key created! Copy it now — you won't see it again.");
-      fetchKeys();
+      refetchKeys();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create key");
     } finally {
@@ -75,10 +60,11 @@ export default function ApiKeysPage() {
       return;
     setRevoking(keyId);
     try {
-      const res = await fetch(`/api/settings/api-keys?keyId=${keyId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to revoke key");
+      await validatedFetcher(`/api/settings/api-keys?keyId=${keyId}`, ApiKeyDeleteResponseSchema, {
+        method: "DELETE",
+      });
       toast.success("API key revoked");
-      setKeys((prev) => prev.filter((k) => k.id !== keyId));
+      refetchKeys();
     } catch {
       toast.error("Failed to revoke key");
     } finally {
@@ -117,7 +103,7 @@ export default function ApiKeysPage() {
           <h3 className="text-lg font-semibold text-red-400 mb-1">Failed to load API keys</h3>
           <p className="text-muted-foreground mb-6">{error}</p>
           <button
-            onClick={fetchKeys}
+            onClick={refetchKeys}
             className="px-4 py-2 bg-nexus-500 hover:bg-nexus-600 text-white rounded-lg text-sm transition-all"
           >
             Try again

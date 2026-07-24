@@ -107,24 +107,29 @@ export interface HealthStatus {
 }
 
 /**
- * Evaluate all system health conditions and return active alerts.
- * This is called by the /api/queue/alerts endpoint on each poll.
+ * Pure evaluation logic — determines which alerts are active given a health
+ * status snapshot and threshold values. Does not touch Redis or any I/O.
  *
- * Thresholds are loaded from Redis (falling back to defaults in alert-thresholds.ts).
+ * Exported separately so it can be unit-tested without a Redis connection.
  *
  * @param status - Current health status snapshot
+ * @param thresholds - Numeric thresholds for each alert condition
  * @param previousAlertIds - Set of alert IDs that were active in the previous poll
+ * @param now - ISO timestamp to stamp on alerts (defaults to Date.now)
  * @returns Array of active alerts with `fresh` flag set for newly triggered ones
  */
-export async function evaluateAlerts(
+export function evaluateAlertsWithThresholds(
   status: HealthStatus,
+  thresholds: {
+    consecutiveFailuresThreshold: number;
+    workerInactivityHours: number;
+    backlogThreshold: number;
+  },
   previousAlertIds: Set<string> = new Set(),
-): Promise<Alert[]> {
-  const now = new Date().toISOString();
+  now?: string,
+): Alert[] {
+  const timestamp = now ?? new Date().toISOString();
   const alerts: Alert[] = [];
-
-  // Load configurable thresholds from Redis
-  const thresholds = await loadAlertThresholds();
 
   // ── Redis health ──
   if (status.redis !== "connected" && status.redis !== "ready") {
@@ -134,8 +139,8 @@ export async function evaluateAlerts(
       title: "Redis Disconnected",
       message:
         "Redis connection is " + status.redis + ". AI processing and backfill are unavailable.",
-      firstSeen: now,
-      lastSeen: now,
+      firstSeen: timestamp,
+      lastSeen: timestamp,
       fresh: !previousAlertIds.has("redis_disconnected"),
     });
   }
@@ -149,8 +154,8 @@ export async function evaluateAlerts(
       message:
         status.consecutiveFailures +
         " consecutive backfill failures. Check Ollama and database connectivity.",
-      firstSeen: now,
-      lastSeen: now,
+      firstSeen: timestamp,
+      lastSeen: timestamp,
       fresh: !previousAlertIds.has("backfill_repeated_failures"),
     });
   }
@@ -162,8 +167,8 @@ export async function evaluateAlerts(
       severity: "warning",
       title: "Backfill Enqueue Errors",
       message: status.backfillErrors + " items failed to enqueue during last backfill scan.",
-      firstSeen: now,
-      lastSeen: now,
+      firstSeen: timestamp,
+      lastSeen: timestamp,
       fresh: !previousAlertIds.has("backfill_enqueue_errors"),
     });
   }
@@ -181,8 +186,8 @@ export async function evaluateAlerts(
           "Last backfill run was " +
           Math.floor(hoursSinceLastRun) +
           " hours ago. The worker process may have stopped.",
-        firstSeen: now,
-        lastSeen: now,
+        firstSeen: timestamp,
+        lastSeen: timestamp,
         fresh: !previousAlertIds.has("worker_inactive"),
       });
     }
@@ -198,8 +203,8 @@ export async function evaluateAlerts(
           "The worker has " +
           failures +
           " consecutive failures and no successful runs. Check the worker logs.",
-        firstSeen: now,
-        lastSeen: now,
+        firstSeen: timestamp,
+        lastSeen: timestamp,
         fresh: !previousAlertIds.has("worker_no_successful_run"),
       });
     }
@@ -214,13 +219,28 @@ export async function evaluateAlerts(
       message:
         status.unprocessedItems.toLocaleString() +
         " items are missing AI embeddings. Backfill is processing them in batches.",
-      firstSeen: now,
-      lastSeen: now,
+      firstSeen: timestamp,
+      lastSeen: timestamp,
       fresh: !previousAlertIds.has("large_backlog"),
     });
   }
 
   return alerts;
+}
+
+/**
+ * Evaluate all system health conditions and return active alerts.
+ * This is called by the /api/queue/alerts endpoint on each poll.
+ *
+ * Thresholds are loaded from Redis (falling back to defaults in alert-thresholds.ts).
+ * Delegates to the pure {@link evaluateAlertsWithThresholds} for the actual logic.
+ */
+export async function evaluateAlerts(
+  status: HealthStatus,
+  previousAlertIds: Set<string> = new Set(),
+): Promise<Alert[]> {
+  const thresholds = await loadAlertThresholds();
+  return evaluateAlertsWithThresholds(status, thresholds, previousAlertIds);
 }
 
 // ── Alert helpers ──

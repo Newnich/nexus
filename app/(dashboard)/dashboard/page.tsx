@@ -1,31 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatDateRelative } from "@/lib/utils";
+import { DashboardStatsSchema } from "@/lib/schemas";
+import { useApiData } from "@/lib/hooks/use-api-data";
+import type { z } from "zod";
 
-interface DashboardStats {
-  totalItems: number;
-  totalCollections: number;
-  totalConnections: number;
-  itemsByType: Array<{ type: string; count: number }>;
-  recentItems: Array<{
-    id: string;
-    title: string;
-    type: string;
-    createdAt: string;
-    category: string | null;
-  }>;
-  topCategories: Array<{ category: string; count: number }>;
-  recentActivity: Array<{
-    id: string;
-    action: string;
-    entityType: string;
-    entityId: string | null;
-    metadata: Record<string, unknown>;
-    createdAt: string;
-  }>;
-}
+type DashboardStats = z.output<typeof DashboardStatsSchema>;
 
 const TYPE_ICONS: Record<string, string> = {
   link: "🔗",
@@ -78,28 +59,11 @@ const CATEGORY_COLORS = [
 ];
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        const res = await fetch("/api/dashboard");
-        if (!res.ok) {
-          if (res.status === 401) throw new Error("Please sign in to view your dashboard");
-          throw new Error("Failed to load dashboard");
-        }
-        const data = await res.json();
-        setStats(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchDashboard();
-  }, []);
+  const {
+    data: stats,
+    loading,
+    error,
+  } = useApiData<DashboardStats>("/api/dashboard", DashboardStatsSchema);
 
   // ── Loading State ──
   if (loading) {

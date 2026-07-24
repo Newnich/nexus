@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn, formatDateRelative, extractDomain, ITEM_TYPE_CONFIG } from "@/lib/utils";
+import { useApiData } from "@/lib/hooks/use-api-data";
+import { ItemDetailResponseSchema } from "@/lib/schemas";
 import type { Item } from "@/types/item";
 
 interface Connection {
@@ -35,26 +37,12 @@ const TYPE_GRADIENTS: Record<string, string> = {
 
 export function QuickViewModal({ itemId, onClose }: QuickViewModalProps) {
   const router = useRouter();
-  const [item, setItem] = useState<Item | null>(null);
-  const [connections, setConnections] = useState<Connection[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchItem() {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/items/${itemId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setItem(data.item);
-        setConnections(data.connections || []);
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchItem();
-  }, [itemId]);
+  // Fetch item via useApiData
+  const { data, loading } = useApiData(`/api/items/${itemId}`, ItemDetailResponseSchema);
+
+  const item = (data?.item as Item | undefined) ?? null;
+  const connections = (data?.connections as Connection[] | undefined) ?? [];
 
   // Close on Escape
   useEffect(() => {

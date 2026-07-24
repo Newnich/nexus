@@ -2,34 +2,18 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, validatedFetcher } from "@/lib/utils";
 import { PageSkeleton } from "@/components/page-skeleton";
+import { GraphDataSchema } from "@/lib/schemas";
+import type { z } from "zod";
 
 // ── Types ──
-interface GraphNode {
-  id: string;
-  title: string;
-  type: string;
-  category: string | null;
-  tags: string[];
-  createdAt: string;
-  connectionCount: number;
-}
-
-interface GraphEdge {
-  id: string;
-  source: string;
-  target: string;
-  strength: number;
-  type: string;
-  label?: string;
-  description?: string;
-}
-
+type GraphNode = z.infer<typeof GraphDataSchema>["nodes"][number];
+type GraphEdge = z.infer<typeof GraphDataSchema>["edges"][number];
 interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  stats: { totalNodes: number; totalEdges: number; averageStrength: number };
+  stats: z.infer<typeof GraphDataSchema>["stats"];
 }
 
 interface PositionedNode extends GraphNode {
@@ -174,16 +158,15 @@ export default function GraphPage() {
   useEffect(() => {
     async function fetchGraph() {
       try {
-        const res = await fetch("/api/graph");
-        if (!res.ok) {
-          if (res.status === 401) throw new Error("Please sign in");
-          throw new Error("Failed to load graph");
-        }
-        const d = await res.json();
-        setData(d);
+        const d = await validatedFetcher("/api/graph", GraphDataSchema);
+        setData({
+          nodes: d.nodes ?? [],
+          edges: d.edges ?? [],
+          stats: d.stats,
+        });
         // Initialize selected types with all available types
         if (d.nodes) {
-          const types = new Set((d.nodes as GraphNode[]).map((n) => n.type));
+          const types = new Set(d.nodes.map((n) => n.type));
           setSelectedTypes(types);
         }
       } catch (err) {

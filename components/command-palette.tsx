@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ItemsResponseSchema } from "@/lib/schemas";
+import { useApiData } from "@/lib/hooks/use-api-data";
 
 // ── Types ──
 interface Command {
@@ -169,43 +171,27 @@ interface RecentItem {
 }
 
 function useRecentItems() {
-  const [items, setItems] = useState<RecentItem[]>([]);
+  const { data } = useApiData("/api/items?limit=5&sort=updated_at", ItemsResponseSchema);
 
-  useEffect(() => {
-    let mounted = true;
-    async function loadItems() {
-      try {
-        const res = await globalThis.fetch("/api/items?limit=5&sort=updated_at");
-        if (!res.ok || !mounted) return;
-        const data = await res.json();
-        const typeIcons: Record<string, string> = {
-          link: "🔗",
-          note: "📝",
-          file: "📄",
-          image: "🖼",
-          screenshot: "📸",
-          voice_memo: "🎤",
-          pdf: "📕",
-          video: "🎬",
-        };
-        if (!mounted) return;
-        setItems(
-          (data.items || []).map((i: { id: string; title: string; type: string }) => ({
-            id: i.id,
-            title: i.title || "Untitled",
-            type: i.type,
-            icon: typeIcons[i.type] || "📄",
-          })),
-        );
-      } catch {}
-    }
-    loadItems();
-    return () => {
-      mounted = false;
+  return useMemo(() => {
+    if (!data) return [];
+    const typeIcons: Record<string, string> = {
+      link: "🔗",
+      note: "📝",
+      file: "📄",
+      image: "🖼",
+      screenshot: "📸",
+      voice_memo: "🎤",
+      pdf: "📕",
+      video: "🎬",
     };
-  }, []);
-
-  return items;
+    return (data.items ?? []).map((i) => ({
+      id: i.id,
+      title: i.title || "Untitled",
+      type: i.type,
+      icon: typeIcons[i.type] || "📄",
+    }));
+  }, [data]);
 }
 
 // ── Component ──

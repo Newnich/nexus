@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { z } from "zod";
+import { validatedFetcher } from "@/lib/utils";
+import { useApiData } from "@/lib/hooks/use-api-data";
+import { CooldownConfigResponseSchema, CooldownConfigSchema } from "@/lib/schemas";
 import { PageSkeleton } from "@/components/page-skeleton";
 
 // ── Types ──
@@ -75,7 +79,6 @@ function formatDuration(minutes: number): string {
 export default function CooldownSettingsPage() {
   const [config, setConfig] = useState<CooldownConfig | null>(null);
   const [draft, setDraft] = useState<CooldownConfig | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -85,28 +88,32 @@ export default function CooldownSettingsPage() {
     CHANNEL_CONFIGS.some((cfg) => draft[cfg.key] !== config[cfg.key])
   );
 
-  // Load config on mount
-  const fetchConfig = useCallback(async () => {
-    try {
-      const res = await fetch("/api/settings/cooldown");
-      if (!res.ok) throw new Error("Failed to load cooldown config");
-      const data = await res.json();
-      setConfig(data.cooldown);
-      setDraft(data.cooldown);
-    } catch (err) {
-      console.error("Failed to load cooldown config:", err);
+  // Load config via useApiData hook
+  const {
+    data,
+    loading,
+    error,
+    refetch: refetchConfig,
+  } = useApiData("/api/settings/cooldown", CooldownConfigResponseSchema);
+
+  // Sync loaded data into config + draft
+  useEffect(() => {
+    if (data?.cooldown) {
+      const c = data.cooldown as CooldownConfig;
+      setConfig(c);
+      setDraft(c);
+    }
+  }, [data]);
+
+  // Show error toast on fetch failure
+  useEffect(() => {
+    if (error) {
       toast.error("Failed to load cooldown configuration", {
         duration: 4000,
         style: { background: "hsl(0 63% 6%)", border: "1px solid hsl(0 63% 31%)" },
       });
-    } finally {
-      setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
+  }, [error]);
 
   // Update a single channel value
   const update = (key: keyof CooldownConfig, value: number) => {
@@ -119,19 +126,24 @@ export default function CooldownSettingsPage() {
     if (!draft) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/cooldown", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cooldown: draft }),
-      });
+      const data = await validatedFetcher(
+        "/api/settings/cooldown",
+        z.object({
+          success: z.boolean(),
+          cooldown: CooldownConfigSchema,
+          error: z.string().optional(),
+        }),
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cooldown: draft }),
+        },
+      );
 
-      if (!res.ok) throw new Error("Failed to save");
-
-      const data = await res.json();
       if (!data.success) throw new Error(data.error || "Save failed");
 
-      setConfig(data.cooldown);
-      setDraft(data.cooldown);
+      setConfig(data.cooldown as CooldownConfig);
+      setDraft(data.cooldown as CooldownConfig);
 
       toast.success("Cooldown settings saved!", {
         duration: 3000,
@@ -153,17 +165,20 @@ export default function CooldownSettingsPage() {
     setShowResetConfirm(false);
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/cooldown", {
-        method: "DELETE",
-      });
+      const data = await validatedFetcher(
+        "/api/settings/cooldown",
+        z.object({
+          success: z.boolean(),
+          cooldown: CooldownConfigSchema,
+          error: z.string().optional(),
+        }),
+        { method: "DELETE" },
+      );
 
-      if (!res.ok) throw new Error("Failed to reset");
-
-      const data = await res.json();
       if (!data.success) throw new Error(data.error || "Reset failed");
 
-      setConfig(data.cooldown);
-      setDraft(data.cooldown);
+      setConfig(data.cooldown as CooldownConfig);
+      setDraft(data.cooldown as CooldownConfig);
 
       toast.success("Reset to default cooldown periods", {
         duration: 3000,
@@ -203,10 +218,7 @@ export default function CooldownSettingsPage() {
           <h2 className="text-xl font-semibold mb-2">Could not load cooldown config</h2>
           <p className="text-muted-foreground mb-6">Make sure Redis is running and try again.</p>
           <button
-            onClick={() => {
-              setLoading(true);
-              fetchConfig();
-            }}
+            onClick={refetchConfig}
             className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
           >
             Retry

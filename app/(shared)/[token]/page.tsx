@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { formatDateRelative } from "@/lib/utils";
+import { formatDateRelative, validatedFetcher } from "@/lib/utils";
+import { ItemDetailResponseSchema } from "@/lib/schemas";
 
 interface SharedData {
   type: "item" | "collection";
@@ -46,20 +47,19 @@ export default function SharedPage({ params }: { params: { token: string } }) {
     // Fetch the item data
     async function fetchShared() {
       try {
-        const res = await fetch(`/api/items/${link.itemId}`);
-        if (!res.ok) throw new Error("Failed to load shared content");
-        const json = await res.json();
-        const item = json.item;
+        const json = await validatedFetcher(`/api/items/${link.itemId}`, ItemDetailResponseSchema);
+        const item = json.item as Record<string, unknown>;
+        const aiData = item.aiData as Record<string, unknown> | null;
 
         setData({
           type: "item",
-          title: item.title || "Untitled",
-          itemTitle: item.title || "Untitled",
-          itemType: item.type,
-          itemSummary: item.aiData?.summary,
-          itemContent: item.content,
-          itemTags: item.aiData?.tags,
-          createdAt: item.createdAt,
+          title: (item.title as string) || "Untitled",
+          itemTitle: (item.title as string) || "Untitled",
+          itemType: item.type as string,
+          itemSummary: (aiData?.summary as string) || undefined,
+          itemContent: item.content as string,
+          itemTags: (aiData?.tags as string[]) || undefined,
+          createdAt: item.createdAt as string,
           expiresAt: link.expiresAt,
         });
       } catch (err) {

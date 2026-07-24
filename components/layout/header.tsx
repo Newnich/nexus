@@ -3,14 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { cn, formatDateRelative } from "@/lib/utils";
+import { useApiData } from "@/lib/hooks/use-api-data";
+import { AlertsResponseSchema } from "@/lib/schemas";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface AlertEntry {
   id: string;
   severity: "info" | "warning" | "critical";
+  title: string;
   message: string;
   details?: string;
-  timestamp: string;
+  firstSeen: string;
+  lastSeen: string;
+  fresh?: boolean;
   dismissed?: boolean;
 }
 
@@ -19,12 +24,25 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
-  const [alerts, setAlerts] = useState<AlertEntry[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const quickCreateRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Fetch alerts via useApiData hook
+  const { data: alertsData, refetch: refetchAlerts } = useApiData(
+    "/api/queue/alerts",
+    AlertsResponseSchema,
+  );
+
+  const alerts = (alertsData?.alerts as AlertEntry[]) ?? [];
+
+  // Poll every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => refetchAlerts(), 30000);
+    return () => clearInterval(interval);
+  }, [refetchAlerts]);
 
   const activeAlerts = alerts.filter((a) => !dismissedIds.has(a.id));
   const notificationCount = activeAlerts.filter(
@@ -60,22 +78,6 @@ export function Header() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Fetch alerts on mount and poll
-  useEffect(() => {
-    async function fetchAlerts() {
-      try {
-        const res = await fetch("/api/queue/alerts");
-        if (res.ok) {
-          const data = await res.json();
-          setAlerts(data.alerts || []);
-        }
-      } catch {}
-    }
-    fetchAlerts();
-    const interval = setInterval(fetchAlerts, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -286,7 +288,7 @@ export function Header() {
                               </p>
                             )}
                             <p className="text-[9px] text-muted-foreground/60 mt-1">
-                              {formatDateRelative(alert.timestamp)}
+                              {formatDateRelative(alert.firstSeen)}
                             </p>
                           </div>
                           <button

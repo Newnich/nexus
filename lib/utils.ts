@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { nanoid } from "nanoid";
 import { format, formatDistanceToNow } from "date-fns";
+import { type ZodType } from "zod";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,13 +12,21 @@ export function generateId(): string {
   return nanoid(24);
 }
 
-export function formatDate(date: string | Date): string {
+function toValidDate(date: string | Date | null | undefined): Date | null {
+  if (date == null) return null;
   const d = typeof date === "string" ? new Date(date) : date;
+  return isNaN(d.getTime()) ? null : d;
+}
+
+export function formatDate(date: string | Date | null | undefined): string {
+  const d = toValidDate(date);
+  if (!d) return "Unknown";
   return format(d, "MMM d, yyyy");
 }
 
-export function formatDateRelative(date: string | Date): string {
-  const d = typeof date === "string" ? new Date(date) : date;
+export function formatDateRelative(date: string | Date | null | undefined): string {
+  const d = toValidDate(date);
+  if (!d) return "Recently";
   return formatDistanceToNow(d, { addSuffix: true });
 }
 
@@ -87,10 +96,75 @@ export async function fetcher<T>(url: string, options?: RequestInit): Promise<T>
     ...options,
   });
   if (!res.ok) {
-    const error = new Error("API request failed");
-    throw error;
+    throw new Error("API request failed");
   }
   return res.json();
+}
+
+/**
+ * Like `fetcher` but validates the JSON response against a Zod schema at runtime.
+ * Throws a descriptive error with Zod issues if validation fails.
+ *
+ * Retries once on 500 responses after a short delay to handle transient
+ * Supabase JWT clock-skew issues (PGRST303 "JWT issued at future") — the
+ * error occurs before any business logic runs, so retrying is safe.
+ *
+ * @example
+ * ```ts
+ * const item = await validatedFetcher("/api/items/123", ItemSchema);
+ * // item is now typed as z.infer<typeof ItemSchema>
+ * ```
+ */
+export async function validatedFetcher<T>(
+  url: string,
+  schema: ZodType<T, any, any>,
+  options?: RequestInit,
+): Promise<T> {
+  const attempt = async (): Promise<T> => {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options?.headers as Record<string, string> | undefined),
+      },
+    });
+
+    if (res.ok) {
+      const json: unknown = await res.json();
+
+      const result = schema.safeParse(json);
+      if (!result.success) {
+        const issues = result.error.issues
+          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+          .join("; ");
+        throw new Error(`API response validation failed for ${url}: ${issues}`);
+      }
+
+      return result.data;
+    }
+
+    // Non-ok response — throw so the retry logic can catch it
+    throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+  };
+
+  try {
+    return await attempt();
+  } catch (error) {
+    // Retry once on server errors (500+) — the original request never reached
+    // business logic (failed at auth check), so retrying is safe even for POST.
+    // Extract status code from error message — single regex execution
+    const statusMatch =
+      error instanceof Error ? error.message.match(/^API request failed: (5\d{2})/) : null;
+    const status = statusMatch ? parseInt(statusMatch[1]) : null;
+
+    if (status && status >= 500) {
+      // Brief delay to let Supabase clock skew resolve
+      await new Promise((r) => setTimeout(r, 500));
+      return await attempt();
+    }
+
+    throw error;
+  }
 }
 
 export const ITEM_TYPE_CONFIG = {

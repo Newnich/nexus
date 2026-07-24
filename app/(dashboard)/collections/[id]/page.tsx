@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { cn, formatDateRelative, ITEM_TYPE_CONFIG } from "@/lib/utils";
+import { cn, formatDateRelative, ITEM_TYPE_CONFIG, validatedFetcher } from "@/lib/utils";
+import { CollectionDetailResponseSchema, ItemsResponseSchema } from "@/lib/schemas";
 
 interface DetailItem {
   id: string;
@@ -68,15 +69,12 @@ export default function CollectionDetailPage() {
 
   const fetchCollection = useCallback(async () => {
     try {
-      const res = await fetch(`/api/collections/${collectionId}`);
-      if (!res.ok) {
-        if (res.status === 404) throw new Error("Collection not found");
-        if (res.status === 401) throw new Error("Please sign in");
-        throw new Error("Failed to load collection");
-      }
-      const data = await res.json();
-      setCollection(data.collection);
-      setItems(data.items || []);
+      const data = await validatedFetcher(
+        `/api/collections/${collectionId}`,
+        CollectionDetailResponseSchema,
+      );
+      setCollection(data.collection as CollectionDetail);
+      setItems(data.items as DetailItem[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -155,12 +153,10 @@ export default function CollectionDetailPage() {
     setSelectedAddItems(new Set());
     setLoadingAvailable(true);
     try {
-      const res = await fetch("/api/items?limit=200");
-      if (!res.ok) throw new Error("Failed to load items");
-      const data = await res.json();
+      const data = await validatedFetcher("/api/items?limit=200", ItemsResponseSchema);
       const existingIds = new Set(items.map((i) => i.id));
       // Map API response (snake_case, ai_data JSONB) to DetailItem interface
-      const mapped = (data.items || [])
+      const mapped = (data.items ?? [])
         .filter((raw: Record<string, unknown>) => !existingIds.has(raw.id as string))
         .map((raw: Record<string, unknown>) => {
           const aiData = raw.ai_data as Record<string, unknown> | null;

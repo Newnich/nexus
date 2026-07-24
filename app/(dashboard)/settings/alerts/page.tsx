@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { z } from "zod";
+import { validatedFetcher } from "@/lib/utils";
+import { useApiData } from "@/lib/hooks/use-api-data";
+import { AlertThresholdsResponseSchema, AlertThresholdsSchema } from "@/lib/schemas";
 import { PageSkeleton } from "@/components/page-skeleton";
 
 // ── Types ──
@@ -71,7 +75,6 @@ const THRESHOLD_CONFIGS: ThresholdConfig[] = [
 export default function AlertThresholdsPage() {
   const [thresholds, setThresholds] = useState<AlertThresholds | null>(null);
   const [draft, setDraft] = useState<AlertThresholds | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -81,28 +84,32 @@ export default function AlertThresholdsPage() {
     THRESHOLD_CONFIGS.some((cfg) => draft[cfg.key] !== thresholds[cfg.key])
   );
 
-  // Load thresholds on mount
-  const fetchThresholds = useCallback(async () => {
-    try {
-      const res = await fetch("/api/settings/alert-thresholds");
-      if (!res.ok) throw new Error("Failed to load thresholds");
-      const data = await res.json();
-      setThresholds(data.thresholds);
-      setDraft(data.thresholds);
-    } catch (err) {
-      console.error("Failed to load thresholds:", err);
+  // Load thresholds via useApiData hook
+  const {
+    data,
+    loading,
+    error,
+    refetch: refetchThresholds,
+  } = useApiData("/api/settings/alert-thresholds", AlertThresholdsResponseSchema);
+
+  // Sync loaded data into thresholds + draft
+  useEffect(() => {
+    if (data?.thresholds) {
+      const t = data.thresholds as AlertThresholds;
+      setThresholds(t);
+      setDraft(t);
+    }
+  }, [data]);
+
+  // Show error toast on fetch failure
+  useEffect(() => {
+    if (error) {
       toast.error("Failed to load alert thresholds", {
         duration: 4000,
         style: { background: "hsl(0 63% 6%)", border: "1px solid hsl(0 63% 31%)" },
       });
-    } finally {
-      setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchThresholds();
-  }, [fetchThresholds]);
+  }, [error]);
 
   // Update a single threshold value
   const update = (key: keyof AlertThresholds, value: number) => {
@@ -115,20 +122,24 @@ export default function AlertThresholdsPage() {
     if (!draft) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/alert-thresholds", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thresholds: draft }),
-      });
+      const data = await validatedFetcher(
+        "/api/settings/alert-thresholds",
+        z.object({
+          success: z.boolean(),
+          thresholds: AlertThresholdsSchema,
+          error: z.string().optional(),
+        }),
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ thresholds: draft }),
+        },
+      );
 
-      if (!res.ok) throw new Error("Failed to save");
-
-      const data = await res.json();
       if (!data.success) throw new Error(data.error || "Save failed");
 
-      // Use the sanitized values returned from server
-      setThresholds(data.thresholds);
-      setDraft(data.thresholds);
+      setThresholds(data.thresholds as AlertThresholds);
+      setDraft(data.thresholds as AlertThresholds);
 
       toast.success("Alert thresholds saved!", {
         duration: 3000,
@@ -150,17 +161,20 @@ export default function AlertThresholdsPage() {
     setShowResetConfirm(false);
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/alert-thresholds", {
-        method: "DELETE",
-      });
+      const data = await validatedFetcher(
+        "/api/settings/alert-thresholds",
+        z.object({
+          success: z.boolean(),
+          thresholds: AlertThresholdsSchema,
+          error: z.string().optional(),
+        }),
+        { method: "DELETE" },
+      );
 
-      if (!res.ok) throw new Error("Failed to reset");
-
-      const data = await res.json();
       if (!data.success) throw new Error(data.error || "Reset failed");
 
-      setThresholds(data.thresholds);
-      setDraft(data.thresholds);
+      setThresholds(data.thresholds as AlertThresholds);
+      setDraft(data.thresholds as AlertThresholds);
 
       toast.success("Reset to default thresholds", {
         duration: 3000,
@@ -200,10 +214,7 @@ export default function AlertThresholdsPage() {
           <h2 className="text-xl font-semibold mb-2">Could not load thresholds</h2>
           <p className="text-muted-foreground mb-6">Make sure Redis is running and try again.</p>
           <button
-            onClick={() => {
-              setLoading(true);
-              fetchThresholds();
-            }}
+            onClick={refetchThresholds}
             className="px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
           >
             Retry

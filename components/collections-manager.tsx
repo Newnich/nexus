@@ -1,15 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-
-interface CollectionInfo {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  type: string;
-}
+import { useApiData } from "@/lib/hooks/use-api-data";
+import { CollectionsResponseSchema, ItemCollectionsResponseSchema } from "@/lib/schemas";
 
 interface CollectionManagerProps {
   itemId: string;
@@ -17,11 +11,36 @@ interface CollectionManagerProps {
 
 export function CollectionsManager({ itemId }: CollectionManagerProps) {
   const [open, setOpen] = useState(false);
-  const [allCollections, setAllCollections] = useState<CollectionInfo[]>([]);
   const [memberCollectionIds, setMemberCollectionIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
+
+  // Fetch collections when dropdown opens
+  const {
+    data: colData,
+    loading: loadingCols,
+    error: colError,
+  } = useApiData(open ? "/api/collections?limit=100" : null, CollectionsResponseSchema);
+
+  const { data: memData, loading: loadingMem } = useApiData(
+    open ? `/api/items/${itemId}/collections` : null,
+    ItemCollectionsResponseSchema,
+  );
+
+  // Sync member collections from server data
+  useEffect(() => {
+    if (memData) {
+      setMemberCollectionIds(new Set(memData.collections.map((c) => c.id)));
+    }
+  }, [memData]);
+
+  // Show error toast when fetch fails
+  useEffect(() => {
+    if (colError) toast.error("Failed to load collections");
+  }, [colError]);
+
+  const allCollections = colData?.collections ?? [];
+  const loading = open && (loadingCols || loadingMem);
 
   // Close on outside click
   useEffect(() => {
@@ -33,30 +52,6 @@ export function CollectionsManager({ itemId }: CollectionManagerProps) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  // Fetch data on mount
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [colRes, memRes] = await Promise.all([
-        fetch("/api/collections?limit=100"),
-        fetch(`/api/items/${itemId}/collections`),
-      ]);
-      if (!colRes.ok || !memRes.ok) throw new Error("Failed to load collections");
-      const colData = await colRes.json();
-      const memData = await memRes.json();
-      setAllCollections(colData.collections || []);
-      setMemberCollectionIds(new Set((memData.collections || []).map((c: CollectionInfo) => c.id)));
-    } catch {
-      toast.error("Failed to load collections");
-    } finally {
-      setLoading(false);
-    }
-  }, [itemId]);
-
-  useEffect(() => {
-    if (open) fetchData();
-  }, [open, fetchData]);
 
   const toggleCollection = async (collectionId: string, isCurrentlyMember: boolean) => {
     setToggling((prev) => new Set(prev).add(collectionId));

@@ -1,50 +1,31 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { cn } from "@/lib/utils";
+import { cn, validatedFetcher } from "@/lib/utils";
+import { TagsResponseSchema, TagsActionResponseSchema } from "@/lib/schemas";
+import { useApiData } from "@/lib/hooks/use-api-data";
 
-interface TagEntry {
-  name: string;
-  count: number;
-}
-
+type TagEntry = { name: string; count: number };
 type TagAction = "rename" | "merge" | "delete";
 
 export default function TagsPage() {
-  const [tags, setTags] = useState<TagEntry[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: tagData,
+    loading,
+    error,
+    refetch: refetchTags,
+  } = useApiData<{ tags: TagEntry[]; total: number }>("/api/tags", TagsResponseSchema);
+
+  const tags = tagData?.tags ?? [];
+  const total = tagData?.total ?? 0;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<TagEntry | null>(null);
   const [action, setAction] = useState<TagAction>("rename");
   const [actionValue, setActionValue] = useState("");
   const [processing, setProcessing] = useState(false);
-
-  const fetchTags = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/tags");
-      if (!res.ok) {
-        if (res.status === 401) throw new Error("Please sign in");
-        throw new Error("Failed to load tags");
-      }
-      const data = await res.json();
-      setTags(data.tags || []);
-      setTotal(data.total || 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTags();
-  }, [fetchTags]);
 
   const filteredTags = searchQuery
     ? tags.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -60,7 +41,7 @@ export default function TagsPage() {
 
     setProcessing(true);
     try {
-      const res = await fetch("/api/tags", {
+      const data = await validatedFetcher("/api/tags", TagsActionResponseSchema, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -77,13 +58,6 @@ export default function TagsPage() {
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Action failed");
-      }
-
-      const data = await res.json();
-
       const actionLabels: Record<TagAction, string> = {
         rename: `Tag renamed from "${selectedTag.name}" to "${actionValue}"`,
         merge: `Tag "${selectedTag.name}" merged into "${actionValue}"`,
@@ -94,7 +68,7 @@ export default function TagsPage() {
       setSelectedTag(null);
       setActionValue("");
       setAction("rename");
-      fetchTags();
+      refetchTags();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Action failed");
     } finally {
@@ -256,7 +230,7 @@ export default function TagsPage() {
           <h3 className="text-lg font-semibold text-red-400 mb-1">Failed to load tags</h3>
           <p className="text-muted-foreground mb-6">{error}</p>
           <button
-            onClick={fetchTags}
+            onClick={refetchTags}
             className="px-4 py-2 bg-nexus-500 hover:bg-nexus-600 text-white rounded-lg transition-all text-sm"
           >
             Try again

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { useApiData } from "@/lib/hooks/use-api-data";
+import { CollectionsResponseSchema } from "@/lib/schemas";
 
 interface CollectionOption {
   id: string;
@@ -26,33 +28,20 @@ export function CollectionPicker({
   className,
   limit = 50,
 }: CollectionPickerProps) {
-  const [collections, setCollections] = useState<CollectionOption[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Fetch collections
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/collections?limit=${limit}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setCollections(
-          (data.collections || []).map((c: { id: string; name: string; icon: string }) => ({
-            id: c.id,
-            name: c.name,
-            icon: c.icon || "▦",
-          })),
-        );
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [limit]);
+  // Fetch collections via useApiData
+  const { data: collectionsData, loading } = useApiData(
+    `/api/collections?limit=${limit}`,
+    CollectionsResponseSchema,
+  );
+
+  const collections: CollectionOption[] = (collectionsData?.collections ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    icon: c.icon || "▦",
+  }));
 
   // Close on click outside
   useEffect(() => {

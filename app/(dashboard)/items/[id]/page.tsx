@@ -4,7 +4,22 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { cn, formatDate, formatDateRelative, extractDomain, ITEM_TYPE_CONFIG } from "@/lib/utils";
+import {
+  cn,
+  formatDate,
+  formatDateRelative,
+  extractDomain,
+  ITEM_TYPE_CONFIG,
+  validatedFetcher,
+} from "@/lib/utils";
+import {
+  ItemDetailResponseSchema,
+  ItemUpdateResponseSchema,
+  ItemDeleteResponseSchema,
+  AIProcessResponseSchema,
+} from "@/lib/schemas";
+import { useValidatedMutation } from "@/lib/hooks/use-validated-mutation";
+import type { z } from "zod";
 import type { Item } from "@/types/item";
 import { MiniGraph } from "@/components/mini-graph";
 import { ItemEditor } from "@/components/item-editor";
@@ -51,26 +66,71 @@ export default function ItemDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [editing, setEditing] = useState(false);
+
+  const { mutate: toggleFavorite } = useValidatedMutation<
+    { isFavorite: boolean },
+    z.infer<typeof ItemUpdateResponseSchema>
+  >({
+    url: `/api/items/${itemId}`,
+    method: "PATCH",
+    schema: ItemUpdateResponseSchema,
+    onError: () => {
+      setIsFavorite((prev) => !prev);
+      toast.error("Failed to update favorite");
+    },
+  });
+
+  const { mutate: toggleArchive } = useValidatedMutation<
+    { isArchived: boolean },
+    z.infer<typeof ItemUpdateResponseSchema>
+  >({
+    url: `/api/items/${itemId}`,
+    method: "PATCH",
+    schema: ItemUpdateResponseSchema,
+    onError: () => {
+      setIsArchived((prev) => !prev);
+      toast.error("Failed to update archive status");
+    },
+  });
+
+  const { mutate: deleteItem, loading: deleting } = useValidatedMutation<
+    void,
+    { success?: boolean }
+  >({
+    url: `/api/items/${itemId}`,
+    method: "DELETE",
+    schema: ItemDeleteResponseSchema,
+    onSuccess: () => {
+      toast.success("Item deleted");
+      router.push("/dashboard");
+    },
+    onError: () => toast.error("Failed to delete item"),
+  });
+
+  const { mutate: reprocessAI } = useValidatedMutation<{ itemId: string }, { success?: boolean }>({
+    url: "/api/ai/process",
+    method: "POST",
+    schema: AIProcessResponseSchema,
+    onSuccess: () => toast.success("AI processing re-queued"),
+    onError: () => toast.error("Failed to re-queue AI processing"),
+  });
+
   const { trackView } = useRecentlyViewed();
 
   useEffect(() => {
     async function fetchItem() {
       try {
-        const res = await fetch(`/api/items/${itemId}`);
-        if (!res.ok) {
-          if (res.status === 404) throw new Error("Item not found");
-          if (res.status === 401) throw new Error("Please sign in to view this item");
-          throw new Error("Failed to load item");
-        }
-        const data = await res.json();
-        setItem(data.item);
-        setConnections(data.connections || []);
-        setIsFavorite(data.item.isFavorite);
-        setIsArchived(data.item.isArchived);
-        trackView(itemId, data.item.title, data.item.type);
+        const data = await validatedFetcher(`/api/items/${itemId}`, ItemDetailResponseSchema);
+        const itemData = data.item as Record<string, unknown>;
+        const connData = (data.connections ?? []) as Connection[];
+
+        setItem(itemData as unknown as Item);
+        setConnections(connData);
+        setIsFavorite(Boolean(itemData.isFavorite));
+        setIsArchived(Boolean(itemData.isArchived));
+        trackView(itemId, String(itemData.title ?? ""), String(itemData.type ?? ""));
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -84,42 +144,21 @@ export default function ItemDetailPage() {
     if (!item) return;
     const newValue = !isFavorite;
     setIsFavorite(newValue);
-    try {
-      const res = await fetch(`/api/items/${itemId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isFavorite: newValue }),
-      });
-      if (!res.ok) throw new Error("Failed to update");
-    } catch {
-      setIsFavorite(!newValue);
-      toast.error("Failed to update favorite");
-    }
+    await toggleFavorite({ isFavorite: newValue });
   };
 
   const handleDelete = async () => {
     if (!confirm("Delete this item permanently?")) return;
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/items/${itemId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete");
-      toast.success("Item deleted");
-      router.push("/dashboard");
-    } catch {
-      toast.error("Failed to delete item");
-      setDeleting(false);
-    }
+    await deleteItem();
   };
 
   const handleSaveEdit = async (updates: Record<string, unknown>) => {
-    const res = await fetch(`/api/items/${itemId}`, {
+    const data = await validatedFetcher(`/api/items/${itemId}`, ItemUpdateResponseSchema, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error("Failed to update");
-    const data = await res.json();
-    setItem(data.item);
+    setItem(data.item as unknown as Item);
     setEditing(false);
   };
 
@@ -301,18 +340,8 @@ export default function ItemDetailPage() {
                   onClick={async () => {
                     const newVal = !isArchived;
                     setIsArchived(newVal);
-                    try {
-                      const res = await fetch(`/api/items/${itemId}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ isArchived: newVal }),
-                      });
-                      if (!res.ok) throw new Error();
-                      toast.success(newVal ? "Item archived" : "Item restored");
-                    } catch {
-                      setIsArchived(!newVal);
-                      toast.error("Failed to update archive status");
-                    }
+                    await toggleArchive({ isArchived: newVal });
+                    toast.success(newVal ? "Item archived" : "Item restored");
                   }}
                   className={cn(
                     "p-2.5 rounded-xl border transition-all text-lg",
@@ -573,19 +602,7 @@ export default function ItemDetailPage() {
             )}
             {/* Source link (mobile) */} {/* Reprocess with AI button */}
             <button
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/ai/process", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ itemId }),
-                  });
-                  if (!res.ok) throw new Error();
-                  toast.success("AI processing re-queued");
-                } catch {
-                  toast.error("Failed to re-queue AI processing");
-                }
-              }}
+              onClick={() => reprocessAI({ itemId })}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-nexus-500/10 hover:bg-nexus-500/20 text-nexus-400 rounded-xl text-sm transition-all"
             >
               ✨ Reprocess with AI
