@@ -4,6 +4,8 @@
   <p>The last app you'll ever need for information.</p>
 
 [![CI](https://github.com/Newnich/nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/Newnich/nexus/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-154%20passing-brightgreen)](https://github.com/Newnich/nexus/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/gh/Newnich/nexus/branch/master/graph/badge.svg)](https://codecov.io/gh/Newnich/nexus)
 [![Vercel](https://img.shields.io/badge/deployed-vercel-black)](https://nexus-wine-chi.vercel.app)
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://github.com/Newnich/nexus)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

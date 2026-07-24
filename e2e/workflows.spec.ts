@@ -17,26 +17,29 @@ test.describe("Quick Capture", () => {
 
   test("Quick capture opens a modal", async ({ page }) => {
     const quickCaptureBtn = page.locator('button[title="Quick capture"]');
+    await quickCaptureBtn.waitFor({ state: "visible", timeout: 5000 });
     await quickCaptureBtn.click();
     // Modal should appear with an input field
-    await expect(page.locator('input[placeholder*="url"i]').first()).toBeVisible({ timeout: 5000 });
+    const urlInput = page.locator('input[placeholder*="url"i]').first();
+    await urlInput.waitFor({ state: "visible", timeout: 8000 });
+    await expect(urlInput).toBeVisible();
   });
 
   test("Quick capture can submit a URL", async ({ page }) => {
     const quickCaptureBtn = page.locator('button[title="Quick capture"]');
+    await quickCaptureBtn.waitFor({ state: "visible", timeout: 5000 });
     await quickCaptureBtn.click();
-    await page
-      .locator('input[placeholder*="url"i]')
-      .first()
-      .fill("https://example.com/test-quick-capture");
-    const submitBtn = page.locator("button:has-text('Save')").first();
-    if (await submitBtn.isVisible()) {
-      await submitBtn.click();
-      // Should show a success toast or the item appears
-      await page.waitForTimeout(2000);
-      // Verify we're still on a valid page (not an error)
-      await expect(page.locator("body")).toBeVisible({ timeout: 5000 });
-    }
+    // Wait for modal to open
+    const urlInput = page.locator('input[placeholder*="url"i]').first();
+    await urlInput.waitFor({ state: "visible", timeout: 5000 });
+    await urlInput.fill("https://example.com/test-quick-capture");
+    // Click the Save button inside the modal
+    const saveBtn = page.locator('button:has-text("Save")').first();
+    await saveBtn.waitFor({ state: "visible", timeout: 5000 });
+    await saveBtn.click();
+    // Wait for the item to save (shows toast or redirects)
+    await page.waitForTimeout(3000);
+    await expect(page.locator("body")).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -221,18 +224,81 @@ test.describe("Settings Pages", () => {
     await signIn(page);
   });
 
-  test("General settings page loads", async ({ page }) => {
+  test("General settings page shows notification preference toggles", async ({ page }) => {
     await page.goto("/settings/general");
     await expect(page.locator("h1").filter({ hasText: /Settings/i })).toBeVisible({
       timeout: 10000,
     });
+    // Should show toggle buttons for Slack/Discord/Email per alert
+    await expect(page.getByText("Redis Disconnected").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Large Processing Backlog").first()).toBeVisible({ timeout: 5000 });
+    // Should have channel icons
+    await expect(page.getByText("💬").first()).toBeVisible({ timeout: 3000 });
   });
 
-  test("Notifications settings page loads", async ({ page }) => {
+  test("General settings has Save and Reset buttons", async ({ page }) => {
+    await page.goto("/settings/general");
+    // Wait for preferences to load
+    await page.waitForTimeout(2000);
+    // Save button should be visible (initially disabled)
+    const saveBtn = page.getByRole("button", { name: /Save Changes/i });
+    await expect(saveBtn).toBeVisible({ timeout: 5000 });
+    // Reset button should be visible
+    const resetBtn = page.getByRole("button", { name: /Reset to Defaults/i });
+    await expect(resetBtn).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Notifications settings page loads with channel cards", async ({ page }) => {
     await page.goto("/settings/notifications");
     await expect(page.locator("h1").filter({ hasText: /Notification Settings/i })).toBeVisible({
       timeout: 10000,
     });
+    // Should show Slack, Discord, and Email cards
+    await expect(page.getByText("💬").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("🎮").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("📧").first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Alert thresholds page has sliders and number inputs", async ({ page }) => {
+    await page.goto("/settings/alerts");
+    await expect(page.getByText(/threshold|Failure|Inactivity|Backlog/i).first()).toBeVisible({
+      timeout: 10000,
+    });
+    // Should have range sliders (input[type=range])
+    const sliders = page.locator('input[type="range"]');
+    await expect(sliders.first()).toBeVisible({ timeout: 5000 });
+    const sliderCount = await sliders.count();
+    expect(sliderCount).toBeGreaterThanOrEqual(3);
+    // Should have number inputs
+    const numberInputs = page.locator('input[type="number"]');
+    await expect(numberInputs.first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test("Alert thresholds page can adjust slider values", async ({ page }) => {
+    await page.goto("/settings/alerts");
+    await page.waitForTimeout(2000);
+    // Find the first slider
+    const slider = page.locator('input[type="range"]').first();
+    await expect(slider).toBeVisible({ timeout: 5000 });
+    // Get the associated number input (they're paired)
+    const numberInput = page.locator('input[type="number"]').first();
+    await expect(numberInput).toBeVisible({ timeout: 3000 });
+    // Change the number input and verify "Unsaved changes" indicator appears
+    const currentValue = await numberInput.inputValue();
+    await numberInput.fill(String(Number(currentValue) + 1));
+    await expect(page.getByText(/Unsaved changes/i).first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test("Cooldown settings page has sliders and duration badges", async ({ page }) => {
+    await page.goto("/settings/cooldown");
+    await expect(page.locator("h1").filter({ hasText: /Cooldown/i })).toBeVisible({
+      timeout: 10000,
+    });
+    // Should show Slack, Discord, Email cooldown cards
+    const sliders = page.locator('input[type="range"]');
+    await expect(sliders.first()).toBeVisible({ timeout: 5000 });
+    const sliderCount = await sliders.count();
+    expect(sliderCount).toBeGreaterThanOrEqual(3);
   });
 
   test("API Keys settings page loads", async ({ page }) => {
@@ -240,11 +306,10 @@ test.describe("Settings Pages", () => {
     await expect(page.locator("h1").filter({ hasText: /API Keys/i })).toBeVisible({
       timeout: 10000,
     });
-  });
-
-  test("Alert thresholds page loads", async ({ page }) => {
-    await page.goto("/settings/alerts");
-    await expect(page.getByText(/threshold/i).first()).toBeVisible({ timeout: 10000 });
+    // Should show create key button
+    await expect(page.getByRole("button", { name: /Create New Key/i })).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Import/Export page loads", async ({ page }) => {
@@ -252,11 +317,16 @@ test.describe("Settings Pages", () => {
     await expect(page.locator("h1").filter({ hasText: /Import & Export/i })).toBeVisible({
       timeout: 10000,
     });
+    // Should have export and import sections
+    await expect(page.getByText(/Export Data/).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/Import Data/).first()).toBeVisible({ timeout: 5000 });
   });
 
   test("Tags management page loads", async ({ page }) => {
     await page.goto("/tags");
     await expect(page.locator("h1").filter({ hasText: /Tags/i })).toBeVisible({ timeout: 10000 });
+    // Should have a search input for filtering tags
+    await expect(page.getByPlaceholder(/Filter tags/i).first()).toBeVisible({ timeout: 5000 });
   });
 });
 

@@ -2,6 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
+import { validatedFetcher } from "@/lib/utils";
+import {
+  QueueStatusSchema,
+  NotificationHistoryResponseSchema,
+  TestNotificationResponseSchema,
+} from "@/lib/schemas";
 
 // ── Types ──
 
@@ -103,9 +109,7 @@ export default function NotificationSettingsPage() {
   // Fetch channel configuration status
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/queue/status");
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await validatedFetcher("/api/queue/status", QueueStatusSchema);
 
       setChannelStatus({
         slack: data.config
@@ -136,10 +140,11 @@ export default function NotificationSettingsPage() {
   // Fetch notification history
   const fetchHistory = useCallback(async () => {
     try {
-      const res = await fetch("/api/notifications/history?limit=50");
-      if (!res.ok) throw new Error("Failed to load history");
-      const data = await res.json();
-      setHistory(data.history || []);
+      const data = await validatedFetcher(
+        "/api/notifications/history?limit=50",
+        NotificationHistoryResponseSchema,
+      );
+      setHistory(data.history as HistoryEntry[]);
     } catch {
       // Best-effort
     } finally {
@@ -161,15 +166,18 @@ export default function NotificationSettingsPage() {
     }));
 
     try {
-      const res = await fetch("/api/notifications/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel }),
-      });
+      const data = await validatedFetcher(
+        "/api/notifications/test",
+        TestNotificationResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ channel }),
+        },
+      );
 
-      const data = await res.json();
-      const result: TestResult = data.result || {
-        channel,
+      const result: TestResult = (data.result as TestResult) || {
+        channel: channel as "slack" | "discord",
         sent: false,
         alertId: "test",
         error: "No result",

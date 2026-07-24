@@ -2,14 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
+import { validatedFetcher } from "@/lib/utils";
+import { CollectionsResponseSchema, ItemCollectionsResponseSchema } from "@/lib/schemas";
 
-interface CollectionInfo {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  type: string;
-}
+import type { z } from "zod";
+
+type CollectionInfo = z.infer<typeof ItemCollectionsResponseSchema>["collections"][number];
 
 interface CollectionManagerProps {
   itemId: string;
@@ -38,15 +36,12 @@ export function CollectionsManager({ itemId }: CollectionManagerProps) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [colRes, memRes] = await Promise.all([
-        fetch("/api/collections?limit=100"),
-        fetch(`/api/items/${itemId}/collections`),
+      const [colData, memData] = await Promise.all([
+        validatedFetcher("/api/collections?limit=100", CollectionsResponseSchema),
+        validatedFetcher(`/api/items/${itemId}/collections`, ItemCollectionsResponseSchema),
       ]);
-      if (!colRes.ok || !memRes.ok) throw new Error("Failed to load collections");
-      const colData = await colRes.json();
-      const memData = await memRes.json();
-      setAllCollections(colData.collections || []);
-      setMemberCollectionIds(new Set((memData.collections || []).map((c: CollectionInfo) => c.id)));
+      setAllCollections(colData.collections as CollectionInfo[]);
+      setMemberCollectionIds(new Set((memData.collections ?? []).map((c: CollectionInfo) => c.id)));
     } catch {
       toast.error("Failed to load collections");
     } finally {

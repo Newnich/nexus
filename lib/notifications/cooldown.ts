@@ -43,12 +43,12 @@ const COOLDOWN_KEY = "nexus:notification:cooldowns";
 
 // ── Helpers ──
 
-function clampMinutes(value: number, fallback: number): number {
+export function clampMinutes(value: number, fallback: number): number {
   if (isNaN(value) || value < 1 || value > 1440) return fallback; // 1 min to 24 hours
   return Math.round(value);
 }
 
-function sanitize(raw: Partial<CooldownConfig>): CooldownConfig {
+export function sanitize(raw: Partial<CooldownConfig>): CooldownConfig {
   return {
     slack: clampMinutes(raw.slack ?? DEFAULT_COOLDOWNS.slack, DEFAULT_COOLDOWNS.slack),
     discord: clampMinutes(raw.discord ?? DEFAULT_COOLDOWNS.discord, DEFAULT_COOLDOWNS.discord),

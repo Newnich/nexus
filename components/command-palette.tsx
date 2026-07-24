@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, validatedFetcher } from "@/lib/utils";
+import { ItemsResponseSchema } from "@/lib/schemas";
 
 // ── Types ──
 interface Command {
@@ -175,9 +176,11 @@ function useRecentItems() {
     let mounted = true;
     async function loadItems() {
       try {
-        const res = await globalThis.fetch("/api/items?limit=5&sort=updated_at");
-        if (!res.ok || !mounted) return;
-        const data = await res.json();
+        const data = await validatedFetcher(
+          "/api/items?limit=5&sort=updated_at",
+          ItemsResponseSchema,
+        );
+        if (!mounted) return;
         const typeIcons: Record<string, string> = {
           link: "🔗",
           note: "📝",
@@ -188,9 +191,8 @@ function useRecentItems() {
           pdf: "📕",
           video: "🎬",
         };
-        if (!mounted) return;
         setItems(
-          (data.items || []).map((i: { id: string; title: string; type: string }) => ({
+          (data.items ?? []).map((i) => ({
             id: i.id,
             title: i.title || "Untitled",
             type: i.type,

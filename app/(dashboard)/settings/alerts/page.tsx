@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { z } from "zod";
+import { validatedFetcher } from "@/lib/utils";
+import { AlertThresholdsResponseSchema, AlertThresholdsSchema } from "@/lib/schemas";
 import { PageSkeleton } from "@/components/page-skeleton";
 
 // ── Types ──
@@ -84,11 +87,13 @@ export default function AlertThresholdsPage() {
   // Load thresholds on mount
   const fetchThresholds = useCallback(async () => {
     try {
-      const res = await fetch("/api/settings/alert-thresholds");
-      if (!res.ok) throw new Error("Failed to load thresholds");
-      const data = await res.json();
-      setThresholds(data.thresholds);
-      setDraft(data.thresholds);
+      const data = await validatedFetcher(
+        "/api/settings/alert-thresholds",
+        AlertThresholdsResponseSchema,
+      );
+      if (!data.thresholds) throw new Error("Thresholds data is null");
+      setThresholds(data.thresholds as AlertThresholds);
+      setDraft(data.thresholds as AlertThresholds);
     } catch (err) {
       console.error("Failed to load thresholds:", err);
       toast.error("Failed to load alert thresholds", {
@@ -115,20 +120,24 @@ export default function AlertThresholdsPage() {
     if (!draft) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/alert-thresholds", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ thresholds: draft }),
-      });
+      const data = await validatedFetcher(
+        "/api/settings/alert-thresholds",
+        z.object({
+          success: z.boolean(),
+          thresholds: AlertThresholdsSchema,
+          error: z.string().optional(),
+        }),
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ thresholds: draft }),
+        },
+      );
 
-      if (!res.ok) throw new Error("Failed to save");
-
-      const data = await res.json();
       if (!data.success) throw new Error(data.error || "Save failed");
 
-      // Use the sanitized values returned from server
-      setThresholds(data.thresholds);
-      setDraft(data.thresholds);
+      setThresholds(data.thresholds as AlertThresholds);
+      setDraft(data.thresholds as AlertThresholds);
 
       toast.success("Alert thresholds saved!", {
         duration: 3000,
@@ -150,17 +159,20 @@ export default function AlertThresholdsPage() {
     setShowResetConfirm(false);
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/alert-thresholds", {
-        method: "DELETE",
-      });
+      const data = await validatedFetcher(
+        "/api/settings/alert-thresholds",
+        z.object({
+          success: z.boolean(),
+          thresholds: AlertThresholdsSchema,
+          error: z.string().optional(),
+        }),
+        { method: "DELETE" },
+      );
 
-      if (!res.ok) throw new Error("Failed to reset");
-
-      const data = await res.json();
       if (!data.success) throw new Error(data.error || "Reset failed");
 
-      setThresholds(data.thresholds);
-      setDraft(data.thresholds);
+      setThresholds(data.thresholds as AlertThresholds);
+      setDraft(data.thresholds as AlertThresholds);
 
       toast.success("Reset to default thresholds", {
         duration: 3000,

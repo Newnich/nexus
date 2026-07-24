@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { nanoid } from "nanoid";
 import { format, formatDistanceToNow } from "date-fns";
+import { type ZodSchema } from "zod";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,13 +12,21 @@ export function generateId(): string {
   return nanoid(24);
 }
 
-export function formatDate(date: string | Date): string {
+function toValidDate(date: string | Date | null | undefined): Date | null {
+  if (date == null) return null;
   const d = typeof date === "string" ? new Date(date) : date;
+  return isNaN(d.getTime()) ? null : d;
+}
+
+export function formatDate(date: string | Date | null | undefined): string {
+  const d = toValidDate(date);
+  if (!d) return "Unknown";
   return format(d, "MMM d, yyyy");
 }
 
-export function formatDateRelative(date: string | Date): string {
-  const d = typeof date === "string" ? new Date(date) : date;
+export function formatDateRelative(date: string | Date | null | undefined): string {
+  const d = toValidDate(date);
+  if (!d) return "Recently";
   return formatDistanceToNow(d, { addSuffix: true });
 }
 
@@ -87,10 +96,45 @@ export async function fetcher<T>(url: string, options?: RequestInit): Promise<T>
     ...options,
   });
   if (!res.ok) {
-    const error = new Error("API request failed");
-    throw error;
+    throw new Error("API request failed");
   }
   return res.json();
+}
+
+/**
+ * Like `fetcher` but validates the JSON response against a Zod schema at runtime.
+ * Throws a descriptive error with Zod issues if validation fails.
+ *
+ * @example
+ * ```ts
+ * const item = await validatedFetcher("/api/items/123", ItemSchema);
+ * // item is now typed as z.infer<typeof ItemSchema>
+ * ```
+ */
+export async function validatedFetcher<T>(
+  url: string,
+  schema: ZodSchema<T>,
+  options?: RequestInit,
+): Promise<T> {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) {
+    throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+  }
+
+  const json: unknown = await res.json();
+
+  const result = schema.safeParse(json);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+      .join("; ");
+    throw new Error(`API response validation failed for ${url}: ${issues}`);
+  }
+
+  return result.data;
 }
 
 export const ITEM_TYPE_CONFIG = {

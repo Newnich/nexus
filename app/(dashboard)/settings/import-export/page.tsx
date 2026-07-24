@@ -3,7 +3,8 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { cn } from "@/lib/utils";
+import { cn, validatedFetcher } from "@/lib/utils";
+import { ExportDataResponseSchema, ImportDataResponseSchema } from "@/lib/schemas";
 
 export default function ImportExportPage() {
   const [exporting, setExporting] = useState(false);
@@ -20,9 +21,7 @@ export default function ImportExportPage() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const res = await fetch("/api/data/export");
-      if (!res.ok) throw new Error("Export failed");
-      const data = await res.json();
+      const data = await validatedFetcher("/api/data/export", ExportDataResponseSchema);
 
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -73,17 +72,11 @@ export default function ImportExportPage() {
       formData.append("file", file);
       formData.append("type", ext === "html" || ext === "htm" ? "html" : "json");
 
-      const res = await fetch("/api/data/import", {
+      const data = await validatedFetcher("/api/data/import", ImportDataResponseSchema, {
         method: "POST",
         body: formData,
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Import failed");
-      }
-
-      const data = await res.json();
       setImportResult(data);
       toast.success(data.message);
     } catch (err) {

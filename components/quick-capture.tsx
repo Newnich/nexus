@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ItemCreateResponseSchema } from "@/lib/schemas";
+import { useValidatedMutation } from "@/lib/hooks/use-validated-mutation";
 import toast from "react-hot-toast";
 
 export function QuickCapture() {
@@ -12,7 +14,24 @@ export function QuickCapture() {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [content, setContent] = useState("");
-  const [saving, setSaving] = useState(false);
+  const { mutate: saveItem, loading: saving } = useValidatedMutation<
+    { type: string; title: string; content?: string; metadata?: { sourceUrl: string } },
+    { id: string }
+  >({
+    url: "/api/items",
+    method: "POST",
+    schema: ItemCreateResponseSchema,
+    onSuccess: () => {
+      toast.success(`${mode === "link" ? "Link" : "Note"} saved!`);
+      setTitle("");
+      setUrl("");
+      setContent("");
+      setIsOpen(false);
+      router.refresh();
+    },
+    onError: () => toast.error("Failed to save item"),
+  });
+
   const fabRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -57,33 +76,12 @@ export function QuickCapture() {
       return;
     }
 
-    setSaving(true);
-    try {
-      const body =
-        mode === "link"
-          ? { type: "link", title: title.trim(), metadata: { sourceUrl: url.trim() } }
-          : { type: "note", title: title.trim(), content: content.trim() };
+    const body =
+      mode === "link"
+        ? { type: "link", title: title.trim(), metadata: { sourceUrl: url.trim() } }
+        : { type: "note", title: title.trim(), content: content.trim() };
 
-      const res = await fetch("/api/items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) throw new Error("Failed to save");
-
-      const data = await res.json();
-      toast.success(`${mode === "link" ? "Link" : "Note"} saved!`);
-      setTitle("");
-      setUrl("");
-      setContent("");
-      setIsOpen(false);
-      router.refresh();
-    } catch {
-      toast.error("Failed to save item");
-    } finally {
-      setSaving(false);
-    }
+    await saveItem(body);
   };
 
   return (

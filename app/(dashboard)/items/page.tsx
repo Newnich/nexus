@@ -3,7 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { formatDateRelative, extractDomain, ITEM_TYPE_CONFIG } from "@/lib/utils";
+import { formatDateRelative, extractDomain, ITEM_TYPE_CONFIG, validatedFetcher } from "@/lib/utils";
+import {
+  ItemsResponseSchema,
+  BatchUpdateResponseSchema,
+  CollectionsResponseSchema,
+} from "@/lib/schemas";
 import { ItemSkeleton } from "@/components/item-skeleton";
 
 interface ListItem {
@@ -104,19 +109,14 @@ export default function ItemsPage() {
         if (type !== "all") params.set("type", type);
         if (showArchived) params.set("includeArchived", "true");
 
-        const res = await fetch(`/api/items?${params}`);
-        if (!res.ok) {
-          if (res.status === 401) throw new Error("Please sign in to view your items");
-          throw new Error("Failed to load items");
-        }
-        const data = await res.json();
+        const data = await validatedFetcher(`/api/items?${params}`, ItemsResponseSchema);
 
         if (append) {
-          setItems((prev) => [...prev, ...(data.items || [])]);
+          setItems((prev) => [...prev, ...((data.items ?? []) as ListItem[])]);
         } else {
-          setItems(data.items || []);
+          setItems((data.items ?? []) as ListItem[]);
         }
-        setCount(data.count || 0);
+        setCount(data.count ?? 0);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
         if (!append) setItems([]);
@@ -201,9 +201,7 @@ export default function ItemsPage() {
     if (!input?.trim()) return;
     // Look up collection by name (fetch available collections)
     try {
-      const res = await fetch("/api/collections?limit=50");
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await validatedFetcher("/api/collections?limit=50", CollectionsResponseSchema);
       const collection = (data.collections || []).find(
         (c: { name: string }) => c.name.toLowerCase() === input.trim().toLowerCase(),
       );
@@ -501,13 +499,15 @@ export default function ItemsPage() {
                           itemIds: Array.from(selectedIds),
                           ...(tagEditorMode === "add" ? { addTags: tags } : { removeTags: tags }),
                         };
-                        const res = await fetch("/api/items/batch", {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(body),
-                        });
-                        if (!res.ok) throw new Error();
-                        const data = await res.json();
+                        const data = await validatedFetcher(
+                          "/api/items/batch",
+                          BatchUpdateResponseSchema,
+                          {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(body),
+                          },
+                        );
                         toast.success(
                           tagEditorMode === "add"
                             ? `Added tags to ${data.updatedCount} item${data.updatedCount !== 1 ? "s" : ""}`

@@ -2,25 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import toast from "react-hot-toast";
+import { validatedFetcher } from "@/lib/utils";
+import { QueueStatusSchema, AlertsResponseSchema } from "@/lib/schemas";
+import { z } from "zod";
 
-// ── Types ──
-
-interface QueueCounts {
-  waiting: number;
-  active: number;
-  completed: number;
-  failed: number;
-  delayed: number;
-}
-
-interface BackfillLastRun {
-  scanned: number;
-  enqueued: number;
-  skipped: number;
-  errors: number;
-  hasMore: boolean;
-  completedAt: string | null;
-}
+type StatusData = z.infer<typeof QueueStatusSchema>;
 
 interface Alert {
   id: string;
@@ -30,36 +16,6 @@ interface Alert {
   firstSeen: string;
   lastSeen: string;
   fresh: boolean;
-}
-
-interface StatusData {
-  redis: string;
-  queues: {
-    ai_processing: QueueCounts;
-    maintenance: QueueCounts;
-  } | null;
-  backfill: {
-    cursor: string | null;
-    schedule: string;
-    nextRun: string | null;
-    batchSize: number;
-    enabled: boolean;
-    hasMore: boolean;
-    lastRun: BackfillLastRun | null;
-  } | null;
-  database: {
-    unprocessedItems: number | null;
-  } | null;
-  config: {
-    redisHost: string;
-    redisPort: string;
-    ollamaUrl: string;
-    workerConcurrency: string;
-    backfillCron: string;
-    backfillBatch: string;
-    dbListener: boolean;
-  } | null;
-  error?: string;
 }
 
 // ── Helpers ──
@@ -168,9 +124,7 @@ export default function StatusPage() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/queue/status");
-      if (!res.ok) throw new Error("Failed to load status");
-      const d = await res.json();
+      const d = await validatedFetcher("/api/queue/status", QueueStatusSchema);
       setData(d);
       setError(null);
     } catch (err) {
@@ -187,10 +141,11 @@ export default function StatusPage() {
         .filter((a) => !dismissedAlerts.current.has(a.id))
         .map((a) => a.id)
         .join(",");
-      const res = await fetch("/api/queue/alerts?previous=" + encodeURIComponent(previousIds));
-      if (!res.ok) return;
-      const result = await res.json();
-      const newAlerts: Alert[] = result.alerts || [];
+      const result = await validatedFetcher(
+        "/api/queue/alerts?previous=" + encodeURIComponent(previousIds),
+        AlertsResponseSchema,
+      );
+      const newAlerts: Alert[] = result.alerts as Alert[];
 
       // Show toast for fresh critical/warning alerts
       for (const alert of newAlerts) {

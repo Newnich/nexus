@@ -2,30 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { formatDateRelative } from "@/lib/utils";
+import { z } from "zod";
+import { formatDateRelative, validatedFetcher } from "@/lib/utils";
+import { DashboardStatsSchema } from "@/lib/schemas";
 
-interface DashboardStats {
-  totalItems: number;
-  totalCollections: number;
-  totalConnections: number;
-  itemsByType: Array<{ type: string; count: number }>;
-  recentItems: Array<{
-    id: string;
-    title: string;
-    type: string;
-    createdAt: string;
-    category: string | null;
-  }>;
-  topCategories: Array<{ category: string; count: number }>;
-  recentActivity: Array<{
-    id: string;
-    action: string;
-    entityType: string;
-    entityId: string | null;
-    metadata: Record<string, unknown>;
-    createdAt: string;
-  }>;
-}
+type DashboardStats = z.infer<typeof DashboardStatsSchema>;
 
 const TYPE_ICONS: Record<string, string> = {
   link: "🔗",
@@ -85,13 +66,8 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboard() {
       try {
-        const res = await fetch("/api/dashboard");
-        if (!res.ok) {
-          if (res.status === 401) throw new Error("Please sign in to view your dashboard");
-          throw new Error("Failed to load dashboard");
-        }
-        const data = await res.json();
-        setStats(data);
+        const data = await validatedFetcher("/api/dashboard", DashboardStatsSchema);
+        setStats(data as DashboardStats);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {

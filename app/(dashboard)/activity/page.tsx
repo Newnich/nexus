@@ -2,17 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { formatDateRelative, cn } from "@/lib/utils";
+import { formatDateRelative, cn, validatedFetcher } from "@/lib/utils";
 import { ActivitySkeleton } from "@/components/activity-skeleton";
+import { ActivityResponseSchema } from "@/lib/schemas";
+import type { z } from "zod";
 
-interface ActivityEntry {
-  id: string;
-  action: string;
-  entity_type: string;
-  entity_id: string | null;
-  metadata: Record<string, unknown>;
-  created_at: string;
-}
+type ActivityEntry = z.infer<typeof ActivityResponseSchema>["entries"][number];
 
 const ACTION_CONFIG: Record<string, { icon: string; label: string; gradient: string }> = {
   create: { icon: "➕", label: "Created", gradient: "from-emerald-500/20 to-green-500/20" },
@@ -67,16 +62,17 @@ export default function ActivityPage() {
         if (action) params.set("action", action);
         if (entity) params.set("entityType", entity);
 
-        const res = await fetch(`/api/activity?${params}`);
-        if (!res.ok) throw new Error("Failed to load activity");
-        const data = await res.json();
+        const data = await validatedFetcher(`/api/activity?${params}`, ActivityResponseSchema);
+
+        const activityEntries = data.entries ?? [];
+        const activityCount = data.count ?? 0;
 
         if (append) {
-          setEntries((prev) => [...prev, ...(data.entries || [])]);
+          setEntries((prev) => [...prev, ...activityEntries]);
         } else {
-          setEntries(data.entries || []);
+          setEntries(activityEntries);
         }
-        setCount(data.count || 0);
+        setCount(activityCount);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
         if (!append) setEntries([]);
@@ -186,19 +182,39 @@ export default function ActivityPage() {
 
       {/* ── Empty ── */}
       {!loading && !error && entries.length === 0 && (
-        <div className="text-center py-20">
+        <div className="text-center py-16 glass-card rounded-2xl">
           <div className="text-5xl mb-6">⚡</div>
           <h2 className="text-xl font-semibold mb-2">No activity yet</h2>
-          <p className="text-muted-foreground mb-8">
-            Activity is logged when you create, delete, or search items.
+          <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+            Activity is logged when you create, delete, or search items. Here&apos;s how to get
+            started:
           </p>
-          <Link
-            href="/items/new"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-nexus-500 hover:bg-nexus-600 text-white rounded-xl transition-all"
-          >
-            <span>+</span>
-            Save your first item
-          </Link>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto mb-8">
+            <Link
+              href="/items/new"
+              className="p-4 glass-card hover:bg-card/70 rounded-xl text-sm text-left transition-all hover-lift"
+            >
+              <div className="text-2xl mb-2">➕</div>
+              <p className="font-medium mb-1">Save an Item</p>
+              <p className="text-xs text-muted-foreground">Links, notes, files, and more</p>
+            </Link>
+            <Link
+              href="/search"
+              className="p-4 glass-card hover:bg-card/70 rounded-xl text-sm text-left transition-all hover-lift"
+            >
+              <div className="text-2xl mb-2">⌕</div>
+              <p className="font-medium mb-1">Search</p>
+              <p className="text-xs text-muted-foreground">Find anything in your knowledge</p>
+            </Link>
+            <Link
+              href="/dashboard"
+              className="p-4 glass-card hover:bg-card/70 rounded-xl text-sm text-left transition-all hover-lift"
+            >
+              <div className="text-2xl mb-2">◈</div>
+              <p className="font-medium mb-1">Dashboard</p>
+              <p className="text-xs text-muted-foreground">See your stats at a glance</p>
+            </Link>
+          </div>
         </div>
       )}
 

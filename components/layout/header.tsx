@@ -2,15 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { cn, formatDateRelative } from "@/lib/utils";
+import { cn, formatDateRelative, validatedFetcher } from "@/lib/utils";
+import { AlertsResponseSchema } from "@/lib/schemas";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface AlertEntry {
   id: string;
   severity: "info" | "warning" | "critical";
+  title: string;
   message: string;
   details?: string;
-  timestamp: string;
+  firstSeen: string;
+  lastSeen: string;
+  fresh?: boolean;
   dismissed?: boolean;
 }
 
@@ -66,12 +70,11 @@ export function Header() {
   useEffect(() => {
     async function fetchAlerts() {
       try {
-        const res = await fetch("/api/queue/alerts");
-        if (res.ok) {
-          const data = await res.json();
-          setAlerts(data.alerts || []);
-        }
-      } catch {}
+        const data = await validatedFetcher("/api/queue/alerts", AlertsResponseSchema);
+        setAlerts(data.alerts as AlertEntry[]);
+      } catch {
+        // Silently fail — alerts are best-effort
+      }
     }
     fetchAlerts();
     const interval = setInterval(fetchAlerts, 30000);
@@ -286,7 +289,7 @@ export function Header() {
                               </p>
                             )}
                             <p className="text-[9px] text-muted-foreground/60 mt-1">
-                              {formatDateRelative(alert.timestamp)}
+                              {formatDateRelative(alert.firstSeen)}
                             </p>
                           </div>
                           <button

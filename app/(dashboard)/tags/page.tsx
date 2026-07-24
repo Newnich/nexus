@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { cn } from "@/lib/utils";
+import { cn, validatedFetcher } from "@/lib/utils";
+import { TagsResponseSchema } from "@/lib/schemas";
 
 interface TagEntry {
   name: string;
@@ -27,14 +28,9 @@ export default function TagsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/tags");
-      if (!res.ok) {
-        if (res.status === 401) throw new Error("Please sign in");
-        throw new Error("Failed to load tags");
-      }
-      const data = await res.json();
-      setTags(data.tags || []);
-      setTotal(data.total || 0);
+      const data = await validatedFetcher("/api/tags", TagsResponseSchema);
+      setTags(data.tags ?? []);
+      setTotal(data.total ?? 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
-import { cn, formatDateRelative } from "@/lib/utils";
+import { cn, formatDateRelative, validatedFetcher } from "@/lib/utils";
+import {
+  ApiKeysResponseSchema,
+  ApiKeyCreateResponseSchema,
+  ApiKeyDeleteResponseSchema,
+} from "@/lib/schemas";
 import { PageSkeleton } from "@/components/page-skeleton";
 
 interface ApiKey {
@@ -27,13 +32,8 @@ export default function ApiKeysPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/settings/api-keys");
-      if (!res.ok) {
-        if (res.status === 401) throw new Error("Please sign in");
-        throw new Error("Failed to load API keys");
-      }
-      const data = await res.json();
-      setKeys(data.keys || []);
+      const data = await validatedFetcher("/api/settings/api-keys", ApiKeysResponseSchema);
+      setKeys(data.keys as ApiKey[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -49,16 +49,11 @@ export default function ApiKeysPage() {
     if (!newKeyName.trim()) return;
     setCreating(true);
     try {
-      const res = await fetch("/api/settings/api-keys", {
+      const data = await validatedFetcher("/api/settings/api-keys", ApiKeyCreateResponseSchema, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newKeyName.trim() }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create key");
-      }
-      const data = await res.json();
       setNewKeyValue(data.key);
       setNewKeyName("");
       toast.success("API key created! Copy it now — you won't see it again.");
@@ -75,8 +70,9 @@ export default function ApiKeysPage() {
       return;
     setRevoking(keyId);
     try {
-      const res = await fetch(`/api/settings/api-keys?keyId=${keyId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to revoke key");
+      await validatedFetcher(`/api/settings/api-keys?keyId=${keyId}`, ApiKeyDeleteResponseSchema, {
+        method: "DELETE",
+      });
       toast.success("API key revoked");
       setKeys((prev) => prev.filter((k) => k.id !== keyId));
     } catch {

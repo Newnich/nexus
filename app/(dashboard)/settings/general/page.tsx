@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { validatedFetcher } from "@/lib/utils";
+import { NotificationPreferencesResponseSchema } from "@/lib/schemas";
 import { PageSkeleton } from "@/components/page-skeleton";
 
 // ── Types ──
@@ -115,10 +117,11 @@ export default function GeneralSettingsPage() {
   // Load preferences on mount
   const fetchPreferences = useCallback(async () => {
     try {
-      const res = await fetch("/api/settings/preferences");
-      if (!res.ok) throw new Error("Failed to load preferences");
-      const data = await res.json();
-      setPreferences(data.preferences || {});
+      const data = await validatedFetcher(
+        "/api/settings/preferences",
+        NotificationPreferencesResponseSchema,
+      );
+      setPreferences(data.preferences || ({} as NotificationPreferences));
     } catch (err) {
       console.error("Failed to load preferences:", err);
       toast.error("Failed to load notification preferences", {
