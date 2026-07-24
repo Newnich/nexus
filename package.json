@@ -51,7 +51,7 @@
     "tailwind-merge": "^2.5.0",
     "tailwindcss-animate": "^1.0.7",
     "tiktoken": "^1.0.0",
-    "zod": "^3.23.0"
+    "zod": "^4.4.3"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
