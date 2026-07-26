@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAIQueue } from "@/lib/queue/ai-queue";
-import { backfillQueue } from "@/lib/queue/backfill";
+import { getBackfillQueue } from "@/lib/queue/backfill";
 import { getRedisConnection } from "@/lib/queue/config";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -42,8 +42,8 @@ export async function GET() {
     // Get queue job counts and backfill schedulers in parallel
     const [aiCounts, maintenanceCounts, backfillSchedulers, cursor] = await Promise.all([
       getAIQueue().getJobCounts(),
-      backfillQueue.getJobCounts(),
-      backfillQueue.getJobSchedulers(),
+      getBackfillQueue().getJobCounts(),
+      getBackfillQueue().getJobSchedulers(),
       redis.get(CURSOR_KEY).catch(() => null),
     ]);
 
@@ -73,7 +73,7 @@ export async function GET() {
     } | null = null;
 
     try {
-      const completedJobs = await backfillQueue.getCompleted(0, 1);
+      const completedJobs = await getBackfillQueue().getCompleted(0, 1);
       if (completedJobs.length > 0) {
         const job = completedJobs[0];
         const data = job.returnvalue as {

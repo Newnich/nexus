@@ -22,7 +22,7 @@
 import { Queue, Worker } from "bullmq";
 import type { JobsOptions, Job } from "bullmq";
 import { getRedisConnection, QUEUES } from "./config";
-import { enqueueAIProcessing, AI_PRIORITY } from "./ai-queue";
+import { enqueueAIProcessing, AI_PRIORITY, JOB_RETAIN_COMPLETE, JOB_RETAIN_FAIL } from "./ai-queue";
 import { createServiceClient } from "@/lib/supabase/server";
 import { incrementBackfillFailures, resetBackfillFailures } from "./alerts";
 
@@ -82,17 +82,27 @@ const BACKFILL_BATCH = parseInt(process.env.BACKFILL_BATCH || "200", 10);
 const BACKFILL_ENABLED = process.env.BACKFILL_ENABLED !== "false";
 const BACKFILL_JOB_ID = "backfill:scan";
 
-// ── Backfill queue ──
+// ── Backfill queue (lazy singleton) ──
+// IMPORTANT: Created lazily to prevent build-time Redis connection attempts.
+// The module-level `new Queue()` was causing ECONNREFUSED errors during
+// `next build` when Redis wasn't available (e.g. Vercel Preview).
 
-export const backfillQueue = new Queue<BackfillJobData, BackfillJobResult>(QUEUES.MAINTENANCE, {
-  connection: getRedisConnection(),
-  defaultJobOptions: {
-    attempts: 2,
-    backoff: { type: "exponential", delay: 10_000 },
-    removeOnComplete: { age: 7200 },
-    removeOnFail: { age: 86400 },
-  },
-});
+let _backfillQueue: Queue<BackfillJobData, BackfillJobResult> | null = null;
+
+export function getBackfillQueue(): Queue<BackfillJobData, BackfillJobResult> {
+  if (!_backfillQueue) {
+    _backfillQueue = new Queue<BackfillJobData, BackfillJobResult>(QUEUES.MAINTENANCE, {
+      connection: getRedisConnection(),
+      defaultJobOptions: {
+        attempts: 2,
+        backoff: { type: "exponential", delay: 10_000 },
+        removeOnComplete: { age: JOB_RETAIN_COMPLETE },
+        removeOnFail: { age: JOB_RETAIN_FAIL },
+      },
+    });
+  }
+  return _backfillQueue;
+}
 
 // ── Backfill scan logic ──
 
@@ -219,7 +229,7 @@ export async function registerBackfillSchedule(): Promise<void> {
   }
 
   try {
-    await backfillQueue.upsertJobScheduler(
+    await getBackfillQueue().upsertJobScheduler(
       BACKFILL_JOB_ID,
       { pattern: BACKFILL_CRON, tz: "UTC" },
       {
@@ -227,8 +237,8 @@ export async function registerBackfillSchedule(): Promise<void> {
         data: { startedAt: new Date().toISOString(), batchSize: BACKFILL_BATCH },
         opts: {
           jobId: BACKFILL_JOB_ID,
-          removeOnComplete: { age: 7200 },
-          removeOnFail: { age: 86400 },
+          removeOnComplete: { age: JOB_RETAIN_COMPLETE },
+          removeOnFail: { age: JOB_RETAIN_FAIL },
         } as JobsOptions,
       },
     );
@@ -242,7 +252,7 @@ export async function registerBackfillSchedule(): Promise<void> {
 
 export async function removeBackfillSchedule(): Promise<void> {
   try {
-    await backfillQueue.removeJobScheduler(BACKFILL_JOB_ID);
+    await getBackfillQueue().removeJobScheduler(BACKFILL_JOB_ID);
     console.log("[Backfill] Schedule removed.");
   } catch (err) {
     console.error("[Backfill] Failed to remove schedule:", err);

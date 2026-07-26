@@ -1,0 +1,110 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# NEXUS — Vercel Preview Deployments
+# ═══════════════════════════════════════════════════════════════════════════════
+# Deploys each PR to a unique Vercel preview URL for live testing.
+# Requires the following secrets to be set in the repository:
+#   VERCEL_ORG_ID             — Vercel team/org ID (find in ~/.vercel/project.json)
+#   VERCEL_PROJECT_ID         — Vercel project ID (find in ~/.vercel/project.json)
+#   VERCEL_TOKEN              — Vercel personal access token
+#   VERCEL_SCOPE              — Vercel team slug (for team- scoped tokens)
+#
+# The preview URL is automatically posted as a PR comment.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: Vercel Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Cancel in-progress preview deployments for the same PR
+concurrency:
+  group: vercel-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-preview:
+    name: Deploy to Vercel Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment information
+        run: |
+          vercel pull \
+            --yes \
+            --environment=preview \
+            --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project artifacts
+        run: |
+          vercel build \
+            --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel Preview
+        id: deploy
+        run: |
+          url="$(vercel deploy \
+            --prebuilt \
+            --token=${{ secrets.VERCEL_TOKEN }})"
+          echo "preview_url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed to: $url"
+
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const previewUrl = '${{ steps.deploy.outputs.preview_url }}';
+            const prNumber = context.issue.number;
+
+            // Delete previous preview comments (keep only the latest)
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            for (const comment of comments.data) {
+              if (
+                comment.user.type === 'Bot' &&
+                comment.body.includes('🌐 Preview deployed')
+              ) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+            // Post new preview comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `## 🌐 Preview deployed
+
+            Your branch has been deployed to Vercel for live testing.
+
+            | Detail | Link |
+            |--------|------|
+            | **Preview URL** | [${previewUrl}](${previewUrl}) |
+            | **Commit** | ${context.sha.slice(0, 7)} |
+            | **PR #${prNumber}** | ${context.payload.pull_request.html_url} |
+
+            > This comment is automatically updated on each push. Only the latest preview comment is kept.`,
+            });

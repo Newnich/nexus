@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useReducer, useCallback } from "react";
 
 export interface Snapshot {
   title: string;
@@ -11,47 +11,72 @@ export interface Snapshot {
 
 const MAX_HISTORY = 50;
 
-export function useUndoRedo(initial: Snapshot) {
-  const [past, setPast] = useState<Snapshot[]>([]);
-  const [present, setPresent] = useState<Snapshot>(initial);
-  const [future, setFuture] = useState<Snapshot[]>([]);
-  const snapshotRef = useRef(initial);
+// ── Reducer for atomic state transitions ──
 
-  const canUndo = past.length > 0;
-  const canRedo = future.length > 0;
-  const snapshotCount = past.length;
+interface UndoRedoState {
+  past: Snapshot[];
+  present: Snapshot;
+  future: Snapshot[];
+}
+
+type UndoRedoAction =
+  { type: "TAKE_SNAPSHOT"; snapshot: Snapshot } | { type: "UNDO" } | { type: "REDO" };
+
+function undoRedoReducer(state: UndoRedoState, action: UndoRedoAction): UndoRedoState {
+  switch (action.type) {
+    case "TAKE_SNAPSHOT": {
+      const past = [...state.past, state.present];
+      if (past.length > MAX_HISTORY) past.shift();
+      return { past, present: action.snapshot, future: [] };
+    }
+    case "UNDO": {
+      if (state.past.length === 0) return state;
+      const previous = state.past[state.past.length - 1];
+      return {
+        past: state.past.slice(0, -1),
+        present: previous,
+        future: [state.present, ...state.future],
+      };
+    }
+    case "REDO": {
+      if (state.future.length === 0) return state;
+      const next = state.future[0];
+      return {
+        past: [...state.past, state.present],
+        present: next,
+        future: state.future.slice(1),
+      };
+    }
+  }
+}
+
+// ── Hook ──
+
+export function useUndoRedo(initial: Snapshot) {
+  const [state, dispatch] = useReducer(undoRedoReducer, {
+    past: [],
+    present: initial,
+    future: [],
+  });
+
+  const canUndo = state.past.length > 0;
+  const canRedo = state.future.length > 0;
+  const snapshotCount = state.past.length;
 
   const takeSnapshot = useCallback((snap: Snapshot) => {
-    setPast((prev) => {
-      const updated = [...prev, snapshotRef.current];
-      if (updated.length > MAX_HISTORY) updated.shift();
-      return updated;
-    });
-    snapshotRef.current = snap;
-    setPresent(snap);
-    setFuture([]);
+    dispatch({ type: "TAKE_SNAPSHOT", snapshot: snap });
   }, []);
 
   const undo = useCallback(() => {
-    if (past.length === 0) return;
-    const previous = past[past.length - 1];
-    setPast((prev) => prev.slice(0, -1));
-    setFuture((prev) => [present, ...prev]);
-    snapshotRef.current = previous;
-    setPresent(previous);
-  }, [past, present]);
+    dispatch({ type: "UNDO" });
+  }, []);
 
   const redo = useCallback(() => {
-    if (future.length === 0) return;
-    const next = future[0];
-    setFuture((prev) => prev.slice(1));
-    setPast((prev) => [...prev, present]);
-    snapshotRef.current = next;
-    setPresent(next);
-  }, [future, present]);
+    dispatch({ type: "REDO" });
+  }, []);
 
   return {
-    present,
+    present: state.present,
     takeSnapshot,
     undo,
     redo,

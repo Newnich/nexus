@@ -18,8 +18,17 @@
  * Optional environment variables:
  *   WORKER_CONCURRENCY — how many items to process simultaneously (default 2)
  *   WORKER_POLL_INTERVAL — polling interval in ms (default: uses BullMQ default)
+ *   WORKER_LIMITER_MAX — max jobs per limiter window (default 4)
+ *   WORKER_LIMITER_DURATION — limiter window in ms (default 30000)
+ *   WORKER_STALLED_INTERVAL — how often to check for stalled jobs in ms (default 60000)
+ *   WORKER_LOCK_DURATION — max job processing time in ms before stalled (default 120000)
+ *   WORKER_HEALTH_PORT — health check HTTP server port (default 9090)
+ *   JOB_RETAIN_COMPLETE_HOURS — keep completed jobs for N hours (default 1)
+ *   JOB_RETAIN_FAIL_HOURS — keep failed jobs for N hours (default 24)
+ *   AI_CONNECTION_LIMIT — max existing items to fetch for connection discovery (default 20)
  */
 
+import http from "http";
 import {
   createAIWorker,
   type AIProcessJobData,
@@ -36,6 +45,12 @@ import {
   removeBackfillSchedule,
 } from "@/lib/queue/backfill";
 import type { Job } from "bullmq";
+
+// ── Config (module-level so both the handler and main() can access) ──
+
+/** Max existing items to fetch for connection discovery (default 20). */
+const AI_CONNECTION_LIMIT = parseInt(process.env.AI_CONNECTION_LIMIT || "20", 10);
+const WORKER_HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || "9090", 10);
 
 // ── Job handler ──
 
@@ -77,7 +92,7 @@ async function handleAIProcess(job: Job<AIProcessJobData>): Promise<AIProcessJob
       .eq("user_id", userId)
       .neq("id", itemId)
       .not("ai_data", "is", null)
-      .limit(20);
+      .limit(AI_CONNECTION_LIMIT);
 
     const existingSummaries = (existingItems || []).map((i) => ({
       id: i.id,
@@ -244,6 +259,51 @@ async function withRetry<T>(
   return null;
 }
 
+// ── Health check HTTP server ──
+
+let healthServer: http.Server | null = null;
+let isHealthy = false;
+
+/**
+ * Start a minimal HTTP health check server for Docker HEALTHCHECK.
+ * Responds 200 when the worker is connected and processing, 503 otherwise.
+ */
+function startHealthServer(): void {
+  healthServer = http.createServer(async (req, res) => {
+    if (req.url === "/health" || req.url === "/") {
+      if (isHealthy) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "ok", service: "nexus-ai-worker" }));
+      } else {
+        res.writeHead(503, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "starting", service: "nexus-ai-worker" }));
+      }
+    } else {
+      res.writeHead(404);
+      res.end();
+    }
+  });
+
+  healthServer.listen(WORKER_HEALTH_PORT, "0.0.0.0", () => {
+    console.log(`   Health check:  http://0.0.0.0:${WORKER_HEALTH_PORT}/health`);
+  });
+
+  healthServer.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      console.warn(`⚠️ [Health] Port ${WORKER_HEALTH_PORT} in use — health check unavailable`);
+    } else {
+      console.error("⚠️ [Health] Server error:", err.message);
+    }
+  });
+}
+
+function stopHealthServer(): void {
+  if (healthServer) {
+    healthServer.close();
+    healthServer = null;
+  }
+}
+
 // ── Start the worker ──
 
 async function main() {
@@ -254,12 +314,24 @@ async function main() {
   console.log(`🔧 Worker starting...`);
 
   const concurrency = parseInt(process.env.WORKER_CONCURRENCY || "2", 10);
+  const limiterMax = parseInt(process.env.WORKER_LIMITER_MAX || "4", 10);
+  const limiterDuration = parseInt(process.env.WORKER_LIMITER_DURATION || "30000", 10);
+  const stalledInterval = parseInt(process.env.WORKER_STALLED_INTERVAL || "60000", 10);
+  const lockDuration = parseInt(process.env.WORKER_LOCK_DURATION || "120000", 10);
   console.log(`   Concurrency: ${concurrency}`);
+  console.log(`   Connection limit: ${AI_CONNECTION_LIMIT}`);
+  console.log(`   Worker limiter:   ${limiterMax} jobs / ${limiterDuration}ms`);
+  console.log(`   Stalled check:    every ${stalledInterval}ms`);
+  console.log(`   Lock duration:    ${lockDuration}ms`);
   console.log(
     `   Redis:       ${process.env.REDIS_HOST || "localhost"}:${process.env.REDIS_PORT || "6379"}`,
   );
   console.log(`   Ollama:      ${process.env.OLLAMA_URL || "http://localhost:11434"}`);
+  console.log(`   Health:      http://0.0.0.0:${WORKER_HEALTH_PORT}/health`);
   console.log();
+
+  // Start the health check HTTP server (for Docker HEALTHCHECK)
+  startHealthServer();
 
   // Start the Postgres LISTEN/NOTIFY listener to auto-enqueue AI jobs
   // when items are created via the database trigger.
@@ -279,7 +351,14 @@ async function main() {
   });
 
   // ── Create workers ──
-  const aiWorker = createAIWorker(handleAIProcess);
+  const aiWorker = createAIWorker(
+    handleAIProcess,
+    concurrency,
+    limiterMax,
+    limiterDuration,
+    stalledInterval,
+    lockDuration,
+  );
   const maintenanceWorker = createMaintenanceWorker();
 
   // Event handlers for observability
@@ -299,9 +378,14 @@ async function main() {
     console.warn(`⚠️ [AI Worker] Stalled job detected: ${jobId}`);
   });
 
+  // Worker is now fully initialized — mark as healthy for Docker HEALTHCHECK
+  isHealthy = true;
+
   // Graceful shutdown
   const shutdown = async () => {
     console.log("\n🛑 Shutting down workers...");
+    isHealthy = false;
+    stopHealthServer();
     await aiWorker.close();
     await maintenanceWorker.close();
     await removeBackfillSchedule();

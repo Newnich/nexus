@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backfillQueue } from "@/lib/queue/backfill";
+import { getBackfillQueue } from "@/lib/queue/backfill";
 import { getRedisConnection } from "@/lib/queue/config";
 import { createServiceClient } from "@/lib/supabase/server";
 import { evaluateAlerts, getConsecutiveFailures } from "@/lib/queue/alerts";
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     } | null = null;
 
     try {
-      const completedJobs = await backfillQueue.getCompleted(0, 1);
+      const completedJobs = await getBackfillQueue().getCompleted(0, 1);
       if (completedJobs.length > 0) {
         const job = completedJobs[0];
         const data = job.returnvalue as {

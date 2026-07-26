@@ -6,15 +6,26 @@
  * - Text generation: llama3.2 (3B params, runs on CPU)
  *
  * Requires: Ollama running on http://localhost:11434
+ *
+ * Optional environment variables:
+ *   OLLAMA_MODEL           — Text generation model (default: llama3.2)
+ *   OLLAMA_EMBEDDING_MODEL — Embedding model (default: nomic-embed-text)
+ *   OLLAMA_TIMEOUT         — Fetch timeout in ms (default: 30000)
+ *   OLLAMA_NUM_PREDICT     — Max tokens per response (default: 1024)
+ *   OLLAMA_TEMPERATURE     — Model temperature 0.0-1.0 (default: 0.3)
  */
 
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
-const FETCH_TIMEOUT = 30000; // 30 seconds
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2";
+const OLLAMA_EMBEDDING_MODEL = process.env.OLLAMA_EMBEDDING_MODEL || "nomic-embed-text";
+const OLLAMA_TIMEOUT = parseInt(process.env.OLLAMA_TIMEOUT || "30000", 10);
+const OLLAMA_NUM_PREDICT = parseInt(process.env.OLLAMA_NUM_PREDICT || "1024", 10);
+const OLLAMA_TEMPERATURE = parseFloat(process.env.OLLAMA_TEMPERATURE || "0.3");
 
 async function fetchWithTimeout(
   url: string,
   options: RequestInit,
-  timeoutMs = FETCH_TIMEOUT,
+  timeoutMs: number = OLLAMA_TIMEOUT,
 ): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -35,10 +46,10 @@ async function generate(prompt: string, system?: string): Promise<string> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "llama3.2",
+      model: OLLAMA_MODEL,
       messages,
       stream: false,
-      options: { num_predict: 1024, temperature: 0.3 },
+      options: { num_predict: OLLAMA_NUM_PREDICT, temperature: OLLAMA_TEMPERATURE },
     }),
   });
 
@@ -124,7 +135,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "nomic-embed-text",
+      model: OLLAMA_EMBEDDING_MODEL,
       prompt: text.slice(0, 8000),
     }),
   });
@@ -166,7 +177,7 @@ export async function findConnections(
   newText: string,
   existingSummaries: Array<{ id: string; summary: string; title: string }>,
 ): Promise<Array<{ itemId: string; reason: string; strength: number }>> {
-  const maxItems = 20;
+  const maxItems = parseInt(process.env.AI_CONNECTION_LIMIT || "20", 10);
   const itemsToCheck = existingSummaries.slice(0, maxItems);
 
   const context = itemsToCheck

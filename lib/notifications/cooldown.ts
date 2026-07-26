@@ -30,11 +30,13 @@ export interface CooldownConfig {
 }
 
 // ── Defaults ──
+// Configurable via env vars — set before the app starts, these are
+// the fallback values used when no Redis config is saved.
 
 export const DEFAULT_COOLDOWNS: CooldownConfig = {
-  slack: 30,
-  discord: 30,
-  email: 30,
+  slack: clampMinutes(parseInt(process.env.NOTIFY_COOLDOWN_SLACK || "30", 10), 30),
+  discord: clampMinutes(parseInt(process.env.NOTIFY_COOLDOWN_DISCORD || "30", 10), 30),
+  email: clampMinutes(parseInt(process.env.NOTIFY_COOLDOWN_EMAIL || "30", 10), 30),
 };
 
 // ── Redis key ──

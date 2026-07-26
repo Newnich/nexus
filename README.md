@@ -109,7 +109,7 @@ Visit **http://localhost:3000** and sign in with `demo@nexus.app / demo123456`.
 2. Go to **Project Settings → API**
 3. Copy the **Project URL** → set as `NEXT_PUBLIC_SUPABASE_URL`
 4. Copy the **anon public key** → set as `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-5. Copy the **service_role key** → set as `SUPABASE_SERVICE_KEY`
+5. Copy the **service_role key** → set as `SUPABASE_SERVICE_ROLE_KEY`
 6. Run the SQL migrations in `scripts/schema.sql` via Supabase SQL Editor
 
 ---
@@ -152,7 +152,7 @@ Visit **http://localhost:3000** and sign in with `demo@nexus.app / demo123456`.
 | ------------------------------- | -------- | ------------------------ | ----------------------------------------- |
 | `NEXT_PUBLIC_SUPABASE_URL`      | ✅       | —                        | Supabase project URL                      |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅       | —                        | Supabase anon/public key                  |
-| `SUPABASE_SERVICE_KEY`          | ⬜       | —                        | Service role key (for admin ops + worker) |
+| `SUPABASE_SERVICE_ROLE_KEY`     | ⬜       | —                        | Service role key (for admin ops + worker) |
 | `NEXT_PUBLIC_SITE_URL`          | ⬜       | `http://localhost:3000`  | Site URL for auth redirects               |
 | `REDIS_HOST`                    | ⬜       | `localhost`              | Redis server hostname                     |
 | `REDIS_PORT`                    | ⬜       | `6379`                   | Redis server port                         |
@@ -185,7 +185,7 @@ vercel
 # Set environment variables in Vercel dashboard:
 # - NEXT_PUBLIC_SUPABASE_URL
 # - NEXT_PUBLIC_SUPABASE_ANON_KEY
-# - SUPABASE_SERVICE_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
 # - REDIS_HOST, REDIS_PORT (use Upstash or Redis Cloud)
 ```
 
