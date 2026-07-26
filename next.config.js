@@ -8,15 +8,9 @@ const nextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
-  // Server Actions are stable and enabled by default in Next.js 16
-  serverActions: {
-    bodySizeLimit: "10mb",
-  },
-
   // React Compiler: automatic memoization (React 19 feature)
-  experimental: {
-    reactCompiler: true,
-  },
+  // Top-level key in Next.js 16 (moved from experimental)
+  reactCompiler: true,
 
   // Turbopack: explicit config (default bundler in Next.js 16)
   turbopack: {},
