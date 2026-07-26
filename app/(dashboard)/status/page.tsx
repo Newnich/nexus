@@ -117,6 +117,7 @@ export default function StatusPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const dismissedAlerts = useRef<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
   // Fetch status via useApiData hook
   const {
@@ -177,6 +178,11 @@ export default function StatusPage() {
     return () => clearInterval(interval);
   }, [autoRefresh, refetchStatus, fetchAlerts]);
 
+  // Sync dismissed IDs from ref to state (ref for callbacks, state for render)
+  useEffect(() => {
+    setDismissedIds(new Set(dismissedAlerts.current));
+  }, [alerts]);
+
   // ── Loading State (initial load only — interval refetches don't show skeleton) ──
   if (!initialLoadDone && loading) {
     return (
@@ -230,7 +236,7 @@ export default function StatusPage() {
     const order: Record<string, number> = { critical: 0, warning: 1, info: 2 };
     return (order[a.severity] || 99) - (order[b.severity] || 99);
   });
-  const activeAlerts = sortedAlerts.filter((a) => !dismissedAlerts.current.has(a.id));
+  const activeAlerts = sortedAlerts.filter((a) => !dismissedIds.has(a.id));
 
   return (
     <div className="space-y-8">
@@ -293,6 +299,7 @@ export default function StatusPage() {
                 <button
                   onClick={() => {
                     dismissedAlerts.current.add(alert.id);
+                    setDismissedIds(new Set(dismissedAlerts.current));
                     setAlerts([...alerts]);
                   }}
                   className="p-1 rounded hover:bg-muted/50 transition-colors text-muted-foreground shrink-0"

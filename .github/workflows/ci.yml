@@ -53,7 +53,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Lint
-        run: npx next lint
+        run: npx eslint .
 
       - name: Create env file
         run: |

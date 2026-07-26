@@ -42,7 +42,10 @@ export function useApiData<T>(
   // Use ref for fetchOptions to prevent infinite re-fetches when users pass
   // inline objects (which create new references on every render)
   const fetchOptionsRef = useRef(fetchOptions);
-  fetchOptionsRef.current = fetchOptions;
+  // Sync ref after render (React 19 rules: no ref writes during render)
+  useEffect(() => {
+    fetchOptionsRef.current = fetchOptions;
+  }, [fetchOptions]);
 
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +54,10 @@ export function useApiData<T>(
   const abortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
   const urlRef = useRef(url);
-  urlRef.current = url;
+  // Sync urlRef after render (React 19 rules: no ref writes during render)
+  useEffect(() => {
+    urlRef.current = url;
+  }, [url]);
 
   const fetchData = useCallback(async () => {
     const currentUrl = urlRef.current;

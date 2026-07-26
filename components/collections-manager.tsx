@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import { useApiData } from "@/lib/hooks/use-api-data";
 import { CollectionsResponseSchema, ItemCollectionsResponseSchema } from "@/lib/schemas";
@@ -162,12 +163,12 @@ export function CollectionsManager({ itemId }: CollectionManagerProps) {
             )}
           </div>
           <div className="p-2 border-t border-border/50 text-center">
-            <a
+            <Link
               href="/collections"
               className="text-xs text-nexus-400 hover:text-nexus-300 transition-colors"
             >
               Manage collections →
-            </a>
+            </Link>
           </div>
         </div>
       )}

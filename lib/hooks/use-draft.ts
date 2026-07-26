@@ -22,7 +22,7 @@ function getDraftKey(): string {
 export function useDraft() {
   const key = getDraftKey();
   const [hasDraft, setHasDraft] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Load draft on mount
   useEffect(() => {
