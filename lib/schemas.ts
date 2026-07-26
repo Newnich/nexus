@@ -175,7 +175,7 @@ export const QueueStatusSchema = z.object({
     .object({
       cursor: z.string().nullable(),
       schedule: z.string(),
-      nextRun: z.string().nullable(),
+      nextRun: z.union([z.number(), z.string()]).nullable(),
       batchSize: z.number(),
       enabled: z.boolean(),
       hasMore: z.boolean(),
@@ -207,11 +207,11 @@ export const QueueStatusSchema = z.object({
       backfillCron: z.string(),
       backfillBatch: z.string(),
       dbListener: z.boolean(),
-      slackWebhookUrl: z.string().optional(),
-      discordWebhookUrl: z.string().optional(),
-      resendApiKey: z.string().optional(),
-      alertEmailTo: z.string().optional(),
-      alertEmailFrom: z.string().optional(),
+      slackWebhookUrl: z.string().nullable().optional(),
+      discordWebhookUrl: z.string().nullable().optional(),
+      resendApiKey: z.boolean().optional(),
+      alertEmailTo: z.string().nullable().optional(),
+      alertEmailFrom: z.string().nullable().optional(),
     })
     .nullable()
     .optional(),
