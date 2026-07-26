@@ -2,7 +2,17 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { nanoid } from "nanoid";
 import { format, formatDistanceToNow } from "date-fns";
-import type { ZodType } from "zod";
+
+// Structural type that matches any Zod-like schema with a safeParse method.
+// This avoids generic inference issues with zod v4's complex type hierarchy
+// where ZodType<T, any, any> fails to infer T from the schema.
+export interface SafeParsable<T> {
+  safeParse(
+    data: unknown,
+  ):
+    | { success: true; data: T }
+    | { success: false; error: { issues: Array<{ path: PropertyKey[]; message: string }> } };
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -117,8 +127,7 @@ export async function fetcher<T>(url: string, options?: RequestInit): Promise<T>
  */
 export async function validatedFetcher<T>(
   url: string,
-  // Uses v3-compatible ZodType (zod v4 main export = v3 compat layer)
-  schema: ZodType<T, any, any>,
+  schema: SafeParsable<T>,
   options?: RequestInit,
 ): Promise<T> {
   const attempt = async (): Promise<T> => {
