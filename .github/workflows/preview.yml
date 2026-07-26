@@ -14,7 +14,7 @@
 name: Vercel Preview
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 # Cancel in-progress preview deployments for the same PR
@@ -38,6 +38,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
