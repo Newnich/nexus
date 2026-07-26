@@ -5,9 +5,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  // Reduced from 3 to 2 to lower auth contention (JWT clock skew PGRST303)
-  // when multiple workers sign in simultaneously.
-  workers: process.env.CI ? 2 : 1,
+  // Reduced to 1 worker in CI to eliminate auth contention (JWT clock skew
+  // PGRST303) when multiple workers sign in simultaneously with Supabase.
+  workers: process.env.CI ? 1 : 1,
   reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
   timeout: 30000,
   use: {
