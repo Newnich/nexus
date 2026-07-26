@@ -51,9 +51,11 @@ jobs:
 
       - name: Build project artifacts
         run: |
+          # SKIP_REDIS prevents build-time Redis ECONNREFUSED errors
+          # (no Redis server is available during Vercel builds)
+          export SKIP_REDIS=true
           vercel build \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --build-env SKIP_REDIS=true
+            --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel Preview
         id: deploy
