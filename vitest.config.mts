@@ -15,11 +15,13 @@ export default defineConfig({
       reporter: ["text", "lcov"],
       // Enforce minimum coverage thresholds — prevents regressions
       // Set to match current levels so CI passes; bump as coverage grows
+      // Enforce minimum coverage thresholds — prevents regressions
+      // Bumped to 15% after adding 8 new test files (387 tests)
       thresholds: {
-        statements: 5,
-        branches: 5,
-        functions: 5,
-        lines: 5,
+        statements: 15,
+        branches: 10,
+        functions: 10,
+        lines: 15,
       },
       include: ["lib/**", "app/**/*.tsx", "app/**/*.ts", "components/**"],
       exclude: [
