@@ -149,13 +149,11 @@ describe("validateApiKey", () => {
   });
 
   it("returns null when results is not an array", async () => {
-    globalThis.fetch = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ id: "not-an-array" }),
-      });
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ id: "not-an-array" }),
+    });
     const { validateApiKey } = await import("../lib/auth/validate-api-key");
     const result = await validateApiKey("nx_test_key");
     expect(result).toBeNull();
