@@ -343,6 +343,7 @@ export const CollectionDetailResponseSchema = z.object({
 export const TagEntrySchema = z.object({
   name: z.string(),
   count: z.number(),
+  color: z.string().optional(),
 });
 
 export const TagsResponseSchema = z.object({

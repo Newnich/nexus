@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
+import { hashTagToColor } from "@/lib/tag-colors";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/tags — List all unique tags with item counts
+// GET /api/tags — List all unique tags with item counts and colors
 export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
@@ -15,16 +16,21 @@ export async function GET() {
     }
 
     // Fetch all items' ai_data to extract tags
-    const { data: items, error } = await supabase
-      .from("items")
-      .select("ai_data")
-      .eq("user_id", user.id);
+    const [itemsResult, userResult] = await Promise.all([
+      supabase.from("items").select("ai_data").eq("user_id", user.id),
+      supabase.from("users").select("preferences").eq("id", user.id).single(),
+    ]);
 
-    if (error) throw error;
+    if (itemsResult.error) throw itemsResult.error;
+
+    // Get saved tag colors from user preferences
+    const userPrefs =
+      (userResult.data?.preferences as { tagColors?: Record<string, string> }) || {};
+    const savedColors = userPrefs.tagColors || {};
 
     // Aggregate tags with counts
     const tagMap = new Map<string, number>();
-    for (const item of items || []) {
+    for (const item of itemsResult.data || []) {
       const aiData = item.ai_data as { tags?: string[] } | null;
       if (aiData?.tags) {
         for (const tag of aiData.tags) {
@@ -35,7 +41,11 @@ export async function GET() {
 
     // Sort by count descending, then alphabetically
     const tags = Array.from(tagMap.entries())
-      .map(([name, count]) => ({ name, count }))
+      .map(([name, count]) => ({
+        name,
+        count,
+        color: savedColors[name] || hashTagToColor(name),
+      }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
     return NextResponse.json({ tags, total: tags.length });
@@ -57,10 +67,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { action, tag, newName } = body as {
-      action: "rename" | "merge" | "delete";
+    const { action, tag, newName, color } = body as {
+      action: "rename" | "merge" | "delete" | "setColor";
       tag: string;
       newName?: string;
+      color?: string;
     };
 
     if (!tag || !action) {
@@ -69,6 +80,28 @@ export async function POST(request: NextRequest) {
 
     if (action === "rename" && !newName) {
       return NextResponse.json({ error: "New name is required for rename" }, { status: 400 });
+    }
+
+    // Handle setColor action — saves color to user preferences
+    if (action === "setColor") {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("preferences")
+        .eq("id", user.id)
+        .single();
+
+      const prefs = (userData?.preferences as Record<string, unknown>) || {};
+      const tagColors = (prefs.tagColors as Record<string, string>) || {};
+      tagColors[tag] = color || hashTagToColor(tag);
+
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ preferences: { ...prefs, tagColors } })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      return NextResponse.json({ success: true, action, tag, color });
     }
 
     // Fetch all items that have this tag in their ai_data

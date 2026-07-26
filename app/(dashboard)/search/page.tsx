@@ -161,8 +161,8 @@ function SearchContent() {
   const initialRange = searchParams.get("range") || "all";
 
   const [query, setQuery] = useState(initialQuery);
-  const [searchMode, setSearchMode] = useState<"semantic" | "fulltext">(
-    (searchParams.get("mode") as "semantic" | "fulltext") || "semantic",
+  const [searchMode, setSearchMode] = useState<"semantic" | "hybrid" | "fulltext">(
+    (searchParams.get("mode") as "semantic" | "hybrid" | "fulltext") || "semantic",
   );
   const [selectedType, setSelectedType] = useState(initialType);
   const [selectedRange, setSelectedRange] = useState(initialRange);
@@ -335,6 +335,17 @@ function SearchContent() {
       <div className="flex items-center gap-3 flex-wrap">
         {/* Search Mode Toggle */}
         <div className="flex items-center gap-1 p-0.5 glass-card rounded-lg">
+          <button
+            onClick={() => setSearchMode("hybrid")}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-xs transition-all",
+              searchMode === "hybrid"
+                ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-nexus-400 font-medium"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            🔀 Hybrid
+          </button>
           <button
             onClick={() => setSearchMode("semantic")}
             className={cn(
