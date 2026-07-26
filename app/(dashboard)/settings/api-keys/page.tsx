@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import { cn, formatDateRelative, validatedFetcher } from "@/lib/utils";
 import {
@@ -245,7 +246,7 @@ export default function ApiKeysPage() {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-4">
-        <a
+        <Link
           href="/settings/general"
           className="flex items-center gap-3 p-3 glass-card hover:bg-card/70 rounded-xl text-sm transition-all group"
         >
@@ -254,8 +255,8 @@ export default function ApiKeysPage() {
           <span className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
             →
           </span>
-        </a>
-        <a
+        </Link>
+        <Link
           href="/settings/notifications"
           className="flex items-center gap-3 p-3 glass-card hover:bg-card/70 rounded-xl text-sm transition-all group"
         >
@@ -264,8 +265,8 @@ export default function ApiKeysPage() {
           <span className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
             →
           </span>
-        </a>
-        <a
+        </Link>
+        <Link
           href="/status"
           className="flex items-center gap-3 p-3 glass-card hover:bg-card/70 rounded-xl text-sm transition-all group"
         >
@@ -274,7 +275,7 @@ export default function ApiKeysPage() {
           <span className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
             →
           </span>
-        </a>
+        </Link>
       </div>
     </div>
   );
