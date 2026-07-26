@@ -138,7 +138,9 @@ export function evaluateAlertsWithThresholds(
       severity: "critical",
       title: "Redis Disconnected",
       message:
-        "Redis connection is " + status.redis + ". AI processing and backfill are unavailable.",
+        status.redis === "waiting"
+          ? "Redis is not yet connected — AI features and background processing are paused. Start Redis with: docker run -d -p 6379:6379 --name redis redis:7-alpine"
+          : "Redis connection is " + status.redis + ". Try restarting Redis: docker restart redis",
       firstSeen: timestamp,
       lastSeen: timestamp,
       fresh: !previousAlertIds.has("redis_disconnected"),
@@ -153,7 +155,7 @@ export function evaluateAlertsWithThresholds(
       title: "Backfill Failing Repeatedly",
       message:
         status.consecutiveFailures +
-        " consecutive backfill failures. Check Ollama and database connectivity.",
+        " consecutive backfill failures. Verify Ollama is reachable at http://localhost:11434 and your database connection is working.",
       firstSeen: timestamp,
       lastSeen: timestamp,
       fresh: !previousAlertIds.has("backfill_repeated_failures"),
@@ -166,7 +168,9 @@ export function evaluateAlertsWithThresholds(
       id: "backfill_enqueue_errors",
       severity: "warning",
       title: "Backfill Enqueue Errors",
-      message: status.backfillErrors + " items failed to enqueue during last backfill scan.",
+      message:
+        status.backfillErrors +
+        " items failed to enqueue during the last backfill scan. This usually indicates a temporary database issue — it will retry automatically.",
       firstSeen: timestamp,
       lastSeen: timestamp,
       fresh: !previousAlertIds.has("backfill_enqueue_errors"),
@@ -185,7 +189,7 @@ export function evaluateAlertsWithThresholds(
         message:
           "Last backfill run was " +
           Math.floor(hoursSinceLastRun) +
-          " hours ago. The worker process may have stopped.",
+          " hours ago. The worker may have stopped. Start it with: npm run worker",
         firstSeen: timestamp,
         lastSeen: timestamp,
         fresh: !previousAlertIds.has("worker_inactive"),
@@ -202,7 +206,7 @@ export function evaluateAlertsWithThresholds(
         message:
           "The worker has " +
           failures +
-          " consecutive failures and no successful runs. Check the worker logs.",
+          " consecutive failures and no successful runs. Check worker logs with: npm run worker 2>&1 | grep error",
         firstSeen: timestamp,
         lastSeen: timestamp,
         fresh: !previousAlertIds.has("worker_no_successful_run"),
@@ -218,7 +222,7 @@ export function evaluateAlertsWithThresholds(
       title: "Large Processing Backlog",
       message:
         status.unprocessedItems.toLocaleString() +
-        " items are missing AI embeddings. Backfill is processing them in batches.",
+        " items are missing AI embeddings. Backfill is processing them automatically — no action needed.",
       firstSeen: timestamp,
       lastSeen: timestamp,
       fresh: !previousAlertIds.has("large_backlog"),
