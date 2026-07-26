@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 // POST /api/collections/[id]/items — Add items to a collection
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = await createServerSupabaseClient();
     const {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const itemIds: string[] = body.itemIds || [];
 
@@ -82,7 +82,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 }
 
 // DELETE /api/collections/[id]/items — Remove items from a collection
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const supabase = await createServerSupabaseClient();
     const {
@@ -92,7 +95,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const itemIds: string[] = body.itemIds || [];
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { formatDateRelative, validatedFetcher } from "@/lib/utils";
 import { ItemDetailResponseSchema } from "@/lib/schemas";
@@ -19,7 +19,8 @@ interface SharedData {
   expiresAt?: string;
 }
 
-export default function SharedPage({ params }: { params: { token: string } }) {
+export default function SharedPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = use(params);
   const [data, setData] = useState<SharedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +30,7 @@ export default function SharedPage({ params }: { params: { token: string } }) {
     const allLinks = JSON.parse(
       typeof window !== "undefined" ? localStorage.getItem("nexus:share-links") || "[]" : "[]",
     );
-    const link = allLinks.find((l: { token: string }) => l.token === params.token);
+    const link = allLinks.find((l: { token: string }) => l.token === token);
 
     if (!link) {
       setError("This shared link is invalid or has been revoked.");
@@ -69,7 +70,7 @@ export default function SharedPage({ params }: { params: { token: string } }) {
       }
     }
     fetchShared();
-  }, [params.token]);
+  }, [token]);
 
   if (loading) {
     return (

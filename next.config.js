@@ -8,10 +8,9 @@ const nextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "10mb",
-    },
+  // Server Actions are stable and enabled by default in Next.js 16
+  serverActions: {
+    bodySizeLimit: "10mb",
   },
   async headers() {
     return [

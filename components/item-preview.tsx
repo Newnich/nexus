@@ -55,7 +55,7 @@ export function ItemPreview({ itemId, children, className }: ItemPreviewProps) {
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const cacheRef = useRef<Map<string, PreviewData>>(new Map());
 
   // Cleanup timeout on unmount
