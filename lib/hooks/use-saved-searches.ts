@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 export interface SavedSearch {
   id: string;
   query: string;
-  mode: "semantic" | "fulltext";
+  mode: "semantic" | "hybrid" | "fulltext";
   type?: string;
   range?: string;
   createdAt: string;

@@ -6,9 +6,10 @@ import toast from "react-hot-toast";
 import { cn, validatedFetcher } from "@/lib/utils";
 import { TagsResponseSchema, TagsActionResponseSchema } from "@/lib/schemas";
 import { useApiData } from "@/lib/hooks/use-api-data";
+import { TAG_COLOR_PALETTE } from "@/lib/tag-colors";
 
-type TagEntry = { name: string; count: number };
-type TagAction = "rename" | "merge" | "delete";
+type TagEntry = { name: string; count: number; color?: string };
+type TagAction = "rename" | "merge" | "delete" | "setColor";
 
 export default function TagsPage() {
   const {
@@ -31,6 +32,22 @@ export default function TagsPage() {
     ? tags.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : tags;
 
+  const handleColorChange = async (tagName: string, color: string) => {
+    setProcessing(true);
+    try {
+      await validatedFetcher("/api/tags", TagsActionResponseSchema, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "setColor", tag: tagName, color }),
+      });
+      refetchTags();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update color");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleTagAction = async () => {
     if (!selectedTag || !actionValue.trim()) return;
 
@@ -47,7 +64,7 @@ export default function TagsPage() {
         body: JSON.stringify({
           action,
           tag: selectedTag.name,
-          ...(action !== "delete"
+          ...(action !== "delete" && action !== "setColor"
             ? {
                 newName: actionValue
                   .trim()
@@ -58,13 +75,13 @@ export default function TagsPage() {
         }),
       });
 
-      const actionLabels: Record<TagAction, string> = {
+      const actionLabels: Record<string, string> = {
         rename: `Tag renamed from "${selectedTag.name}" to "${actionValue}"`,
         merge: `Tag "${selectedTag.name}" merged into "${actionValue}"`,
         delete: `Tag "${selectedTag.name}" deleted from ${data.updatedCount} item${data.updatedCount !== 1 ? "s" : ""}`,
       };
 
-      toast.success(actionLabels[action]);
+      toast.success(actionLabels[action] || "Tag updated");
       setSelectedTag(null);
       setActionValue("");
       setAction("rename");
@@ -125,7 +142,7 @@ export default function TagsPage() {
       </div>
 
       {/* ── Action Modal ── */}
-      {selectedTag && (
+      {selectedTag && action !== "setColor" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="glass-card rounded-2xl p-6 max-w-md w-full space-y-4">
             <div className="flex items-center justify-between">
@@ -270,14 +287,24 @@ export default function TagsPage() {
               className="glass-card p-4 rounded-2xl hover:bg-card/80 transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-lg shrink-0">
-                  🏷️
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
+                  style={{ backgroundColor: (tag.color || "#6366f1") + "20" }}
+                >
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: tag.color || "#6366f1" }}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <Link
-                    href={`/search?q=${encodeURIComponent(tag.name)}&mode=semantic`}
+                    href={`/search?q=${encodeURIComponent(tag.name)}&mode=hybrid`}
                     className="text-sm font-semibold hover:text-nexus-400 transition-colors"
                   >
+                    <span
+                      className="inline-block w-2 h-2 rounded-full mr-1.5"
+                      style={{ backgroundColor: tag.color || "#6366f1" }}
+                    />
                     #{tag.name}
                   </Link>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -285,6 +312,26 @@ export default function TagsPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="relative group/color">
+                    <button
+                      className="px-3 py-1.5 glass-card hover:bg-card/70 rounded-lg text-xs transition-all"
+                      title="Change color"
+                    >
+                      🎨
+                    </button>
+                    <div className="absolute right-0 top-full mt-1 p-2 glass-card rounded-xl hidden group-hover/color:grid grid-cols-5 gap-1 z-10 shadow-xl">
+                      {TAG_COLOR_PALETTE.map((c: string) => (
+                        <button
+                          key={c}
+                          onClick={() => handleColorChange(tag.name, c)}
+                          className={`w-5 h-5 rounded-full transition-transform hover:scale-125 ${
+                            tag.color === c ? "ring-2 ring-background ring-offset-2" : ""
+                          }`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
                   <button
                     onClick={() => openAction(tag, "rename")}
                     className="px-3 py-1.5 glass-card hover:bg-card/70 rounded-lg text-xs transition-all"
