@@ -69,7 +69,7 @@ export async function GET() {
       title: item.title || "Untitled",
       type: item.type,
       createdAt: item.created_at,
-      category: (item.ai_data as Record<string, unknown> | null)?.category as string | null,
+      category: (item.ai_data as Record<string, unknown> | null)?.category ?? null,
     }));
 
     // Compute top categories from all items (single query, limited to avoid perf issues)
