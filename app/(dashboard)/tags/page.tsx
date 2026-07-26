@@ -320,7 +320,7 @@ export default function TagsPage() {
                       🎨
                     </button>
                     <div className="absolute right-0 top-full mt-1 p-2 glass-card rounded-xl hidden group-hover/color:grid grid-cols-5 gap-1 z-10 shadow-xl">
-                      {TAG_COLOR_PALETTE.map((c: string) => (
+                      {TAG_COLOR_PALETTE.map((c) => (
                         <button
                           key={c}
                           onClick={() => handleColorChange(tag.name, c)}
