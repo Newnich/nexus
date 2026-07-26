@@ -52,7 +52,8 @@ jobs:
       - name: Build project artifacts
         run: |
           vercel build \
-            --token=${{ secrets.VERCEL_TOKEN }}
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --build-env SKIP_REDIS=true
 
       - name: Deploy to Vercel Preview
         id: deploy
