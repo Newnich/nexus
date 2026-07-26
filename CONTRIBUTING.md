@@ -150,6 +150,92 @@ Supabase credentials are also configured in:
 
 ---
 
+## 🗄️ Database Migrations
+
+NEXUS uses a **versioned migration framework** stored in `scripts/migrations/`.
+
+### Migration Files
+
+Each migration is a numbered SQL file:
+
+```
+scripts/migrations/
+├── 001_initial_schema.sql
+├── 002_pgvector_index.sql
+└── ...
+```
+
+**File naming convention:** `NNN_description.sql` (e.g., `003_add_api_keys.sql`)
+
+Each file must have:
+
+- An `-- UP` section (the migration to apply)
+- A `-- DOWN` section (commented-out SQL to roll back)
+
+Format:
+
+```sql
+-- ═════════════════════════════════════════════════════════════════════════
+-- UP
+-- ═════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS example (...);
+
+-- ═════════════════════════════════════════════════════════════════════════
+-- DOWN
+-- ═════════════════════════════════════════════════════════════════════════
+
+-- DROP TABLE IF EXISTS example;
+```
+
+### Commands
+
+| Command                  | Description                                            |
+| ------------------------ | ------------------------------------------------------ |
+| `npm run migrate`        | Apply all pending migrations                           |
+| `npm run migrate:up`     | Alias for `migrate`                                    |
+| `npm run migrate:down`   | Roll back the last migration (requires `--force` flag) |
+| `npm run migrate:status` | Show which migrations are applied/pending              |
+| `npm run migrate:redo`   | Roll back + re-apply the last migration                |
+
+### Creating a New Migration
+
+1. **Find the next number**: check `npm run migrate:status` for the highest applied number
+2. **Create the file**: `scripts/migrations/003_your_description.sql`
+3. **Write the SQL**:
+   - `-- UP` section: the schema changes (use `IF NOT EXISTS` / `IF EXISTS` for idempotency)
+   - `-- DOWN` section: commented-out rollback statements
+4. **Run it**: `npm run migrate`
+5. **Commit**: include both the new migration file and the auto-generated checksum changes
+
+### Adding to a Migration File
+
+> **Rule:** Never edit an existing migration that has already been applied to production.
+> Always create a new migration with the next number.
+
+If your PR needs to add a column or index, create a new file:
+
+```sql
+-- scripts/migrations/003_add_item_source.sql
+-- UP
+ALTER TABLE items ADD COLUMN IF NOT EXISTS source TEXT DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_items_source ON items(source);
+
+-- DOWN
+-- DROP INDEX IF EXISTS idx_items_source;
+-- ALTER TABLE items DROP COLUMN IF EXISTS source;
+```
+
+### CI Checks
+
+Every PR that touches migration files automatically runs:
+
+1. **Naming convention**: ensures files match `NNN_description.sql`
+2. **Section markers**: verifies `-- UP` section exists (recommends `-- DOWN`)
+3. **Sequential numbering**: checks no gaps or duplicate numbers
+
+---
+
 ## 🦴 Skeleton System (Loading States)
 
 NEXUS uses a **two-layer skeleton system** to give users immediate visual feedback during loading:

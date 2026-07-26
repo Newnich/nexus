@@ -2,36 +2,17 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { validateApiKey } from "@/lib/auth/validate-api-key";
-
-// ── Rate limiting state (in-memory — resets on server restart) ──
-// For production, replace with Redis-based rate limiting
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-const RATE_LIMIT_MAX = 60; // 60 requests per minute per IP
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-
-  entry.count++;
-  if (entry.count > RATE_LIMIT_MAX) {
-    return true;
-  }
-
-  return false;
-}
+import { checkRateLimit, rateLimitConfig } from "@/lib/rate-limit";
 
 // ── Paths that require API key authentication ──
 const EXTERNAL_API_PREFIX = "/api/external/";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "127.0.0.1";
 
   // ── Create base response for cookie handling ──
   const response = NextResponse.next();
@@ -95,22 +76,19 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Rate limiting for API routes ──
+  // Uses Upstash Ratelimit (shared) when configured, falls back to
+  // in-memory sliding window for single-instance deployments.
   if (pathname.startsWith("/api/") && !pathname.startsWith("/api/health")) {
-    // Periodically clean stale entries to prevent memory growth
-    if (Math.random() < 0.01) {
-      const now = Date.now();
-      for (const [key, val] of rateLimitMap) {
-        if (now > val.resetAt + RATE_LIMIT_WINDOW_MS) rateLimitMap.delete(key);
-      }
-    }
+    const result = await checkRateLimit(ip);
 
-    if (isRateLimited(ip)) {
+    if (!result.allowed) {
       const isExternal = pathname.startsWith("/api/external/");
+      const retryAfter = Math.ceil((result.resetAt - Date.now()) / 1000);
       const headers: Record<string, string> = {
-        "Retry-After": "60",
-        "X-RateLimit-Limit": String(RATE_LIMIT_MAX),
+        "Retry-After": String(Math.max(1, retryAfter)),
+        "X-RateLimit-Limit": String(rateLimitConfig.max),
         "X-RateLimit-Remaining": "0",
-        "X-RateLimit-Reset": String(Math.ceil((Date.now() + RATE_LIMIT_WINDOW_MS) / 1000)),
+        "X-RateLimit-Reset": String(Math.ceil(result.resetAt / 1000)),
       };
 
       // Add CORS headers for external API clients

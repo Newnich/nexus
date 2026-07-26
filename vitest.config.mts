@@ -16,10 +16,10 @@ export default defineConfig({
       // Enforce minimum coverage thresholds — prevents regressions
       // Set to match current levels so CI passes; bump as coverage grows
       thresholds: {
-        statements: 2,
-        branches: 3,
-        functions: 1,
-        lines: 2,
+        statements: 5,
+        branches: 5,
+        functions: 5,
+        lines: 5,
       },
       include: ["lib/**", "app/**/*.tsx", "app/**/*.ts", "components/**"],
       exclude: [

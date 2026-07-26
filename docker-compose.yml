@@ -32,9 +32,34 @@ services:
       - REDIS_PORT=6379
       # ── Auth (required for Supabase SSR) ──
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
-      # ── Optional: AI Worker ──
+      # ── AI / Ollama ──
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
-      # ── Optional: Notifications ──
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-}
+      - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-}
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-}
+      - OLLAMA_NUM_PREDICT=${OLLAMA_NUM_PREDICT:-}
+      - OLLAMA_TEMPERATURE=${OLLAMA_TEMPERATURE:-}
+      # ── AI Processing (worker config — affects enqueued jobs) ──
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-}
+      - WORKER_LIMITER_MAX=${WORKER_LIMITER_MAX:-}
+      - WORKER_LIMITER_DURATION=${WORKER_LIMITER_DURATION:-}
+      - WORKER_STALLED_INTERVAL=${WORKER_STALLED_INTERVAL:-}
+      - WORKER_LOCK_DURATION=${WORKER_LOCK_DURATION:-}
+      - AI_CONNECTION_LIMIT=${AI_CONNECTION_LIMIT:-}
+      - AI_BATCH_SIZE=${AI_BATCH_SIZE:-}
+      # ── Job retention (Redis memory) ──
+      - JOB_RETAIN_COMPLETE_HOURS=${JOB_RETAIN_COMPLETE_HOURS:-}
+      - JOB_RETAIN_FAIL_HOURS=${JOB_RETAIN_FAIL_HOURS:-}
+      # ── Rate limiting (middleware — Upstash for Vercel, in-memory for Docker) ──
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL:-}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN:-}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-}
+      # ── Backfill ──
+      - BACKFILL_CRON=${BACKFILL_CRON:-}
+      - BACKFILL_BATCH=${BACKFILL_BATCH:-}
+      - BACKFILL_ENABLED=${BACKFILL_ENABLED:-}
+      # ── Notifications ──
       - ALERT_EMAIL_TO=${ALERT_EMAIL_TO:-}
       - ALERT_EMAIL_FROM=${ALERT_EMAIL_FROM:-}
       - RESEND_API_KEY=${RESEND_API_KEY:-}
@@ -59,9 +84,37 @@ services:
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:?err}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:?err}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      # ── AI / Ollama ──
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-}
+      - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-}
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-}
+      - OLLAMA_NUM_PREDICT=${OLLAMA_NUM_PREDICT:-}
+      - OLLAMA_TEMPERATURE=${OLLAMA_TEMPERATURE:-}
+      # ── Worker performance ──
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-}
+      - WORKER_LIMITER_MAX=${WORKER_LIMITER_MAX:-}
+      - WORKER_LIMITER_DURATION=${WORKER_LIMITER_DURATION:-}
+      - WORKER_STALLED_INTERVAL=${WORKER_STALLED_INTERVAL:-}
+      - WORKER_LOCK_DURATION=${WORKER_LOCK_DURATION:-}
+      - AI_CONNECTION_LIMIT=${AI_CONNECTION_LIMIT:-}
+      # ── Job retention (Redis memory) ──
+      - JOB_RETAIN_COMPLETE_HOURS=${JOB_RETAIN_COMPLETE_HOURS:-}
+      - JOB_RETAIN_FAIL_HOURS=${JOB_RETAIN_FAIL_HOURS:-}
+      # ── Backfill ──
       - BACKFILL_CRON=${BACKFILL_CRON:-*/15 * * * *}
+      - BACKFILL_BATCH=${BACKFILL_BATCH:-}
+      - BACKFILL_ENABLED=${BACKFILL_ENABLED:-}
+      # ── Health check ──
+      - WORKER_HEALTH_PORT=${WORKER_HEALTH_PORT:-}
+      # ── Database listener ──
       - DATABASE_URL=${DATABASE_URL}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9090/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     depends_on:
       redis:
         condition: service_healthy

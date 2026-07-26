@@ -1,0 +1,119 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# NEXUS — Migration File Check
+# ═══════════════════════════════════════════════════════════════════════════════
+# Validates that all migration files in scripts/migrations/ have the correct
+# format: numbered files with proper UP/DOWN section markers.
+# Runs on every PR that modifies migration files.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: Migration Check
+
+on:
+  pull_request:
+    paths:
+      - "scripts/migrations/**"
+      - "scripts/migrate.ts"
+
+# Cancel in-progress runs for the same PR
+concurrency:
+  group: migration-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-migrations:
+    name: Check migration file format
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Verify migration file naming convention
+        run: |
+          echo "=== Checking migration file names ==="
+          errors=0
+          for file in scripts/migrations/*.sql; do
+            basename=$(basename "$file")
+            if ! echo "$basename" | grep -qE '^[0-9]{3}_.+\.sql$'; then
+              echo "❌ Invalid name: $basename"
+              echo "   Must match: NNN_description.sql (e.g., 003_add_indexes.sql)"
+              errors=$((errors + 1))
+            else
+              echo "✅ $basename"
+            fi
+          done
+
+          if [ "$errors" -gt 0 ]; then
+            echo "---"
+            echo "❌ $errors migration file(s) have invalid names."
+            exit 1
+          fi
+          echo "✅ All file names are valid."
+
+      - name: Verify UP/DOWN section markers
+        run: |
+          echo "=== Checking UP/DOWN section markers ==="
+          errors=0
+          for file in scripts/migrations/*.sql; do
+            basename=$(basename "$file")
+            has_up=false
+            has_down=false
+
+            while IFS= read -r line; do
+              trimmed=$(echo "$line" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+              if [ "$trimmed" = "-- UP" ]; then
+                has_up=true
+              fi
+              if [ "$trimmed" = "-- DOWN" ]; then
+                has_down=true
+              fi
+            done < "$file"
+
+            if [ "$has_up" = false ]; then
+              echo "❌ $basename: missing '-- UP' section marker"
+              errors=$((errors + 1))
+            else
+              echo "✅ $basename: has UP section"
+            fi
+
+            if [ "$has_down" = false ]; then
+              echo "⚠  $basename: missing '-- DOWN' section marker (optional but recommended)"
+            fi
+          done
+
+          if [ "$errors" -gt 0 ]; then
+            echo "---"
+            echo "❌ $errors migration file(s) are missing required UP section markers."
+            exit 1
+          fi
+          echo "✅ All migration files have required section markers."
+
+      - name: Verify numeric ordering (no gaps or duplicates)
+        run: |
+          echo "=== Checking migration ordering ==="
+          numbers=$(ls scripts/migrations/*.sql 2>/dev/null | \
+            sed 's/.*\/\([0-9]\{3\}\)_.*/\1/' | sort -n)
+
+          expected=1
+          errors=0
+          for num in $numbers; do
+            expected_padded=$(printf "%03d" "$expected")
+            if [ "$num" != "$expected_padded" ]; then
+              echo "❌ Gap or duplicate: expected $expected_padded, found $num"
+              errors=$((errors + 1))
+            fi
+            expected=$((expected + 1))
+          done
+
+          if [ "$errors" -gt 0 ]; then
+            echo "---"
+            echo "❌ Migration numbering is not sequential."
+            exit 1
+          fi
+          echo "✅ Migration numbering is sequential."
+
+      - name: Summary
+        run: |
+          count=$(ls -1 scripts/migrations/*.sql 2>/dev/null | wc -l)
+          echo "📊 Found $count migration file(s)"
+          echo "✅ All migration checks passed!"

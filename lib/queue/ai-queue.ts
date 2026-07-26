@@ -53,6 +53,11 @@ export interface AIProcessJobResult {
 // — it waits for the first job. However, importing this module during build
 // can still fail if Redis is unreachable. We use a lazy getter pattern.
 
+/** Job retention in seconds — shared by AI queue and backfill queue. */
+export const JOB_RETAIN_COMPLETE =
+  parseInt(process.env.JOB_RETAIN_COMPLETE_HOURS || "1", 10) * 3600;
+export const JOB_RETAIN_FAIL = parseInt(process.env.JOB_RETAIN_FAIL_HOURS || "24", 10) * 3600;
+
 let _queue: Queue<AIProcessJobData, AIProcessJobResult, string> | null = null;
 
 /**
@@ -70,8 +75,8 @@ export function getAIQueue(): Queue<AIProcessJobData, AIProcessJobResult, string
           type: "exponential",
           delay: 5_000,
         },
-        removeOnComplete: { age: 3600 },
-        removeOnFail: { age: 86400 },
+        removeOnComplete: { age: JOB_RETAIN_COMPLETE },
+        removeOnFail: { age: JOB_RETAIN_FAIL },
       },
     });
   }
@@ -110,9 +115,31 @@ export type AIProcessHandler = (job: Job<AIProcessJobData>) => Promise<AIProcess
  *
  * The worker is NOT started automatically — the standalone worker
  * script (workers/ai-worker.ts) calls `.run()` on it.
+ *
+ * @param handler - Job handler function
+ * @param concurrency - Number of items to process simultaneously (default 2)
+ * @param limiterMax - Max jobs per limiter window (default 4)
+ * @param limiterDuration - Limiter window in ms (default 30000)
+ * @param stalledInterval - How often to check for stalled jobs in ms (default 60000)
+ * @param lockDuration - Max job processing time before being considered stalled in ms (default 120000)
+ *
+ * Rate limiting (env vars):
+ *   WORKER_LIMITER_MAX           — Max jobs per limiter window (default 4)
+ *   WORKER_LIMITER_DURATION      — Limiter window in ms (default 30000)
+ *   WORKER_STALLED_INTERVAL      — Stalled job check interval in ms (default 60000)
+ *   WORKER_LOCK_DURATION         — Max job processing time in ms (default 120000)
+ *
+ * Job retention (env vars — affects Redis memory):
+ *   JOB_RETAIN_COMPLETE_HOURS    — Keep completed jobs for N hours (default 1)
+ *   JOB_RETAIN_FAIL_HOURS        — Keep failed jobs for N hours (default 24)
  */
 export function createAIWorker(
   handler: AIProcessHandler,
+  concurrency: number = 2,
+  limiterMax: number = 4,
+  limiterDuration: number = 30_000,
+  stalledInterval: number = 60_000,
+  lockDuration: number = 120_000,
 ): Worker<AIProcessJobData, AIProcessJobResult> {
   return new Worker<AIProcessJobData, AIProcessJobResult>(
     QUEUES.AI_PROCESSING,
@@ -126,13 +153,13 @@ export function createAIWorker(
     },
     {
       connection: getRedisConnection(),
-      concurrency: 2,
+      concurrency,
       limiter: {
-        max: 4,
-        duration: 30_000,
+        max: limiterMax,
+        duration: limiterDuration,
       },
-      stalledInterval: 60_000,
-      lockDuration: 120_000,
+      stalledInterval,
+      lockDuration,
     },
   );
 }

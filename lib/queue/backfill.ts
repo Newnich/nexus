@@ -22,7 +22,7 @@
 import { Queue, Worker } from "bullmq";
 import type { JobsOptions, Job } from "bullmq";
 import { getRedisConnection, QUEUES } from "./config";
-import { enqueueAIProcessing, AI_PRIORITY } from "./ai-queue";
+import { enqueueAIProcessing, AI_PRIORITY, JOB_RETAIN_COMPLETE, JOB_RETAIN_FAIL } from "./ai-queue";
 import { createServiceClient } from "@/lib/supabase/server";
 import { incrementBackfillFailures, resetBackfillFailures } from "./alerts";
 
@@ -89,8 +89,8 @@ export const backfillQueue = new Queue<BackfillJobData, BackfillJobResult>(QUEUE
   defaultJobOptions: {
     attempts: 2,
     backoff: { type: "exponential", delay: 10_000 },
-    removeOnComplete: { age: 7200 },
-    removeOnFail: { age: 86400 },
+    removeOnComplete: { age: JOB_RETAIN_COMPLETE },
+    removeOnFail: { age: JOB_RETAIN_FAIL },
   },
 });
 
@@ -227,8 +227,8 @@ export async function registerBackfillSchedule(): Promise<void> {
         data: { startedAt: new Date().toISOString(), batchSize: BACKFILL_BATCH },
         opts: {
           jobId: BACKFILL_JOB_ID,
-          removeOnComplete: { age: 7200 },
-          removeOnFail: { age: 86400 },
+          removeOnComplete: { age: JOB_RETAIN_COMPLETE },
+          removeOnFail: { age: JOB_RETAIN_FAIL },
         } as JobsOptions,
       },
     );
