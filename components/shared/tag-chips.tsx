@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { hashTagToColor } from "@/lib/tag-colors";
 
 interface TagChipsProps {
   tags: string[];
@@ -10,6 +11,7 @@ interface TagChipsProps {
   disabled?: boolean;
   maxTags?: number;
   className?: string;
+  tagColors?: Record<string, string>;
 }
 
 export function TagChips({
@@ -19,13 +21,13 @@ export function TagChips({
   disabled = false,
   maxTags = 20,
   className,
+  tagColors = {},
 }: TagChipsProps) {
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const addTag = useCallback(
     (raw: string) => {
-      // Split on spaces/commas, sanitize, deduplicate
       const parts = raw
         .toLowerCase()
         .trim()
@@ -70,26 +72,37 @@ export function TagChips({
       )}
       onClick={() => inputRef.current?.focus()}
     >
-      {tags.map((tag) => (
-        <span
-          key={tag}
-          className="inline-flex items-center gap-1 px-2 py-0.5 bg-nexus-500/15 text-nexus-400 rounded-lg text-xs"
-        >
-          #{tag}
-          {!disabled && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                removeTag(tag);
-              }}
-              className="hover:text-red-400 transition-colors text-[10px]"
-            >
-              ✕
-            </button>
-          )}
-        </span>
-      ))}
+      {tags.map((tag) => {
+        const color = tagColors[tag] || hashTagToColor(tag);
+        return (
+          <span
+            key={tag}
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs"
+            style={{
+              backgroundColor: color + "20",
+              color: color,
+            }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{ backgroundColor: color }}
+            />
+            #{tag}
+            {!disabled && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeTag(tag);
+                }}
+                className="hover:text-red-400 transition-colors text-[10px]"
+              >
+                ✕
+              </button>
+            )}
+          </span>
+        );
+      })}
       {!disabled && tags.length < maxTags && (
         <input
           ref={inputRef}
