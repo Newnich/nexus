@@ -10,7 +10,7 @@ interface MutationOptions<TBody, TResponse> {
   /** URL to send the request to */
   url: string;
   /** Zod schema to validate the response */
-  schema: ZodType<TResponse, any, any>;
+  schema: ZodType<TResponse>;
   /** Optional success/error callbacks */
   onSuccess?: (data: TResponse) => void;
   onError?: (error: string) => void;

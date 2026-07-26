@@ -19,7 +19,7 @@ export const ItemSchema = z.object({
   title: z.string(),
   type: z.string(),
   content: z.string(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   ai_data: z
     .object({
       summary: z.string().optional(),
@@ -95,7 +95,7 @@ export const DashboardStatsSchema = z.object({
         action: z.string(),
         entityType: z.string(),
         entityId: z.string().nullable(),
-        metadata: z.record(z.unknown()),
+        metadata: z.record(z.string(), z.unknown()),
         createdAt: z.string(),
       }),
     )
@@ -129,7 +129,7 @@ export const ActivityEntrySchema = z.object({
   action: z.string(),
   entity_type: z.string(),
   entity_id: z.string().nullable(),
-  metadata: z.record(z.unknown()),
+  metadata: z.record(z.string(), z.unknown()),
   created_at: z.string(),
 });
 
@@ -468,7 +468,7 @@ export const SearchResultItemSchema = z.object({
   title: z.string(),
   type: z.string(),
   content: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   aiData: z
     .object({
       summary: z.string().optional(),
