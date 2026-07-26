@@ -1,5 +1,5 @@
 # ── Build Stage ──
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ ENV BUILD_TARGET=standalone
 RUN npm run build
 
 # ── Production Stage ──
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 
 WORKDIR /app
 
