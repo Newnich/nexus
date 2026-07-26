@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { nanoid } from "nanoid";
 import { format, formatDistanceToNow } from "date-fns";
-import { type ZodType } from "zod";
+import type { ZodType } from "zod";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -117,7 +117,8 @@ export async function fetcher<T>(url: string, options?: RequestInit): Promise<T>
  */
 export async function validatedFetcher<T>(
   url: string,
-  schema: ZodType<T>,
+  // Uses v3-compatible ZodType (zod v4 main export = v3 compat layer)
+  schema: ZodType<T, any, any>,
   options?: RequestInit,
 ): Promise<T> {
   const attempt = async (): Promise<T> => {
