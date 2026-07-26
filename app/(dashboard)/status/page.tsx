@@ -18,21 +18,21 @@ interface Alert {
 
 // ── Helpers ──
 
-function formatTimestamp(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
+function formatTimestamp(ts: string | number | null): string {
+  if (ts == null) return "—";
+  const d = new Date(ts);
   return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
+function formatDate(ts: string | number | null): string {
+  if (ts == null) return "—";
+  const d = new Date(ts);
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function timeAgo(iso: string | null): string {
-  if (!iso) return "—";
-  const ms = Date.now() - new Date(iso).getTime();
+function timeAgo(ts: string | number | null): string {
+  if (ts == null) return "—";
+  const ms = Date.now() - new Date(ts).getTime();
   const mins = Math.floor(ms / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
