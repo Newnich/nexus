@@ -117,7 +117,7 @@ export async function fetcher<T>(url: string, options?: RequestInit): Promise<T>
  */
 export async function validatedFetcher<T>(
   url: string,
-  schema: ZodType<T, any, any>,
+  schema: ZodType<T>,
   options?: RequestInit,
 ): Promise<T> {
   const attempt = async (): Promise<T> => {
