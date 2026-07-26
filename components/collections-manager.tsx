@@ -31,7 +31,7 @@ export function CollectionsManager({ itemId }: CollectionManagerProps) {
   // Sync member collections from server data
   useEffect(() => {
     if (memData) {
-      setMemberCollectionIds(new Set(memData.collections.map((c) => c.id)));
+      setMemberCollectionIds(new Set((memData.collections ?? []).map((c: { id: string }) => c.id)));
     }
   }, [memData]);
 

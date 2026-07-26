@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { type ZodType } from "zod";
 import { validatedFetcher } from "@/lib/utils";
+import type { SafeParsable } from "@/lib/utils";
 
 interface UseApiDataOptions {
   /** Skip fetching on mount (e.g., wait for user action) */
@@ -34,7 +34,7 @@ interface UseApiDataResult<T> {
  */
 export function useApiData<T>(
   url: string | null,
-  schema: ZodType<T>,
+  schema: SafeParsable<T>,
   options: UseApiDataOptions = {},
 ): UseApiDataResult<T> {
   const { enabled = true, fetchOptions } = options;

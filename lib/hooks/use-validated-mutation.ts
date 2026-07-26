@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { type ZodType } from "zod";
 import { validatedFetcher } from "@/lib/utils";
+import type { SafeParsable } from "@/lib/utils";
 
 interface MutationOptions<TBody, TResponse> {
   /** HTTP method (default: POST) */
@@ -10,7 +10,7 @@ interface MutationOptions<TBody, TResponse> {
   /** URL to send the request to */
   url: string;
   /** Zod schema to validate the response */
-  schema: ZodType<TResponse>;
+  schema: SafeParsable<TResponse>;
   /** Optional success/error callbacks */
   onSuccess?: (data: TResponse) => void;
   onError?: (error: string) => void;
