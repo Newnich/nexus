@@ -108,7 +108,7 @@ jobs:
             | Detail | Link |
             |--------|------|
             | **Preview URL** | [${previewUrl}](${previewUrl}) |
-            | **Commit** | ${context.sha.slice(0, 7)} |
+            | **Commit** | ${'${{ github.event.pull_request.head.sha }}'.slice(0, 7)} |
             | **PR #${prNumber}** | ${context.payload.pull_request.html_url} |
 
             > This comment is automatically updated on each push. Only the latest preview comment is kept.`,
